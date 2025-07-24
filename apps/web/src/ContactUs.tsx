@@ -11,7 +11,7 @@ const ContactUs = () => {
     message: ''
   });
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -19,7 +19,7 @@ const ContactUs = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log('Form submitted:', formData);
     // Handle form submission logic here
@@ -109,7 +109,7 @@ const ContactUs = () => {
             <p className="text-gray-600 mt-2">We would love to hear from you!</p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-12">
+          <form onSubmit={handleSubmit} className="grid lg:grid-cols-2 gap-12">
             {/* Contact Form */}
             <div className="bg-white p-8 rounded-lg shadow-sm">
               <div className="space-y-6">
@@ -166,7 +166,7 @@ const ContactUs = () => {
                 <textarea
                   name="message"
                   placeholder="Message"
-                  rows="6"
+                  rows={6}
                   value={formData.message}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
@@ -200,14 +200,14 @@ const ContactUs = () => {
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}
-                  allowFullScreen=""
+                  allowFullScreen={true}
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                   title="Bastion Research Location"
                 ></iframe>
               </div>
             </div>
-          </div>
+          </form>
         </div>
       </section>
 
