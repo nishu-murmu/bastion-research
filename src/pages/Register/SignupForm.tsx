@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { addUser } from "@/integrations/supabase/api";
 import { useSignUp } from "@clerk/clerk-react";
 import { useState } from "react";
 // import { useNavigate } from 'react-router-dom'
@@ -97,7 +97,7 @@ const SignupForm = () => {
         await setActive({ session: result.createdSessionId });
 
         // Store additional user data in Supabase
-        const { error } = await supabase.from("users").insert({
+        const { error } = await addUser({
           clerk_user_id: result.createdUserId,
           username: formData.username,
           first_name: formData.firstName,
