@@ -1,20 +1,62 @@
-
 import {
   Twitter,
   Linkedin,
   Instagram,
   Youtube,
   Rss,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
+import { useState, useEffect } from "react";
+
+const CollapsibleSection = ({ title, children }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className=" md:border-none md:pb-0 md:mb-0">
+      <button
+        className="flex justify-between items-center w-full text-lg font-semibold mb-4 md:mb-4 md:cursor-default"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        {title}
+        <span className="md:hidden">
+          {isOpen ? (
+            <ChevronUp className="w-5 h-5 transition-transform duration-300" />
+          ) : (
+            <ChevronDown className="w-5 h-5 transition-transform duration-300" />
+          )}
+        </span>
+      </button>
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0 md:max-h-[500px] md:opacity-100"
+        }`}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
 
 const Footer = () => {
-  return (
+  const [isMobile, setIsMobile] = useState(false);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return (
     <footer className="bg-red-600 text-white py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap justify-between gap-8">
-          {/* Company Info */}
-          <div className="flex-1 min-w-72">
+        <div className="flex flex-col md:flex-row flex-wrap justify-between gap-4">
+          {/* Company Info - Always visible */}
+          <div className="flex-1 min-w-72 mb-4">
             <h3 className="text-2xl font-bold mb-4">BASTION RESEARCH</h3>
             <p className="mb-4">
               Maximizing Your Research Quality Per Unit Of Stress
@@ -28,105 +70,127 @@ const Footer = () => {
 
           {/* Web Links */}
           <div className="flex-1 min-w-48">
-            <h4 className="text-lg font-semibold mb-4">Web Links</h4>
-            <ul className="space-y-2">
-              <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
-                  About us
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
-                  Spotlight
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
-                  QUANT
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
-                  Contact
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
-                  Career
-                </a>
-              </li>
-            </ul>
+            <CollapsibleSection title="Web Links">
+              <ul className="space-y-2">
+                <li>
+                  <a href="#" className="relative group hover:text-red-200 transition-colors inline-block">
+                    About us
+                    <span className="absolute left-0 bottom-0 w-0 h-px bg-red-200 transition-all duration-300 group-hover:w-full"></span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="relative group hover:text-red-200 transition-colors inline-block">
+                    Spotlight
+                    <span className="absolute left-0 bottom-0 w-0 h-px bg-red-200 transition-all duration-300 group-hover:w-full"></span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="relative group hover:text-red-200 transition-colors inline-block">
+                    QUANT
+                    <span className="absolute left-0 bottom-0 w-0 h-px bg-red-200 transition-all duration-300 group-hover:w-full"></span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="relative group hover:text-red-200 transition-colors inline-block">
+                    Contact
+                    <span className="absolute left-0 bottom-0 w-0 h-px bg-red-200 transition-all duration-300 group-hover:w-full"></span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="relative group hover:text-red-200 transition-colors inline-block">
+                    Career
+                    <span className="absolute left-0 bottom-0 w-0 h-px bg-red-200 transition-all duration-300 group-hover:w-full"></span>
+                  </a>
+                </li>
+              </ul>
+            </CollapsibleSection>
           </div>
 
           {/* Quick Links */}
           <div className="flex-1 min-w-48">
-            <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
-            <ul className="space-y-2">
-              <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
-                  Refund Policy
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
-                  Privacy Policy
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
-                  Terms and conditions
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
-                  Compliance
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
-                  Blog
-                </a>
-              </li>
-            </ul>
+            <CollapsibleSection title="Quick Links">
+              <ul className="space-y-2">
+                <li>
+                  <a href="#" className="relative group hover:text-red-200 transition-colors inline-block">
+                    Refund Policy
+                    <span className="absolute left-0 bottom-0 w-0 h-px bg-red-200 transition-all duration-300 group-hover:w-full"></span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="relative group hover:text-red-200 transition-colors inline-block">
+                    Privacy Policy
+                    <span className="absolute left-0 bottom-0 w-0 h-px bg-red-200 transition-all duration-300 group-hover:w-full"></span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="relative group hover:text-red-200 transition-colors inline-block">
+                    Terms and conditions
+                    <span className="absolute left-0 bottom-0 w-0 h-px bg-red-200 transition-all duration-300 group-hover:w-full"></span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="relative group hover:text-red-200 transition-colors inline-block">
+                    Compliance
+                    <span className="absolute left-0 bottom-0 w-0 h-px bg-red-200 transition-all duration-300 group-hover:w-full"></span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="relative group hover:text-red-200 transition-colors inline-block">
+                    Blog
+                    <span className="absolute left-0 bottom-0 w-0 h-px bg-red-200 transition-all duration-300 group-hover:w-full"></span>
+                  </a>
+                </li>
+              </ul>
+            </CollapsibleSection>
           </div>
 
           {/* Let's Connect */}
           <div className="flex-1 min-w-64">
-            <h4 className="text-lg font-semibold mb-4">Let's Connect</h4>
-            <p className="mb-4">connect@bastionresearch.in</p>
+            <CollapsibleSection title="Let's Connect">
+              <div className="space-y-4">
+                <p>connect@bastionresearch.in</p>
 
-            {/* Social Icons */}
-            <div className="flex space-x-3 mb-6">
-              <div className="w-8 h-8 bg-white bg-opacity-20 rounded flex items-center justify-center hover:bg-opacity-30 cursor-pointer transition-all">
-                <Twitter className="w-4 h-4" />
-              </div>
-              <div className="w-8 h-8 bg-white bg-opacity-20 rounded flex items-center justify-center hover:bg-opacity-30 cursor-pointer transition-all">
-                <Linkedin className="w-4 h-4" />
-              </div>
-              <div className="w-8 h-8 bg-white bg-opacity-20 rounded flex items-center justify-center hover:bg-opacity-30 cursor-pointer transition-all">
-                <Instagram className="w-4 h-4" />
-              </div>
-              <div className="w-8 h-8 bg-white bg-opacity-20 rounded flex items-center justify-center hover:bg-opacity-30 cursor-pointer transition-all">
-                <Youtube className="w-4 h-4" />
-              </div>
-              <div className="w-8 h-8 bg-white bg-opacity-20 rounded flex items-center justify-center hover:bg-opacity-30 cursor-pointer transition-all">
-                <Rss className="w-4 h-4" />
-              </div>
-            </div>
+                {/* Social Icons */}
+                <div className="flex space-x-3">
+                  <div className="w-8 h-8 bg-white bg-opacity-20 rounded flex items-center justify-center hover:bg-opacity-30 cursor-pointer transition-all">
+                    <Twitter className="w-4 h-4" />
+                  </div>
+                  <div className="w-8 h-8 bg-white bg-opacity-20 rounded flex items-center justify-center hover:bg-opacity-30 cursor-pointer transition-all">
+                    <Linkedin className="w-4 h-4" />
+                  </div>
+                  <div className="w-8 h-8 bg-white bg-opacity-20 rounded flex items-center justify-center hover:bg-opacity-30 cursor-pointer transition-all">
+                    <Instagram className="w-4 h-4" />
+                  </div>
+                  <div className="w-8 h-8 bg-white bg-opacity-20 rounded flex items-center justify-center hover:bg-opacity-30 cursor-pointer transition-all">
+                    <Youtube className="w-4 h-4" />
+                  </div>
+                  <div className="w-8 h-8 bg-white bg-opacity-20 rounded flex items-center justify-center hover:bg-opacity-30 cursor-pointer transition-all">
+                    <Rss className="w-4 h-4" />
+                  </div>
+                </div>
 
-            <div>
-              <h5 className="font-semibold mb-2">
-                Subscribe To Our Newsletter
-              </h5>
-              <button className="border border-white px-4 py-2 rounded hover:bg-white hover:text-red-600 transition-colors">
-                Subscribe Now
-              </button>
-            </div>
+                <div>
+                  <h5 className="font-semibold mb-2">
+                    Subscribe To Our Newsletter
+                  </h5>
+                  <div className="flex">
+                    <input 
+                      type="email" 
+                      placeholder="Your email" 
+                      className="px-3 py-2 text-gray-800 rounded-l focus:outline-none w-full flex-1 min-w-0"
+                    />
+                    <button className="bg-white text-red-600 px-4 py-2 rounded-r hover:bg-gray-100 transition-colors whitespace-nowrap">
+                      Subscribe
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </CollapsibleSection>
           </div>
         </div>
 
         {/* Disclaimer */}
-        <div className="mt-12 pt-8 border-t border-red-500 text-xs leading-relaxed">
+        <div className="mt-6 pt-8 border-t border-red-500 text-xs leading-relaxed">
           <p className="mb-4">
             Bastion CORE is an independent equity research platform providing
             unbiased equity research to its subscribers. We do not recommend
@@ -153,13 +217,13 @@ const Footer = () => {
         </div>
 
         {/* Copyright */}
-        <div className="mt-8 pt-8 border-t border-red-500 flex justify-between items-center text-sm">
+        <div className="mt-8 pt-8 border-t border-red-500 flex flex-col md:flex-row justify-between items-center text-sm gap-4">
           <p>Copyright © 2024 Bastion Research</p>
-          <p>Powered by KB's Webstore</p>
+          <p>Powered by React</p>
         </div>
       </div>
     </footer>
-  )
-}
+  );
+};
 
-export default Footer
+export default Footer;
