@@ -1,4 +1,3 @@
-
 import {
   Twitter,
   Linkedin,
@@ -6,10 +5,10 @@ import {
   Youtube,
   Rss,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-
     <footer className="bg-red-600 text-white py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-wrap justify-between gap-8">
@@ -31,29 +30,29 @@ const Footer = () => {
             <h4 className="text-lg font-semibold mb-4">Web Links</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
+                <Link to="/about-us" className="hover:text-red-200 transition-colors">
                   About us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
+                <Link to="/spotlight" className="hover:text-red-200 transition-colors">
                   Spotlight
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
+                <Link to="/quant" className="hover:text-red-200 transition-colors">
                   QUANT
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
+                <Link to="/contact" className="hover:text-red-200 transition-colors">
                   Contact
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
+                <Link to="/career" className="hover:text-red-200 transition-colors">
                   Career
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -63,29 +62,29 @@ const Footer = () => {
             <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
+                <Link to="/refund-policy" className="hover:text-red-200 transition-colors">
                   Refund Policy
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/footer-privacy-policy" className="hover:text-red-200 transition-colors">
+                <Link to="/privacy-policy" className="hover:text-red-200 transition-colors">
                   Privacy Policy
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
+                <Link to="/terms-and-conditions" className="hover:text-red-200 transition-colors">
                   Terms and conditions
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
+                <Link to="/compliance" className="hover:text-red-200 transition-colors">
                   Compliance
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-red-200 transition-colors">
+                <Link to="/blog" className="hover:text-red-200 transition-colors">
                   Blog
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -162,4 +161,4 @@ const Footer = () => {
   )
 }
 
-export default Footer
+export default Footer;
