@@ -18,6 +18,7 @@ const EditProfile = lazy(() => import("../pages/EditProfile"));
 const Subscription = lazy(() => import("../pages/Subscription"));
 const PodcastsGrid = lazy(() => import("../components/generic/PodcastsGrid.tsx"));
 // const PodcatsBlog = lazy(() => import("../components/generic/PodcatsBlog"));
+const SpotLights = lazy(() => import("../pages/SpotLights.tsx"));
 
 // Define App Routes
 export const AppRoutes = {
@@ -40,6 +41,7 @@ export const AppRoutes = {
   webinars: () => "/webinars", // Added for Header dropdown
   PodcastsGrid: () => "/podcasts-grid", // Added for PodcastsGrid component
   // PodcatsBlog: () => "/podcats-blog", // Added for PodcatsBlog component
+  SpotLights: () => "/spotlights", // Added for Spotlight page
   // Add more route names and path functions as needed
 };
 
@@ -71,6 +73,11 @@ export const routes = [
   {
     Component: PodcastsGrid,
     path: AppRoutes.PodcastsGrid(),
+    
+  },
+   {
+    Component: SpotLights,
+    path: AppRoutes.SpotLights(),
     
   },
   // Additional routes for Header dropdown (assuming they are public pages)
