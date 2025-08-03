@@ -1,14 +1,26 @@
 // DigioService.ts - Service class for Digio API integration
 
-type IdCardType = "PAN" | "PASSPORT" | "VOTER_ID" | "DRIVING_LICENSE" | "CIN" | "DIN" | "UAADHAAR" | "UDYAMAADHAAR" | "FSSAI" | "GST" | "GST_ADVANCED" | "PAN_TO_GST";
+type IdCardType =
+  | "PAN"
+  | "PASSPORT"
+  | "VOTER_ID"
+  | "DRIVING_LICENSE"
+  | "CIN"
+  | "DIN"
+  | "UAADHAAR"
+  | "UDYAMAADHAAR"
+  | "FSSAI"
+  | "GST"
+  | "GST_ADVANCED"
+  | "PAN_TO_GST";
 
 interface FetchIdDataParams {
-    id_no: string;
-    name?: string;
-    dob?: string;
-    file_no?: string;
-    unique_request_id?: string;
-    is_advanced?: boolean;
+  id_no: string;
+  name?: string;
+  dob?: string;
+  file_no?: string;
+  unique_request_id?: string;
+  is_advanced?: boolean;
 }
 
 class DigioService {
@@ -19,13 +31,14 @@ class DigioService {
   constructor() {
     this.clientId = import.meta.env.VITE_DIGIO_CLIENT_ID;
     this.clientSecret = import.meta.env.VITE_DIGIO_CLIENT_SECRET;
-    const environment = import.meta.env.VITE_DIGIO_ENVIRONMENT || 'sandbox';
-    this.baseUrl = environment === 'sandbox'
-      ? '/digio-api-sandbox'
-      : '/digio-api-prod';
+    const environment = import.meta.env.VITE_DIGIO_ENVIRONMENT || "sandbox";
+    this.baseUrl =
+      environment === "sandbox" ? "/digio-api-sandbox" : "/digio-api-prod";
 
     if (!this.clientId || !this.clientSecret) {
-        console.error("Digio client ID or secret not found in environment variables.");
+      console.error(
+        "Digio client ID or secret not found in environment variables."
+      );
     }
   }
 
@@ -34,36 +47,39 @@ class DigioService {
     return `Basic ${credentials}`;
   }
 
-  private generateUniqueRequestId(): string {
-    return `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-  }
-
-  async fetchIdData(idCardType: IdCardType, params: FetchIdDataParams): Promise<any> {
+  async fetchIdData(
+    idCardType: IdCardType,
+    params: FetchIdDataParams
+  ): Promise<any> {
     try {
-        const unique_request_id = params.unique_request_id || this.generateUniqueRequestId();
-        const body = { ...params, unique_request_id };
+      // const unique_request_id = params.unique_request_id || crypto.randomUUID();
+      const body = { ...params };
 
-        const response = await fetch(`${this.baseUrl}/client/v4/apis/kyc/fetch_id_data/${idCardType}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': this.getAuthHeader(),
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(body)
-        });
-
-        if (!response.ok) {
-            const errorBody = await response.text();
-            throw new Error(`HTTP error! status: ${response.status}, body: ${errorBody}`);
+      const response = await fetch(
+        `${this.baseUrl}/client/v4/apis/kyc/fetch_id_data/${idCardType}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: this.getAuthHeader(),
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(body),
         }
+      );
 
-        const result = await response.json();
-        return result;
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(
+          `HTTP error! status: ${response.status}, body: ${errorBody}`
+        );
+      }
 
+      const result = await response.json();
+      return result;
     } catch (error) {
-        console.error('Error fetching ID card data:', error);
-        throw error;
+      console.error("Error fetching ID card data:", error);
+      throw error;
     }
   }
 }
