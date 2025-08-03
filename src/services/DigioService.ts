@@ -21,8 +21,8 @@ class DigioService {
     this.clientSecret = import.meta.env.VITE_DIGIO_CLIENT_SECRET;
     const environment = import.meta.env.VITE_DIGIO_ENVIRONMENT || 'sandbox';
     this.baseUrl = environment === 'sandbox'
-      ? 'https://ext.digio.in:444'
-      : 'https://api.digio.in';
+      ? '/digio-api-sandbox'
+      : '/digio-api-prod';
 
     if (!this.clientId || !this.clientSecret) {
         console.error("Digio client ID or secret not found in environment variables.");
