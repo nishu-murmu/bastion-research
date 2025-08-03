@@ -16,6 +16,7 @@ const Login = lazy(() => import("../pages/Login"));
 const Register = lazy(() => import("../pages/Register"));
 const EditProfile = lazy(() => import("../pages/EditProfile"));
 const Subscription = lazy(() => import("../pages/Subscription"));
+const DigioTest = lazy(() => import("../pages/DigioTest"));
 
 // Define App Routes
 export const AppRoutes = {
@@ -36,6 +37,7 @@ export const AppRoutes = {
   newslettersArchive: () => "/newsletters-archive", // Added for Header dropdown
   podcast: () => "/podcast", // Added for Header dropdown
   webinars: () => "/webinars", // Added for Header dropdown
+  digioTest: () => "/digio-test",
   // Add more route names and path functions as needed
 };
 
@@ -57,6 +59,7 @@ export const routes = [
   { Component: Login, path: AppRoutes.login() },
   // { Component: BastionCore, path: AppRoutes.bastionCore() },
   { Component: Register, path: AppRoutes.register() },
+  { Component: DigioTest, path: AppRoutes.digioTest() },
   // Protected Routes
   { Component: EditProfile, path: AppRoutes.editProfile(), isProtected: true },
   {
