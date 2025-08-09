@@ -1,24 +1,14 @@
-import { useUser } from '@clerk/clerk-react'
-import { Navigate } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext';
+import { Navigate, Outlet } from 'react-router-dom';
 
-interface ProtectedRouteProps {
-  children: React.ReactNode
-}
+const ProtectedRoute = () => {
+  const { isAuthenticated } = useAuth();
 
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isSignedIn, isLoaded } = useUser()
-
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    )
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
   }
 
-  if (!isSignedIn) {
-    return <Navigate to="/auth" replace />
-  }
+  return <Outlet />;
+};
 
-  return <>{children}</>
-}
+export default ProtectedRoute;
