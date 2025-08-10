@@ -73,7 +73,7 @@ const Header = () => {
                 <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-red-600 transition-all duration-300 group-hover:w-full"></span>
               </div>
               <div
-                className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200"
+                className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-[999] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200"
                 onMouseEnter={() => setOpenSubmenu("desktopKnowledgeCenter")}
                 onMouseLeave={() => setOpenSubmenu(null)}
               >
