@@ -14,6 +14,7 @@ import AdminDashboard from './pages/admin/Dashboard';
 import JobOpenings from './pages/admin/JobOpenings';
 import Users from './pages/admin/Users';
 import Settings from './pages/admin/Settings';
+import PublicPage from './pages/PublicPage';
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ function App() {
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
               </Route>
+              <Route path="/:pageName" element={<PublicPage />} />
             </Route>
             <Route element={<AdminLayout />}>
               <Route element={<AdminRoute />}>
