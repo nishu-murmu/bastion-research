@@ -17,7 +17,7 @@ const Dashboard = () => {
         </button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <CashfreePayment />
+        {/* <CashfreePayment /> */}
         <PaymentHistory />
       </div>
     </div>
