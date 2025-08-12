@@ -19,8 +19,6 @@ const Header = () => {
   return (
     <header
       className="bg-white shadow-sm py-6"
-      itemtype="https://schema.org/Organization"
-      itemscope
     >
       <div className="max-w-7xl mx-auto px-6 md:px-8 lg:px-8">
         <div className="flex justify-between items-center">
@@ -84,7 +82,7 @@ const Header = () => {
                   Newsletter Archive
                 </Link>
                 <Link
-                  to="/podcast"
+                  to="/podcasts"
                   className="block px-4 py-2 text-gray-700 hover:text-red-600"
                 >
                   Podcast (MADE IN INDIA)

@@ -1,11 +1,6 @@
 import { Config } from "@/utils/config";
-import {
-  SvgInstagram,
-  SvgLinkedIn,
-  SvgSpotify,
-  SvgTwitter,
-  SvgYoutube,
-} from "@/utils/icons";
+import { SvgInstagram, SvgLinkedIn, SvgSpotify, SvgTwitter, SvgYoutube } from "@/utils/icons";
+
 import { Link } from "react-router-dom"; // Make sure Link is imported
 
 // Mapping object for SVG components

@@ -45,7 +45,8 @@ const SignUpForm = () => {
       // Auto focus next input
       if (value && index < 3) {
         const nextInput = document.querySelector(`input[name="otp-${index + 1}"]`);
-        if (nextInput) nextInput.focus();
+        //@ts-ignore
+        if (nextInput) nextInput?.focus();
       }
     }
   };
@@ -162,8 +163,8 @@ const SignUpForm = () => {
               value={digit}
               onChange={(e) => handleOtpChange(index, e.target.value)}
               className="w-12 h-12 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-lg font-semibold"
-              maxLength="1"
-            />
+              maxLength={1}            
+              />
           ))}
         </div>
 
@@ -269,7 +270,7 @@ const SignUpForm = () => {
             onChange={(e) => updateFormData('panCard', e.target.value.toUpperCase())}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
             placeholder="ABCDE1234F"
-            maxLength="10"
+            maxLength={10}
           />
         </div>
 
@@ -281,7 +282,7 @@ const SignUpForm = () => {
             onChange={(e) => updateFormData('aadharCard', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
             placeholder="1234 5678 9012"
-            maxLength="12"
+            maxLength={12}
           />
         </div>
 
@@ -304,7 +305,7 @@ const SignUpForm = () => {
               onChange={(e) => updateFormData('ifscCode', e.target.value.toUpperCase())}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
               placeholder="SBIN0001234"
-              maxLength="11"
+              maxLength={11}
             />
           </div>
         </div>
@@ -488,10 +489,9 @@ const SignUpForm = () => {
       case 2: return <VerifyStep />;
       case 3: return <OnboardStep />;
       case 4: return <KYCStep />;
-      case 5: return <RiskProfileStep />;
-      case 6: return <PlansStep />;
-      case 7: return <AgreementStep />;
-      case 8: return <PaymentStep />;
+      case 5: return <PlansStep />;
+      case 6: return <AgreementStep />;
+      case 7: return <PaymentStep />;
       default: return <RegisterStep />;
     }
   };

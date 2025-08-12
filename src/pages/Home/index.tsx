@@ -1,8 +1,7 @@
-import Footer from "@/components/generic/Footer";
-import Header from "@/components/generic/Header";
-import MainBanner from "@/files/main-banner.svg";
+import MainBanner from "../../files/main-banner.svg";
 // import mainPageImage from "@/files/main-page-image.svg";
 import { CheckCircle } from "lucide-react";
+
 
 const Home = () => {
   return (
@@ -28,6 +27,7 @@ const Home = () => {
         </section>
 
         {/* About Section */}
+
         <section className="py-12 pb-16 bg-white">
           <div className="max-w-7xl px-6 md:px-8 mx-auto">
             <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">

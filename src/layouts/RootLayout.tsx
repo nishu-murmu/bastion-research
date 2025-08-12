@@ -1,17 +1,17 @@
-import { Outlet } from "react-router-dom";
-import Header from "@/components/generic/Header";
-import Footer from "@/components/generic/Footer/index";
+import { Outlet } from 'react-router-dom';
+import Header from '@/components/generic/Header';
+import Footer from '@/components/generic/Footer';
 
 const RootLayout = () => {
   return (
-    <>
+    <div className="flex flex-col min-h-screen">
       <Header />
-      <Outlet />
+      <main className="flex-grow">
+        <Outlet />
+      </main>
       <Footer />
-    </>
+    </div>
   );
 };
-// <div className="min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10 flex flex-col">
-//     </div>
 
 export default RootLayout;

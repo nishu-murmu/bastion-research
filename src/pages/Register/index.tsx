@@ -1,17 +1,16 @@
-import { useUser } from "@clerk/clerk-react";
 import { Navigate } from "react-router-dom";
-import SignupForm from "./SignupForm";
+import SignUpForm from "./SignupForm";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Register() {
-  const { isSignedIn } = useUser();
-
-  if (isSignedIn) {
+  const { user } = useAuth();
+  if (!user) {
     return <Navigate to="/" replace />;
   }
 
   return (
-    <div className="bg-gradient-to-br from-primary/20 to-secondary/20">
-      <SignupForm />
+    <div className="bg-gradient-to-br from-primary/20 to-secondary/20 min-h-screen flex items-center justify-center">
+      <SignUpForm />
     </div>
   );
 }

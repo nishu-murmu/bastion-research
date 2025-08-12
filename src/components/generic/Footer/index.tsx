@@ -67,7 +67,7 @@ const Footer = () => {
               <ul className="space-y-2">
                 <li>
                   <Link
-                    to="/about-us"
+                    to="/"
                     className="relative group hover:text-red-200 transition-colors inline-block" // Added for each link
                   >
                     About us
@@ -76,7 +76,7 @@ const Footer = () => {
                 </li>
                 <li>
                   <Link
-                    to="/spotlight"
+                    to="/spotlights"
                     className="relative group hover:text-red-200 transition-colors inline-block"
                   >
                     Spotlight
@@ -103,7 +103,7 @@ const Footer = () => {
                 </li>
                 <li>
                   <Link
-                    to="/career"
+                    to="/career-page"
                     className="relative group hover:text-red-200 transition-colors inline-block"
                   >
                     Career
