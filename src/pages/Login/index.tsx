@@ -31,7 +31,7 @@ const Login = () => {
     mutationFn: (data) =>
       axiosInstance.post('/api/auth/signin', data).then((res) => res.data),
     onSuccess: (data) => {
-      login(data.token, data.user);
+      login(data.user);
       navigate('/dashboard');
     },
   });

@@ -1,49 +1,56 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '@/types';
+import axiosInstance from '@/api/axios';
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
-  login: (token: string, user: User) => void;
+  login: (user: User) => void;
   logout: () => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-    }
+    const checkUser = async () => {
+      try {
+        const response = await axiosInstance.get('/api/auth/me');
+        setUser(response.data.user);
+      } catch (error) {
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkUser();
   }, []);
 
-  const login = (newToken: string, newUser: User) => {
-    setToken(newToken);
+  const login = (newUser: User) => {
     setUser(newUser);
-    localStorage.setItem('token', newToken);
-    localStorage.setItem('user', JSON.stringify(newUser));
   };
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  const logout = async () => {
+    try {
+      await axiosInstance.post('/api/auth/logout');
+    } catch (error) {
+      console.error('Logout failed', error);
+    } finally {
+      setUser(null);
+    }
   };
 
-  const isAuthenticated = !!token;
+  const isAuthenticated = !!user;
   const isAdmin = user?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated, isAdmin }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated, isAdmin, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
