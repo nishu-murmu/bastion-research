@@ -1,5 +1,5 @@
 {
-  "name": "bastion-server",
+  "name": "server",
   "version": "1.0.0",
   "description": "A Node.js Express server with TypeScript, JWT authentication, and Supabase integration.",
   "main": "dist/index.js",

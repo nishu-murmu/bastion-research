@@ -18,7 +18,7 @@ importers:
         specifier: 5.8.3
         version: 5.8.3
 
-  apps/bastion-server:
+  apps/server:
     dependencies:
       '@supabase/supabase-js':
         specifier: ^2.43.4
@@ -91,7 +91,7 @@ importers:
         specifier: ^5.4.5
         version: 5.8.3
 
-  apps/bastion-web:
+  apps/web:
     dependencies:
       '@cashfreepayments/cashfree-js':
         specifier: ^1.0.5
