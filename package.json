@@ -1,5 +1,5 @@
 {
-  "name": "bastion",
+  "name": "bastionresearch.in",
   "private": true,
   "scripts": {
     "build": "turbo run build",
@@ -17,7 +17,7 @@
   },
   "engines": {
     "node": ">=18"
-  },
+    },
   "packageManager": "pnpm@10.4.1",
   "workspaces": [
     "apps/*",
