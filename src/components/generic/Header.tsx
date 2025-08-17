@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const Header = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState(null);
+  const [scrolled, setScrolled] = useState(false);
 
   const toggleDrawer = () => {
     setIsDrawerOpen(!isDrawerOpen);
@@ -16,13 +17,25 @@ const Header = () => {
     setOpenSubmenu(openSubmenu === menuName ? null : menuName);
   };
 
+  // Detect scroll for shadow effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10); // add shadow after small scroll
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
     <header
-      className="bg-white shadow-sm py-6"
-      itemtype="https://schema.org/Organization"
-      itemscope
+      className={`fixed top-0 z-[9999]  left-0 w-full bg-white py-6 transition-shadow duration-300 ${
+        scrolled ? "shadow-[0_2px_6px_rgba(0,0,0,0.08)]" : "shadow-none"
+      }`}
+      itemType="https://schema.org/Organization"
+      itemScope
     >
-      <div className="max-w-7xl mx-auto px-6 md:px-8 lg:px-8">
+        <div className="max-w-7xl mx-auto px-6 md:px-8 lg:px-8">
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <Link to="/">

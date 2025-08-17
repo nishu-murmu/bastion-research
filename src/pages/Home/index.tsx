@@ -49,6 +49,7 @@ export default function LandingPage() {
   }, [active]);
 
   return (
+    <div className="main pt-[80px] md:pt-[88px]">
     <div
       className="overflow-hidden bg-white"
       style={{ color: NAVY }}
@@ -317,6 +318,7 @@ export default function LandingPage() {
           © {new Date().getFullYear()} Bastion Research. All rights reserved.
         </footer>
       </div>
+    </div>
     </div>
   );
 }

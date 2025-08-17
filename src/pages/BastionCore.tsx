@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Star, Sparkles, ChevronDown, CheckCircle2 } from "lucide-react";
+import Review from "../components/generic/Review.tsx";
+import Testimonial from "../components/generic/Testimonial.tsx";
 
 // Brand Colors
 const COLORS = {
@@ -75,29 +77,40 @@ function FlipCard({ front, back, color = COLORS.blue }) {
           style={{ background: color, color: COLORS.white }}
         >
           <div className="text-center">
-            <div className="text-5xl md:text-6xl font-black">{front.letter}</div>
-            <div className="mt-2 text-sm md:text-base opacity-90">{front.caption}</div>
+            <div className="text-5xl md:text-6xl font-black">
+              {front.letter}
+            </div>
+            <div className="mt-2 text-sm md:text-base opacity-90">
+              {front.caption}
+            </div>
           </div>
         </div>
         {/* Back */}
         <div
           className="absolute inset-0 rounded-2xl shadow-lg p-6 [transform:rotateY(180deg)] [backface-visibility:hidden] flex items-center justify-center text-center"
-          style={{ background: COLORS.white, color: COLORS.blue, border: `2px solid ${color}` }}
+          style={{
+            background: COLORS.white,
+            color: COLORS.blue,
+            border: `2px solid ${color}`,
+          }}
         >
-          <div className="text-sm md:text-base font-medium leading-snug">{back.text}</div>
+          <div className="text-sm md:text-base font-medium leading-snug">
+            {back.text}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-
 const faqsNew = [
   {
     q: "How do I subscribe and What are the Subscription Charges?",
     a: (
       <span>
-        You can subscribe via the button below at <strong>Rs. 18,750 per year</strong>. After checkout, you’ll receive instant access to research, archives, and updates.
+        You can subscribe via the button below at{" "}
+        <strong>Rs. 18,750 per year</strong>. After checkout, you’ll receive
+        instant access to research, archives, and updates.
       </span>
     ),
   },
@@ -151,185 +164,269 @@ const faqsNew = [
   },
 ];
 
-
- 
-
 export default function BastionCoreProductPage() {
-   const [openIndex, setOpenIndex] = useState(null);
+  const [openIndex, setOpenIndex] = useState(null);
 
   const toggleFAQ = (index) => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
-
   return (
-    <div className="min-h-screen w-full" style={{ background: COLORS.gray }}>
-      {/* Sub-header typing banner */}
-      <section className="mx-auto max-w-6xl px-4 pt-10 md:pt-14">
-        <div className="rounded-3xl p-6 md:p-10 shadow-lg text-center" style={{ background: COLORS.white }}>
-          <TypingLoop phrases={["Comprehensive Objective Research Edge"]} />
-          <div className="mt-3 text-sm md:text-base opacity-70" style={{ color: COLORS.blue }}>Built for DIY investors who want serious, clean, decision-useful research.</div>
-        </div>
-      </section>
-
-      {/* Section 1: Importance of Research */}
-      <section id="research" className="mx-auto max-w-6xl px-4 py-12 md:py-16">
-        <div className="grid md:grid-cols-2 gap-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className="rounded-3xl p-6 md:p-8 shadow-lg" style={{ background: COLORS.white }}>
-            <h2 className="text-2xl md:text-3xl font-bold" style={{ color: COLORS.blue }}>Why Research Matters</h2>
-            <p className="mt-4 leading-relaxed" style={{ color: COLORS.blue }}>
-              Research constitutes the <strong>FUNDAMENTAL</strong> component of an investor's investing endeavours. Our unwavering commitment with Bastion CORE lies in providing best research while ensuring its accessibility to investors, irrespective of the size of their capital.
-            </p>
-            <p className="mt-3 leading-relaxed" style={{ color: COLORS.blue }}>
-              With thorough business comprehension and insights aiding your investment decisions, we guide you through your investment journey with detailed research reports and timely updates through our proprietary <strong>SMART Framework</strong>.
-            </p>
-            <div className="mt-6 border-l-4 pl-4 italic text-sm md:text-base" style={{ borderColor: COLORS.red, color: COLORS.blue }}>
-              “Know What you Own and know why you own it” – <span className="font-semibold">Peter Lynch</span>
-            </div>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.1 }} className="rounded-3xl p-6 md:p-8 shadow-lg flex items-center justify-center" style={{ background: COLORS.blue }}>
-            <div className="text-center text-white">
-              <Sparkles className="mx-auto mb-3" />
-              <div className="text-xl font-semibold">Clean. Objective. Actionable.</div>
-              <div className="opacity-80 mt-2">No fluff. Just high-quality research you can actually use.</div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Section 2: SMART Framework */}
-      <section id="smart" className="mx-auto max-w-6xl px-4 py-12 md:py-16">
-        <div className="flex items-end justify-between mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold" style={{ color: COLORS.blue }}>SMART Framework</h2>
-          <div className="text-sm md:text-base font-medium" style={{ color: COLORS.blue }}>Five simple filters. Serious edge.</div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
-          <FlipCard
-            front={{ letter: "S", caption: "Strong Business" }}
-            back={{ text: "Strong Business – Avoid Businesses Exhibiting Signs of Weakness" }}
-            color={COLORS.blue}
-          />
-          <FlipCard
-            front={{ letter: "M", caption: "Strong Management" }}
-            back={{ text: "Strong Management – Not Partnering with Managements Unwilling to Share Upside" }}
-            color={COLORS.red}
-          />
-          <FlipCard
-            front={{ letter: "A", caption: "Clean Accounts" }}
-            back={{ text: "Clean Accounts – Making Sure the Numbers Are Reliable to Form Decisions" }}
-            color={COLORS.beige}
-          />
-          <FlipCard
-            front={{ letter: "R", caption: "Reasonable Valuations" }}
-            back={{ text: "Reasonable Valuations – Not Buying Anything at Any Price" }}
-            color={COLORS.blue}
-          />
-          <FlipCard
-            front={{ letter: "T", caption: "Business Tailwinds" }}
-            back={{ text: "Business Tailwinds – Steer Clear of Businesses Belonging to a Dying or Stagnant Industry" }}
-            color={COLORS.red}
-          />
-        </div>
-      </section>
-
-      {/* Section 3: Testimonials */}
-      <section id="testimonials" className="mx-auto max-w-6xl px-4 py-12 md:py-16">
-        <h2 className="text-2xl md:text-3xl font-bold text-center" style={{ color: COLORS.blue }}>Look What Our Subscribers Are Saying About Us</h2>
-        <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Testimonial Card */}
-          <div className="aspect-square rounded-3xl shadow-lg p-6 flex flex-col" style={{ background: COLORS.white }}>
-            <div className="flex items-center gap-1" style={{ color: COLORS.beige }}>
-              <Star fill={COLORS.beige} />
-              <Star fill={COLORS.beige} />
-              <Star fill={COLORS.beige} />
-              <Star fill={COLORS.beige} />
-              <Star fill={COLORS.beige} />
-            </div>
-            <p className="mt-4 text-sm md:text-base leading-relaxed" style={{ color: COLORS.blue }}>
-              “Bastion CORE has changed how I evaluate businesses. The reports are clear, decisive, and actually help me take action.”
-            </p>
-            <div className="mt-auto pt-4 font-semibold" style={{ color: COLORS.blue }}>Rohan S. – Subscriber</div>
-          </div>
-
-          {/* Testimonial Input Card */}
-          <div className="aspect-square rounded-3xl shadow-lg p-6 flex flex-col gap-4" style={{ background: COLORS.white }}>
-            <div className="text-sm font-semibold" style={{ color: COLORS.blue }}>Add Your Testimonial</div>
-            <input placeholder="Your Name" className="w-full rounded-xl p-3 border focus:outline-none" style={{ borderColor: COLORS.gray }} />
-            <textarea placeholder="Write your testimonial..." className="w-full rounded-xl p-3 border h-full focus:outline-none" style={{ borderColor: COLORS.gray }} />
-            <button className="rounded-xl py-2 font-semibold hover:opacity-90" style={{ background: COLORS.red, color: COLORS.white }}>Submit</button>
-          </div>
-
-          {/* Another static card for credibility */}
-          <div className="aspect-square rounded-3xl shadow-lg p-6 flex flex-col" style={{ background: COLORS.white }}>
-            <div className="flex items-center gap-2" style={{ color: COLORS.blue }}>
-              <CheckCircle2 /> <span className="font-semibold">Trusted by serious DIY investors</span>
-            </div>
-            <p className="mt-4 text-sm md:text-base leading-relaxed" style={{ color: COLORS.blue }}>
-              Clear research, quarterly tracking, and timely updates to help you stay on top of your positions.
-            </p>
-            <div className="mt-auto pt-4 opacity-70 text-sm" style={{ color: COLORS.blue }}>Real names and reviews available post-subscription.</div>
-          </div>
-        </div>
-      </section>
-
-      {/* Section 4: Pricing */}
-      <section id="pricing" className="mx-auto max-w-md px-4 py-12 md:py-16">
-        <div className="rounded-3xl overflow-hidden shadow-2xl">
-          <div className="text-center py-2 font-bold tracking-wide" style={{ background: COLORS.red, color: COLORS.white }}>
-            Subscribe Now!
-          </div>
-          <div className="p-6 md:p-8" style={{ background: COLORS.white }}>
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-extrabold" style={{ color: COLORS.blue }}>Bastion CORE</div>
-              <div className="mt-2 text-lg md:text-xl font-semibold" style={{ color: COLORS.blue }}>Rs. 18,750 / Annually</div>
-              <button className="mt-5 w-full rounded-xl py-3 font-semibold hover:opacity-90" style={{ background: COLORS.red, color: COLORS.white }}>
-                Start Taking Informed Decisions
-              </button>
-              <div className="mt-2 text-xs opacity-70" style={{ color: COLORS.blue }}>* Above Price is Inclusive of GST</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      
-
-     <section className="mx-auto max-w-4xl px-4 pb-4">
-      <h2 className="text-3xl font-bold text-left mb-4">FAQs</h2>
-      <div className="space-y-4">
-        {faqsNew.map((faq, index) => (
+    <div className="main pt-[80px] md:pt-[88px]">
+      <div className="min-h-screen w-full" style={{ background: COLORS.gray }}>
+        {/* Sub-header typing banner */}
+        <section className="mx-auto max-w-6xl px-4 pt-10 md:pt-14">
           <div
-            key={index}
-            className="rounded-2xl shadow-lg border border-gray-100 overflow-hidden"
+            className="rounded-3xl p-6 md:p-10 shadow-lg text-center"
+            style={{ background: COLORS.white }}
           >
-            <button
-              onClick={() => toggleFAQ(index)}
-              className="w-full flex justify-between items-center px-6 py-4 text-left font-semibold text-lg"
-            >
-              {faq.q}
-              <ChevronDown
-                className={`w-6 h-6 transform transition-transform duration-500 ${
-                  openIndex === index ? "rotate-180" : "rotate-0"
-                }`}
-              />
-            </button>
+            <TypingLoop phrases={["Comprehensive Objective Research Edge"]} />
             <div
-                className={`transition-[max-height] duration-500 ease-in-out overflow-hidden px-6 ${
-                  openIndex === index ? "max-h-96 pb-4" : "max-h-0"
-                }`}
+              className="mt-3 text-sm md:text-base opacity-70"
+              style={{ color: COLORS.blue }}
+            >
+              Built for DIY investors who want serious, clean, decision-useful
+              research.
+            </div>
+          </div>
+        </section>
+
+        {/* Section 1: Importance of Research */}
+        <section
+          id="research"
+          className="mx-auto max-w-6xl px-4 py-12 md:py-16"
+        >
+          <div className="grid md:grid-cols-2 gap-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="rounded-3xl p-6 md:p-8 shadow-lg flex flex-col justify-center text-left"
+              style={{ background: COLORS.white }}
+            >
+              <h2
+                className="text-2xl md:text-3xl font-bold w-max mb-4 relative"
+                style={{ color: COLORS.blue }}
               >
-                <div className="overflow-auto no-scrollbar max-h-96">
-                  <p className="text-gray-700 leading-relaxed">{faq.a}</p>
+                Why Research Matters
+                <div
+                  className="absolute bottom-[-28%] left-0 w-full h-1"
+                  style={{ background: COLORS.red }}
+                ></div>
+              </h2>
+              <p
+                className="mt-4 leading-relaxed"
+                style={{ color: COLORS.blue }}
+              >
+                Research constitutes the <strong>FUNDAMENTAL</strong> component
+                of an investor's investing endeavours. Our unwavering commitment
+                with Bastion CORE lies in providing best research while ensuring
+                its accessibility to investors, irrespective of the size of
+                their capital.
+              </p>
+              <p
+                className="mt-3 leading-relaxed"
+                style={{ color: COLORS.blue }}
+              >
+                With thorough business comprehension and insights aiding your
+                investment decisions, we guide you through your investment
+                journey with detailed research reports and timely updates
+                through our proprietary <strong>SMART Framework</strong>.
+              </p>
+              <div
+                className="mt-6 border-l-4 pl-4 italic text-sm md:text-base"
+                style={{ borderColor: COLORS.red, color: COLORS.blue }}
+              >
+                “Know What you Own and know why you own it” –{" "}
+                <span className="font-semibold">Peter Lynch</span>
+              </div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="rounded-3xl p-6 md:p-8 shadow-lg flex flex-col items-center justify-center"
+              style={{ background: COLORS.blue }}
+            >
+              {/* Image with modern 3D hover effect */}
+              <div className="relative mb-4">
+                <div className="overflow-visible rounded-3xl shadow-2xl transition-transform duration-500 transform">
+                  <img
+                    src="src/files/peter-lynch-portrait.webp"
+                    alt="Peter Lynch"
+                    className="w-64 md:w-80 h-auto rounded-3xl object-contain"
+                  />
+                </div>
+                <div className="mt-3 text-center text-white text-lg md:text-xl font-semibold">
+                  Peter Lynch
                 </div>
               </div>
 
+              {/* Text content */}
+              <div className="text-center text-white">
+                <div className="text-2xl md:text-3xl font-semibold">
+                  Clean. Objective. Actionable.
+                </div>
+                <div className="opacity-80 mt-2 text-lg md:text-base">
+                  No fluff. Just high-quality research you can actually use.
+                </div>
+              </div>
+            </motion.div>
           </div>
-        ))}
-      </div>
-    </section>
+        </section>
 
-      <footer className="py-8 text-center text-xs" style={{ color: COLORS.blue }}>
-        © {new Date().getFullYear()} Bastion Research. All rights reserved.
-      </footer>
+        {/* Section 2: SMART Framework */}
+        <section id="smart" className="mx-auto max-w-6xl px-4 py-12 md:py-16">
+          <div className="flex items-end justify-between mb-8">
+            <h2
+              className="text-2xl md:text-3xl font-bold"
+              style={{ color: COLORS.blue }}
+            >
+              SMART Framework
+            </h2>
+            <div
+              className="text-sm md:text-base font-medium"
+              style={{ color: COLORS.blue }}
+            >
+              Five simple filters. Serious edge.
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+            <FlipCard
+              front={{ letter: "S", caption: "Strong Business" }}
+              back={{
+                text: "Strong Business – Avoid Businesses Exhibiting Signs of Weakness",
+              }}
+              color={COLORS.blue}
+            />
+            <FlipCard
+              front={{ letter: "M", caption: "Strong Management" }}
+              back={{
+                text: "Strong Management – Not Partnering with Managements Unwilling to Share Upside",
+              }}
+              color={COLORS.red}
+            />
+            <FlipCard
+              front={{ letter: "A", caption: "Clean Accounts" }}
+              back={{
+                text: "Clean Accounts – Making Sure the Numbers Are Reliable to Form Decisions",
+              }}
+              color={COLORS.beige}
+            />
+            <FlipCard
+              front={{ letter: "R", caption: "Reasonable Valuations" }}
+              back={{
+                text: "Reasonable Valuations – Not Buying Anything at Any Price",
+              }}
+              color={COLORS.blue}
+            />
+            <FlipCard
+              front={{ letter: "T", caption: "Business Tailwinds" }}
+              back={{
+                text: "Business Tailwinds – Steer Clear of Businesses Belonging to a Dying or Stagnant Industry",
+              }}
+              color={COLORS.red}
+            />
+          </div>
+        </section>
+
+        {/* Section 3: Testimonials */}
+        <section
+          id="testimonials"
+          className="mx-auto max-w-6xl px-4 py-12 md:py-16"
+        >
+          <h2
+            className="text-2xl md:text-3xl font-bold text-left"
+            style={{ color: COLORS.blue }}
+          >
+            Look What Our Subscribers Are Saying About Us
+          </h2>
+          <Review />
+          <Testimonial />
+        </section>
+
+        {/* Section 4: Pricing */}
+        <section id="pricing" className="mx-auto max-w-md px-4 py-12 md:py-16">
+          <div className="rounded-3xl overflow-hidden shadow-2xl">
+            <div
+              className="text-center py-2 font-bold tracking-wide"
+              style={{ background: COLORS.red, color: COLORS.white }}
+            >
+              Subscribe Now!
+            </div>
+            <div className="p-6 md:p-8" style={{ background: COLORS.white }}>
+              <div className="text-center">
+                <div
+                  className="text-2xl md:text-3xl font-extrabold"
+                  style={{ color: COLORS.blue }}
+                >
+                  Bastion CORE
+                </div>
+                <div
+                  className="mt-2 text-lg md:text-xl font-semibold"
+                  style={{ color: COLORS.blue }}
+                >
+                  Rs. 18,750 / Annually
+                </div>
+                <button
+                  className="mt-5 w-full rounded-xl py-3 font-semibold hover:opacity-90"
+                  style={{ background: COLORS.red, color: COLORS.white }}
+                >
+                  Start Taking Informed Decisions
+                </button>
+                <div
+                  className="mt-2 text-xs opacity-70"
+                  style={{ color: COLORS.blue }}
+                >
+                  * Above Price is Inclusive of GST
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-4xl px-4 pb-4">
+          <h2 className="text-3xl font-bold text-left mb-4">FAQs</h2>
+          <div className="space-y-4">
+            {faqsNew.map((faq, index) => (
+              <div
+                key={index}
+                className="rounded-2xl bg-white shadow-lg border border-gray-100 overflow-hidden"
+              >
+                <button
+                  onClick={() => toggleFAQ(index)}
+                  className="w-full flex focus:outline-none focus:ring-0 justify-between items-center px-6 py-4 text-left font-semibold text-lg"
+                >
+                  {faq.q}
+                  <ChevronDown
+                    className={`w-6 h-6 transform transition-transform duration-500 ${
+                      openIndex === index ? "rotate-180" : "rotate-0"
+                    }`}
+                  />
+                </button>
+                <div
+                  className={`transition-[max-height] duration-300 ease-in-out overflow-hidden px-6 ${
+                    openIndex === index ? "max-h-96" : "max-h-0"
+                  }`}
+                >
+                  <div className="overflow-auto no-scrollbar max-h-96 pb-4">
+                    <p className="text-gray-700 leading-relaxed">{faq.a}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <footer
+          className="py-8 text-center text-xs"
+          style={{ color: COLORS.blue }}
+        >
+          © {new Date().getFullYear()} Bastion Research. All rights reserved.
+        </footer>
+      </div>
     </div>
   );
 }

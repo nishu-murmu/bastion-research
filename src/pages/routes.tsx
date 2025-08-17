@@ -6,6 +6,8 @@ const Home = lazy(() => import("../pages/Home"));
 // const Spotlight = lazy(() => import("../pages/Spotlight"));
 // const Quant = lazy(() => import("../pages/Quant"));
 const Contact = lazy(() => import("../pages/Contact"));
+const Review = lazy(() => import("../components/generic/Review.tsx"));
+const Testimonial = lazy(() => import("../components/generic/Testimonial.tsx"));
 const CareerPage = lazy(() => import("../pages/CareerPage.tsx"));
 const RefundPolicy = lazy(() => import("../pages/RefundPolicy"));
 const PrivacyPolicy = lazy(() => import("../pages/PrivacyPolicy"));
