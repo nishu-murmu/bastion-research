@@ -36,55 +36,109 @@ const getGoogleClient = () => {
 
 // --- Standard Authentication ---
 
-export const signUp = async (req: Request, res: Response) => {
-  // ... (keeping existing signUp function as it is correct)
-  const {
-    username, first_name, last_name, phone, email, address_1, address_2,
-    pan_card_number, state, city, pin_code, date_of_birth, gst_number, company, password,
-  } = req.body;
+export const register = async (req: Request, res: Response) => {
+    const { email, phone, password } = req.body;
 
-  if (!username || !email || !password || !first_name || !last_name || !phone || !address_1 || !pan_card_number || !state || !city || !pin_code || !date_of_birth) {
-    return res.status(400).json({ message: 'Please provide all required fields.' });
-  }
-
-  try {
-    const { data: existingUser, error: existingUserError } = await supabase
-      .from('users')
-      .select('email, username')
-      .or(`email.eq.${email},username.eq.${username}`);
-
-    if (existingUserError) throw existingUserError;
-
-    if (existingUser && existingUser.length > 0) {
-      return res.status(409).json({ message: 'User with this email or username already exists.' });
+    if (!email || !phone || !password) {
+        return res.status(400).json({ message: 'Email, phone, and password are required.' });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    try {
+        const { data: existingUser, error: existingUserError } = await supabase
+            .from('users')
+            .select('email, phone')
+            .or(`email.eq.${email},phone.eq.${phone}`);
 
-    const { data: newUser, error: insertError } = await supabase
-      .from('users')
-      .insert({
-        username, first_name, last_name, phone, email, address_1, address_2,
-        pan_card_number, state, city, pin_code, date_of_birth, gst_number, company, password: hashedPassword
-      })
-      .select('id, username, email')
-      .single();
+        if (existingUserError) throw existingUserError;
 
-    if (insertError) throw insertError;
-    if (!newUser) throw new Error('User not created');
+        if (existingUser && existingUser.length > 0) {
+            return res.status(409).json({ message: 'User with this email or phone number already exists.' });
+        }
 
-    const token = generateToken(newUser.id, newUser.email);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
-    res.status(201).json({
-      message: 'User created successfully',
-      token,
-      user: { id: newUser.id, username: newUser.username, email: newUser.email },
-    });
-  } catch (error) {
-    console.error('Sign up error:', error);
-    res.status(500).json({ message: 'Server error during sign up.' });
-  }
+        const username = email.split('@')[0];
+
+        const { data: newUser, error: insertError } = await supabase
+            .from('users')
+            .insert({
+                email,
+                phone,
+                password: hashedPassword,
+                username: username,
+            })
+            .select('id, email, phone')
+            .single();
+
+        if (insertError) throw insertError;
+        if (!newUser) throw new Error('User not created');
+
+        res.status(201).json({
+            message: 'User registered successfully. Please verify your OTP.',
+            user: { id: newUser.id, email: newUser.email },
+        });
+
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({ message: 'Server error during registration.' });
+    }
+};
+
+
+export const completeProfile = async (req: Request, res: Response) => {
+    const {
+        email,
+        first_name, last_name,
+        pan_card_number, date_of_birth,
+        aadhar_card_number, bank_account_number, ifsc_code
+    } = req.body;
+
+    if (!email || !first_name || !last_name || !pan_card_number || !date_of_birth) {
+        return res.status(400).json({ message: 'Please provide all required fields.' });
+    }
+
+    try {
+        const { data: user, error: userError } = await supabase
+            .from('users')
+            .select('id')
+            .eq('email', email)
+            .single();
+
+        if (userError || !user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        const { data: updatedUser, error: updateError } = await supabase
+            .from('users')
+            .update({
+                first_name,
+                last_name,
+                pan_card_number,
+                date_of_birth,
+                aadhar_card_number,
+                bank_account_number,
+                ifsc_code,
+                status: 'active'
+            })
+            .eq('id', user.id)
+            .select('id, username, email')
+            .single();
+
+        if (updateError) throw updateError;
+        if (!updatedUser) throw new Error('User profile not completed');
+
+        const token = generateToken(updatedUser.id, updatedUser.email);
+
+        res.status(200).json({
+            message: 'User profile completed successfully',
+            token,
+            user: { id: updatedUser.id, username: updatedUser.email, email: updatedUser.email },
+        });
+    } catch (error) {
+        console.error('Complete profile error:', error);
+        res.status(500).json({ message: 'Server error during profile completion.' });
+    }
 };
 
 export const signIn = async (req: Request, res: Response) => {
