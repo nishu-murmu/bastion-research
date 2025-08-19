@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
-    signUp,
+    register,
+    completeProfile,
     signIn,
     forgotPassword,
     googleOAuthStart,
@@ -13,7 +14,8 @@ import {
 const router = Router();
 
 // Standard Authentication
-router.post('/signup', signUp);
+router.post('/register', register);
+router.post('/complete-profile', completeProfile);
 router.post('/signin', signIn);
 router.post('/forgot-password', forgotPassword);
 

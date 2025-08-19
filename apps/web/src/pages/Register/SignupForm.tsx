@@ -1,9 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Check, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import axiosInstance from '../../api/axios';
+
+declare const Cashfree: any;
 
 interface SignUpFormProps {
   isOpen: boolean;
   onClose: () => void;
+}
+
+interface Plan {
+    code: string;
+    name: string;
+    amount: number;
+    currency: string;
 }
 
 const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
@@ -14,7 +24,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
     phone: '',
     password: '',
     confirmPassword: '',
-    otp: ['', '', '', ''],
+    otp: ['', '', '', '', '', ''],
     firstName: '',
     lastName: '',
     dateOfBirth: '',
@@ -22,9 +32,38 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
     aadharCard: '',
     bankAccount: '',
     ifscCode: '',
-    agreeToTerms: false
+    agreeToTerms: false,
+    selectedPlan: '',
   });
   const [otpTimer, setOtpTimer] = useState(51);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [plans, setPlans] = useState<Plan[]>([]);
+
+  useEffect(() => {
+    try {
+      const savedStep = localStorage.getItem('signupForm_currentStep');
+      const savedFormData = localStorage.getItem('signupForm_formData');
+
+      if (savedStep) {
+        setCurrentStep(JSON.parse(savedStep));
+      }
+      if (savedFormData) {
+        setFormData(JSON.parse(savedFormData));
+      }
+    } catch (error) {
+        console.error("Failed to load state from localStorage", error);
+    }
+  }, []); // Empty dependency array means this runs once on mount
+
+  useEffect(() => {
+    try {
+        localStorage.setItem('signupForm_currentStep', JSON.stringify(currentStep));
+        localStorage.setItem('signupForm_formData', JSON.stringify(formData));
+    } catch (error) {
+        console.error("Failed to save state to localStorage", error);
+    }
+  }, [currentStep, formData]);
 
   const steps = [
     { id: 1, name: 'Register', icon: '👤' },
@@ -36,18 +75,18 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
     { id: 7, name: 'Payment', icon: '💳' }
   ];
 
-  const updateFormData = (field, value) => {
+  const updateFormData = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleOtpChange = (index, value) => {
+  const handleOtpChange = (index: number, value: string) => {
     if (value.length <= 1) {
       const newOtp = [...formData.otp];
       newOtp[index] = value;
       updateFormData('otp', newOtp);
 
       // Auto focus next input
-      if (value && index < 3) {
+      if (value && index < 5) {
         const nextInput = document.querySelector(`input[name="otp-${index + 1}"]`);
         //@ts-ignore
         if (nextInput) nextInput?.focus();
@@ -56,16 +95,166 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
   };
 
   const nextStep = () => {
+    setError(null);
     if (currentStep < 8) {
       setCurrentStep(currentStep + 1);
     }
   };
 
   const prevStep = () => {
+    setError(null);
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
   };
+
+  const handleRegister = async () => {
+    setError(null);
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await axiosInstance.post('/api/auth/register', {
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+      });
+
+      await axiosInstance.post('/api/otp/send', {
+        email: formData.email,
+      });
+
+      nextStep();
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "An unexpected error occurred.";
+      setError(errorMessage);
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    setError(null);
+    setIsLoading(true);
+    const otp = formData.otp.join('');
+    try {
+      await axiosInstance.post('/api/otp/verify', {
+        email: formData.email,
+        otp: otp,
+      });
+      nextStep();
+    } catch (err: any) {
+        const errorMessage = err.response?.data?.message || "An unexpected error occurred.";
+        setError(errorMessage);
+        console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      await axiosInstance.post('/api/otp/send', {
+        email: formData.email,
+      });
+      setOtpTimer(51); // Reset timer
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "An unexpected error occurred.";
+      setError(errorMessage);
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePayment = async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      const orderResponse = await axiosInstance.post('/api/cashfree/orders', {
+        plan: formData.selectedPlan,
+        customer_id: formData.email, // Using email as customer_id
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+      });
+
+      const { payment_session_id } = orderResponse.data.order;
+      const cashfree = new Cashfree(payment_session_id);
+
+      cashfree.checkout({
+        paymentSessionId: payment_session_id,
+        returnUrl: `http://localhost:5173/`, // Not used in this flow
+      }).then(async (result: any) => {
+          if (result.error) {
+              setError(result.error.message);
+              setIsLoading(false);
+              return;
+          }
+          if (result.paymentDetails.paymentStatus === "SUCCESS") {
+              try {
+                await axiosInstance.post('/api/auth/complete-profile', {
+                    email: formData.email,
+                    first_name: formData.firstName,
+                    last_name: formData.lastName,
+                    pan_card_number: formData.panCard,
+                    date_of_birth: formData.dateOfBirth,
+                    aadhar_card_number: formData.aadharCard,
+                    bank_account_number: formData.bankAccount,
+                    ifsc_code: formData.ifscCode,
+                });
+                alert('Payment successful! Welcome to TripleEdge!');
+                localStorage.removeItem('signupForm_currentStep');
+                localStorage.removeItem('signupForm_formData');
+                onClose();
+
+              } catch (profileError: any) {
+                setError(profileError.response?.data?.message || "Failed to complete profile.");
+              }
+          }
+      });
+
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "An unexpected error occurred.";
+      setError(errorMessage);
+    } finally {
+      // Don't set loading to false here, as cashfree checkout is async
+    }
+  };
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (currentStep === 2 && otpTimer > 0) {
+      timer = setInterval(() => {
+        setOtpTimer(prev => prev - 1);
+      }, 1000);
+    } else if (otpTimer === 0) {
+        // Handle timer expiration
+    }
+    return () => clearInterval(timer);
+  }, [currentStep, otpTimer]);
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      if (currentStep === 5) {
+        setIsLoading(true);
+        try {
+          const response = await axiosInstance.get('/api/cashfree/plans');
+          setPlans(response.data.plans);
+        } catch (err: any) {
+          setError(err.response?.data?.message || "Failed to fetch plans.");
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    fetchPlans();
+  }, [currentStep]);
+
 
   if (!isOpen) return null;
 
@@ -136,12 +325,13 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
           />
         </div>
       </div>
-
+      {error && <p className="text-red-500 text-sm text-center">{error}</p>}
       <button
-        onClick={nextStep}
-        className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
+        onClick={handleRegister}
+        disabled={isLoading}
+        className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors disabled:bg-gray-400"
       >
-        Get OTP →
+        {isLoading ? 'Processing...' : 'Get OTP →'}
       </button>
     </div>
   );
@@ -152,7 +342,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
       <div className="text-center">
         <h2 className="text-xl font-semibold text-gray-900 mb-2">Enter OTP to verify</h2>
         <p className="text-gray-600 text-sm">
-          We have sent you a message with a 4-digit verification code on<br />
+          We have sent you a message with a 6-digit verification code on<br />
           {formData.email} & {formData.phone}
         </p>
       </div>
@@ -167,19 +357,19 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
               value={digit}
               onChange={(e) => handleOtpChange(index, e.target.value)}
               className="w-12 h-12 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-lg font-semibold"
-              maxLength={1}            
+              maxLength={1}
               />
           ))}
         </div>
 
         <div className="text-center">
           <p className="text-sm text-gray-600">Expire in 0:{otpTimer.toString().padStart(2, '0')}</p>
-          <button className="text-red-600 text-sm hover:underline mt-1">
+          <button onClick={handleResendOtp} disabled={isLoading || otpTimer > 0} className="text-red-600 text-sm hover:underline mt-1 disabled:text-gray-400">
             Didn't receive the OTP? Resend OTP
           </button>
         </div>
       </div>
-
+      {error && <p className="text-red-500 text-sm text-center">{error}</p>}
       <div className="flex space-x-3">
         <button
           onClick={prevStep}
@@ -188,10 +378,11 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
           <ArrowLeft size={20} className="mr-1" /> Back
         </button>
         <button
-          onClick={nextStep}
-          className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center"
+          onClick={handleVerifyOtp}
+          disabled={isLoading}
+          className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center disabled:bg-gray-400"
         >
-          <Check size={20} className="mr-1" /> Verify OTP
+          {isLoading ? 'Verifying...' : <><Check size={20} className="mr-1" /> Verify OTP</>}
         </button>
       </div>
     </div>
@@ -339,28 +530,24 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
         <p className="text-gray-600 text-sm">Select the investment plan that suits you best</p>
       </div>
 
-      <div className="space-y-3">
-        {[
-          { name: 'Basic Plan', price: '₹999/month', features: ['Basic portfolio', 'Monthly reports', 'Email support'] },
-          { name: 'Premium Plan', price: '₹1999/month', features: ['Advanced portfolio', 'Weekly reports', 'Priority support', 'Tax planning'] },
-          { name: 'Elite Plan', price: '₹4999/month', features: ['Custom portfolio', 'Daily reports', '24/7 support', 'Personal advisor'] }
-        ].map((plan, index) => (
-          <div key={index} className="border rounded-lg p-4 hover:border-red-500 cursor-pointer">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-semibold">{plan.name}</h3>
-              <span className="text-red-600 font-bold">{plan.price}</span>
+      {isLoading ? <p className="text-center">Loading plans...</p> : (
+        <div className="space-y-3">
+          {plans.map((plan, index) => (
+            <div
+              key={index}
+              className={`border rounded-lg p-4 cursor-pointer hover:border-red-500 ${formData.selectedPlan === plan.code ? 'border-red-500 border-2' : ''}`}
+              onClick={() => updateFormData('selectedPlan', plan.code)}
+            >
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-semibold">{plan.name}</h3>
+                <span className="text-red-600 font-bold">₹{plan.amount}</span>
+              </div>
             </div>
-            <ul className="text-sm text-gray-600 space-y-1">
-              {plan.features.map((feature, i) => (
-                <li key={i} className="flex items-center">
-                  <Check size={16} className="text-green-500 mr-2" />
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
       <div className="flex space-x-3">
         <button
@@ -371,7 +558,8 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
         </button>
         <button
           onClick={nextStep}
-          className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
+          disabled={!formData.selectedPlan || isLoading}
+          className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors disabled:bg-gray-400"
         >
           Continue
         </button>
@@ -434,58 +622,54 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
   );
 
   // Step 8: Payment
-  const PaymentStep = () => (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Complete Payment</h2>
-        <p className="text-gray-600 text-sm">Secure payment to activate your account</p>
-      </div>
+  const PaymentStep = () => {
+    const selectedPlanDetails = plans.find(p => p.code === formData.selectedPlan);
 
-      <div className="border rounded-lg p-4 bg-gray-50">
-        <div className="flex justify-between items-center mb-2">
-          <span>Premium Plan</span>
-          <span className="font-semibold">₹1999/month</span>
+    return (
+        <div className="space-y-6">
+        <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Complete Payment</h2>
+            <p className="text-gray-600 text-sm">Secure payment to activate your account</p>
         </div>
-        <div className="flex justify-between items-center text-sm text-gray-600 mb-2">
-          <span>Setup fee</span>
-          <span>₹0</span>
-        </div>
-        <hr className="my-2" />
-        <div className="flex justify-between items-center font-semibold">
-          <span>Total</span>
-          <span>₹1999</span>
-        </div>
-      </div>
 
-      <div className="space-y-3">
-        <h3 className="font-medium">Payment Method</h3>
-        {['Credit/Debit Card', 'Net Banking', 'UPI', 'Wallet'].map((method) => (
-          <label key={method} className="flex items-center border rounded-lg p-3 cursor-pointer hover:border-red-500">
-            <input type="radio" name="payment" className="mr-3" />
-            <span>{method}</span>
-          </label>
-        ))}
-      </div>
+        {selectedPlanDetails && (
+            <div className="border rounded-lg p-4 bg-gray-50">
+            <div className="flex justify-between items-center mb-2">
+                <span>{selectedPlanDetails.name}</span>
+                <span className="font-semibold">₹{selectedPlanDetails.amount}</span>
+            </div>
+            <div className="flex justify-between items-center text-sm text-gray-600 mb-2">
+                <span>Setup fee</span>
+                <span>₹0</span>
+            </div>
+            <hr className="my-2" />
+            <div className="flex justify-between items-center font-semibold">
+                <span>Total</span>
+                <span>₹{selectedPlanDetails.amount}</span>
+            </div>
+            </div>
+        )}
 
-      <div className="flex space-x-3">
-        <button
-          onClick={prevStep}
-          className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800"
-        >
-          <ArrowLeft size={20} className="mr-1" /> Back
-        </button>
-        <button
-          onClick={() => {
-            alert('Payment completed! Welcome to TripleEdge!');
-            onClose();
-          }}
-          className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
-        >
-          Pay ₹1999
-        </button>
-      </div>
-    </div>
-  );
+        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+
+        <div className="flex space-x-3">
+            <button
+            onClick={prevStep}
+            className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800"
+            >
+            <ArrowLeft size={20} className="mr-1" /> Back
+            </button>
+            <button
+            onClick={handlePayment}
+            disabled={isLoading}
+            className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors disabled:bg-gray-400"
+            >
+            {isLoading ? 'Processing...' : `Pay ₹${selectedPlanDetails?.amount || ''}`}
+            </button>
+        </div>
+        </div>
+    );
+};
 
   const renderStep = () => {
     switch (currentStep) {
