@@ -84,7 +84,7 @@ export default function Review() {
       >
         {reviews.map((review, idx) => (
           <SwiperSlide key={idx} className="flex h-auto">
-            <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col justify-between w-full h-full min-h-[240px]">
+            <div className="bg-white/20 rounded-2xl shadow-lg p-6 flex flex-col justify-between w-full h-full min-h-[240px]">
               {/* Stars */}
               <div className="flex justify-center mb-4">
                 {[...Array(5)].map((_, i) => (

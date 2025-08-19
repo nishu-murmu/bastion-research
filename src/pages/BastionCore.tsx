@@ -3,9 +3,9 @@ import { motion } from "framer-motion";
 import { Star, Sparkles, ChevronDown, CheckCircle2 } from "lucide-react";
 import Review from "../components/generic/Review.tsx";
 import Testimonial from "../components/generic/Testimonial.tsx";
-import "../styles/main.css";
 import Lottie from "lottie-react";
 import priceTag from "../files/price-core.json";
+import BackgroundShapes from "../components/generic/framer-motion.tsx";
 
 // Brand Colors
 const COLORS = {
@@ -176,6 +176,8 @@ export default function BastionCoreProductPage() {
 
   return (
     <div className="main pt-[80px] md:pt-[88px]">
+      <BackgroundShapes />
+
       <div className="min-h-screen w-full" style={{ background: COLORS.gray }}>
         {/* Sub-header typing banner */}
         <section className="mx-auto max-w-6xl px-4 pt-10 md:pt-14">

@@ -1,216 +1,347 @@
 import React, { useState } from "react";
-import { MapPin, Mail, Phone, Twitter, Linkedin, Youtube } from "lucide-react";
-import Header from "@/components/generic/Header";
-import Footer from "@/components/generic/Footer";
+import BackgroundShapes from "../components/generic/framer-motion.tsx";
+import {
+  MapPin,
+  Mail,
+  Phone,
+  Send,
+  Twitter,
+  Linkedin,
+  Youtube,
+} from "lucide-react";
+import { motion } from "framer-motion";
 
-const ContactUs = () => {
-  const [formData, setFormData] = useState({
+const colors = {
+  red: "#C00000",
+  blue: "#1C2852",
+  beige: "#C4B696",
+  light: "#E6E6E6",
+};
+
+export default function ContactPage() {
+  const [form, setForm] = useState({
     name: "",
     email: "",
     phone: "",
-    userId: "",
-    subject: "Regarding Research Ally",
+    category: "Research Ally",
     message: "",
+    notRobot: false,
   });
 
-  const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const onChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = (e) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    // Handle form submission logic here
+    if (!form.notRobot) {
+      alert("Please confirm you are not a robot.");
+      return;
+    }
+    console.log("Contact form submitted:", form);
+    alert("Thanks. Your message has been sent.");
+    setForm({
+      name: "",
+      email: "",
+      phone: "",
+      category: "Research Ally",
+      message: "",
+      notRobot: false,
+    });
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Get In Touch Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-800 mb-8">
-              Get In Touch
-            </h1>
+    <div className="main pt-[80px] md:pt-[88px]">
+      <BackgroundShapes />
 
-            {/* Social Icons */}
-            <div className="flex justify-center space-x-4 mb-16">
-              <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 cursor-pointer">
-                <Twitter className="w-5 h-5 text-white" />
-              </div>
-              <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 cursor-pointer">
-                <Linkedin className="w-5 h-5 text-white" />
-              </div>
-            </div>
-
-            {/* Contact Information Cards */}
-            <div className="flex flex-wrap justify-center gap-8 max-w-5xl mx-auto">
-              <div className="bg-gray-50 p-8 rounded-lg text-center min-w-72 flex-1">
-                <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MapPin className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                  Our Location
-                </h3>
-                <p className="text-gray-600">
-                  Megh Sarman Complex, Citylight
-                  <br />
-                  Road, Surat, India - 395007.
-                </p>
-              </div>
-
-              <div className="bg-gray-50 p-8 rounded-lg text-center min-w-72 flex-1">
-                <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Mail className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                  Email Us
-                </h3>
-                <p className="text-gray-600">connect@bastionresearch.in</p>
-              </div>
-
-              <div className="bg-gray-50 p-8 rounded-lg text-center min-w-72 flex-1">
-                <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Phone className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                  Phone
-                </h3>
-                <p className="text-gray-600">+91 8780507966</p>
-              </div>
-            </div>
-          </div>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-2">
+        <motion.h1
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-3xl md:text-4xl font-semibold tracking-tight"
+          style={{ color: colors.blue }}
+        >
+          Contact Bastion Research
+        </motion.h1>
+        <p className="mt-2 text-sm md:text-base text-gray-600">
+          We typically respond within one business day.
+        </p>
+      </section>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <InfoCard
+            icon={<MapPin className="w-6 h-6" />}
+            title="Location"
+            lines={["Surat, Gujarat, India"]}
+          />
+          <InfoCard
+            icon={<Mail className="w-6 h-6" />}
+            title="Email us"
+            lines={["connect@bastionresearch.in"]}
+          />
+          <InfoCard
+            icon={<Phone className="w-6 h-6" />}
+            title="Phone number"
+            lines={[""]}
+          />
         </div>
       </section>
-
-      {/* Send Message Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            .
-            <h2 className="text-3xl font-bold text-gray-800">
-              Send Us A Message
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pb-14">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="bg-white border rounded-2xl p-6 shadow-lg"
+            style={{ borderColor: colors.light }}
+          >
+            <h2
+              className="text-xl font-semibold"
+              style={{ color: colors.blue }}
+            >
+              Send us a message
             </h2>
-            <p className="text-gray-600 mt-2">
-              We would love to hear from you!
+            <p className="text-sm text-gray-600 mt-1">
+              Tell us a bit about yourself and what you are looking for.
             </p>
-          </div>
 
-          <form onSubmit={handleSubmit} className="grid lg:grid-cols-2 gap-12">
-            {/* Contact Form */}
-            <div className="bg-white p-8 rounded-lg shadow-sm">
-              <div className="space-y-6">
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+            <form onSubmit={onSubmit} className="mt-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field
+                  label="Name"
+                  htmlFor="name"
                   required
+                  input={
+                    <input
+                      id="name"
+                      name="name"
+                      value={form.name}
+                      onChange={onChange}
+                      className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2"
+                      style={{ borderColor: colors.light }}
+                      placeholder="Your full name"
+                      required
+                    />
+                  }
                 />
 
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                <Field
+                  label="Email"
+                  htmlFor="email"
                   required
+                  input={
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={form.email}
+                      onChange={onChange}
+                      className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2"
+                      style={{ borderColor: colors.light }}
+                      placeholder="name@example.com"
+                      required
+                    />
+                  }
                 />
+              </div>
 
-                <input
-                  type="tel"
-                  name="phone"
-                  placeholder="Phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                />
-
-                <input
-                  type="text"
-                  name="userId"
-                  placeholder="User ID"
-                  value={formData.userId}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                />
-
-                <select
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                >
-                  <option value="Regarding Research Ally">
-                    Regarding Research Ally
-                  </option>
-                  <option value="General Inquiry">General Inquiry</option>
-                  <option value="Technical Support">Technical Support</option>
-                  <option value="Partnership">Partnership</option>
-                </select>
-
-                <textarea
-                  name="message"
-                  placeholder="Message"
-                  rows={6}
-                  value={formData.message}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
-                  required
-                ></textarea>
-
-                <div className="flex items-center space-x-3">
+              <Field
+                label="Phone"
+                required
+                htmlFor="phone"
+                input={
                   <input
-                    type="checkbox"
-                    id="robot-check"
-                    className="w-4 h-4 text-red-600"
-                    required
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    value={form.phone}
+                    onChange={onChange}
+                    className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2"
+                    style={{ borderColor: colors.light }}
+                    placeholder="e.g., +91 98765 43210"
                   />
-                  <label htmlFor="robot-check" className="text-gray-600">
-                    I'm not a robot
-                  </label>
-                </div>
+                }
+              />
 
-                <button
-                  type="submit"
-                  className="w-full bg-blue-900 text-white py-3 px-6 rounded-md hover:bg-blue-800 transition-colors font-medium"
-                >
-                  Send
-                </button>
+              <Field
+                label="Category"
+                htmlFor="category"
+                required
+                input={
+                  <select
+                    id="category"
+                    name="category"
+                    value={form.category}
+                    onChange={onChange}
+                    className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 bg-white"
+                    style={{ borderColor: colors.light }}
+                  >
+                    <option>Research Ally</option>
+                    <option>Bastion CORE</option>
+                    <option>Others</option>
+                  </select>
+                }
+              />
+
+              <Field
+                label="Message"
+                htmlFor="message"
+                required
+                input={
+                  <textarea
+                    id="message"
+                    name="message"
+                    value={form.message}
+                    onChange={onChange}
+                    className="w-full rounded-xl border px-3 py-2 h-36 resize-y focus:outline-none focus:ring-2"
+                    style={{ borderColor: colors.light }}
+                    placeholder="How can we help?"
+                  />
+                }
+              />
+
+              <div className="flex items-center gap-3">
+                <input
+                  id="notRobot"
+                  name="notRobot"
+                  type="checkbox"
+                  checked={form.notRobot}
+                  onChange={onChange}
+                  className="h-5 w-5 rounded-md border"
+                  style={{ accentColor: colors.red, borderColor: colors.light }}
+                />
+                <label htmlFor="notRobot" className="text-sm text-gray-700">
+                  I am not a robot
+                </label>
               </div>
+
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-2.5 text-white font-medium shadow-lg hover:opacity-95"
+                style={{ background: colors.red }}
+              >
+                <Send className="w-4 h-4" />
+                SEND
+              </button>
+            </form>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
+            className="rounded-2xl overflow-hidden border shadow-lg min-h-[420px]"
+            style={{ borderColor: colors.light }}
+          >
+            <iframe
+              title="Bastion Research Location Map"
+              src="https://www.google.com/maps/dir//Megh+Serman+Apartment,+Panaas,+Athwa,+Surat,+Gujarat+395007/@21.1642067,72.7154062,12z/data=!4m8!4m7!1m0!1m5!1m1!1s0x3be053087a8dc30b:0x759eceffd1da1ff!2m2!1d72.7978079!2d21.1642267?entry=ttu"
+              width="100%"
+              height="100%"
+              style={{ border: 0, minHeight: 420 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </motion.div>
+        </div>
+      </section>
+      <section className="border-t" style={{ borderColor: colors.light }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h3
+                className="text-lg font-semibold"
+                style={{ color: colors.blue }}
+              >
+                Connect with us
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">
+                Follow Bastion Research for research notes, updates, and events.
+              </p>
             </div>
 
-            {/* Map */}
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden h-96 lg:h-auto">
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center relative">
-                <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3719.924330631891!2d72.8001516!3d21.1942928!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be04db6b8b7b7f1%3A0x5b8f6b2c8d6f8e7f!2sCitylight%20Rd%2C%20Surat%2C%20Gujarat%20395007!5e0!3m2!1sen!2sin!4v1640000000000!5m2!1sen!2sin"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen={true}
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title="Bastion Research Location"
-                ></iframe>
-              </div>
+            <div className="flex items-center gap-3">
+              <SocialButton
+                href="https://x.com/bastionresearch"
+                label="Twitter"
+                icon={<Twitter className="w-4 h-4" />}
+              />
+              <SocialButton
+                href="https://www.linkedin.com/company/bastion-research-house"
+                label="LinkedIn"
+                icon={<Linkedin className="w-4 h-4" />}
+              />
+              <SocialButton
+                href="https://www.youtube.com/@BastionResearch"
+                label="YouTube"
+                icon={<Youtube className="w-4 h-4" />}
+              />
             </div>
-          </form>
+          </div>
         </div>
       </section>
     </div>
   );
-};
+}
 
-export default ContactUs;
+function InfoCard({ icon, title, lines }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.45 }}
+      className="rounded-2xl border bg-white p-5 shadow-lg h-full"
+      style={{ borderColor: colors.light }}
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className="flex h-10 w-10 items-center justify-center rounded-xl"
+          style={{ background: colors.light }}
+        >
+          <span className="text-gray-800">{icon}</span>
+        </div>
+        <div>
+          <h4 className="font-semibold" style={{ color: colors.blue }}>
+            {title}
+          </h4>
+          <div className="mt-1 text-sm text-gray-700 space-y-0.5">
+            {lines.map((l, i) => (
+              <p key={i}>{l}</p>
+            ))}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function Field({ label, htmlFor, required, input }) {
+  return (
+    <label className="block">
+      <span className="text-sm font-medium" style={{ color: colors.blue }}>
+        {label} {required ? <span className="text-red-600">*</span> : null}
+      </span>
+      <div className="mt-1">{input}</div>
+    </label>
+  );
+}
+
+function SocialButton({ href, label, icon }) {
+  return (
+    <a
+      href={href}
+      aria-label={label}
+      target="_blank"
+      rel="noreferrer noopener"
+      className="inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium text-white shadow-lg hover:opacity-95"
+      style={{ background: colors.red }}
+    >
+      {icon}
+      <span>{label}</span>
+    </a>
+  );
+}

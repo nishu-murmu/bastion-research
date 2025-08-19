@@ -80,7 +80,7 @@ export default function Testimonial() {
       >
         {testimonials.map((t, idx) => (
           <SwiperSlide key={idx} className="flex">
-            <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col justify-between w-full min-h-[280px]">
+            <div className="bg-white/20 rounded-2xl shadow-lg p-6 flex flex-col justify-between w-full min-h-[280px]">
               {/* Title with Circle Check */}
               <div className="flex items-center justify-center gap-2 mb-4">
                 <CircleCheck
