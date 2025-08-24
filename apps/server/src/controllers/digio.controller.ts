@@ -1,6 +1,5 @@
-import { Request, Response } from 'express'
 import axios from 'axios'
-import FormData from 'form-data'
+import { Request, Response } from 'express'
 import { supabase } from '../config/supabase'
 
 const DIGIO_BASE_URL = process.env.DIGIO_BASE_URL || 'https://ext.digio.in:444'
@@ -15,107 +14,6 @@ const getAuthHeader = () => {
   const token = Buffer.from(`${DIGIO_CLIENT_ID}:${DIGIO_CLIENT_SECRET}`).toString('base64')
   return { Authorization: `Basic ${token}` }
 }
-
-// POST /api/digio/esign/upload
-// form-data: file (pdf), identifier (email or phone), optional: name
-export const initiateSignature = async (req: Request, res: Response) => {
-  try {
-
-    // Support either multer.single or upload.any()
-    const anyReq = req as any
-    const file: Express.Multer.File | undefined = anyReq.file || (Array.isArray(anyReq.files) ? anyReq.files.find((f: any) => f.fieldname === 'file' || f.fieldname === 'pdf') : undefined)
-    const { identifier, name, include_authentication_url } = req.body
-
-    if (!file) return res.status(400).json({ message: 'file (pdf) is required. Use form-data with key "file" or "pdf".' })
-    if (!identifier)
-      return res.status(400).json({ message: 'identifier (email or mobile) is required' })
-
-    const form = new FormData()
-    // Send as application/pdf; filename must end with .pdf
-    form.append('file', file.buffer, {
-      filename: file.originalname.endsWith('.pdf') ? file.originalname : `${file.originalname}.pdf`,
-      contentType: 'application/pdf',
-    })
-    form.append('identifier', identifier)
-    if (name) form.append('name', name)
-    // Important: include the authentication url to redirect user
-    form.append('include_authentication_url', String(include_authentication_url ?? 'true'))
-
-    const headers = { ...form.getHeaders(), ...getAuthHeader(), Accept: 'application/json' }
-
-    // Use exact endpoint with space encoded: "upload pdf"
-    const url = `${DIGIO_BASE_URL}${DIGIO_UPLOAD_PATH}`
-    let data
-    try {
-      // First attempt with field name 'file'
-      const resp = await axios.post(url, form, { headers })
-      data = resp.data
-    } catch (err: any) {
-      const code = err?.response?.data?.code || ''
-      const message = (err?.response?.data?.message || '').toString().toLowerCase()
-      // Retry once using field name 'pdf' if media type was rejected
-      if (message.includes('unsupported media type') || code === 'UNSUPPORTED_MEDIA_TYPE') {
-        const retryForm = new FormData()
-        retryForm.append('pdf', file.buffer, {
-          filename: file.originalname.endsWith('.pdf') ? file.originalname : `${file.originalname}.pdf`,
-          contentType: 'application/pdf',
-        })
-        retryForm.append('identifier', identifier)
-        if (name) retryForm.append('name', name)
-        retryForm.append(
-          'include_authentication_url',
-          String(include_authentication_url ?? 'true')
-        )
-        const retryHeaders = { ...retryForm.getHeaders(), ...getAuthHeader(), Accept: 'application/json' }
-        try {
-          const resp2 = await axios.post(url, retryForm, { headers: retryHeaders })
-          data = resp2.data
-        } catch (err2: any) {
-          // Final fallback: try alternate endpoint '/upload'
-          const altUrl = `${DIGIO_BASE_URL}/v2/client/document/upload`
-          const resp3 = await axios.post(altUrl, retryForm, { headers: retryHeaders })
-          data = resp3.data
-        }
-      } else {
-        // If not unsupported-media-type, try alternate endpoint '/upload' once
-        const altUrl = `${DIGIO_BASE_URL}/v2/client/document/upload`
-        const respAlt = await axios.post(altUrl, form, { headers })
-        data = respAlt.data
-      }
-    }
-
-    // Persist minimal mapping: user identifier -> digio document id using Supabase
-    try {
-      const document_id = data?.id || data?.document_id
-      const status = 'created'
-      const raw_response = data ? JSON.stringify(data) : null
-
-      // Insert into digio_documents table
-      const { error } = await supabase
-        .from('digio_documents')
-        .insert([
-          {
-            identifier,
-            document_id,
-            status,
-            raw_response,
-          },
-        ])
-
-      // Ignore error if table not present or insert fails
-    } catch (e) {
-      // best effort; ignore failures if table not present
-    }
-
-    return res.status(201).json({ message: 'Digio request created', data })
-  } catch (error: any) {
-    const status = error?.response?.status || 500
-    const payload = error?.response?.data || { message: 'Failed to initiate signature', detail: error?.message }
-    return res.status(status).json(payload)
-  }
-}
-
-// NEW JSON ENDPOINT - POST /api/digio/esign/uploadjson
 
 export const initiateSignatureJSON = async (req: Request, res: Response) => {
   console.log("=== INITIATE SIGNATURE STARTED (JSON) ===");
@@ -230,7 +128,7 @@ export const initiateSignatureJSON = async (req: Request, res: Response) => {
       ...jsonPayload,
       file_data: `${jsonPayload.file_data.substring(0, 100)}...`, // Truncate for logging
     });
-
+   
     // Make the JSON request to Digio API
     const response = await axios({
       method: "POST",
@@ -243,10 +141,11 @@ export const initiateSignatureJSON = async (req: Request, res: Response) => {
       },
       timeout: 60000,
     });
-
-    console.log("JSON request completed successfully");
-    console.log("Response status:", response.status);
-    console.log("Response data:", response.data);
+    console.log(getAuthHeader(), jsonPayload)
+    // console.log(DIGIO_BASE_URL, `${DIGIO_BASE_URL}/v2/client/document/uploadpdf`,)
+    // console.log("JSON request completed successfully");
+    // console.log("Response status:", response.status);
+    // console.log("Response data:", response.data);
 
     const data = response.data;
 
@@ -294,6 +193,63 @@ export const initiateSignatureJSON = async (req: Request, res: Response) => {
       });
     } else if (error.request) {
       // Request was made but no response
+      console.error("No response received");
+      return res.status(500).json({
+        success: false,
+        message: "No response from Digio API (JSON endpoint)",
+        error: "Network error",
+      });
+    } else {
+      // Other error
+      console.error("Setup error:", error.message);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error (JSON endpoint)",
+        error: error.message,
+      });
+    }
+  }
+};
+
+
+export const fetchIdCardDetails = async (req: Request, res: Response) => {
+  const payload = {
+    id_no: 'FMQPM9044D',
+    name: "MURMU NISHU",
+    dob: "11/09/2001",
+    unique_request_id: crypto.randomUUID(),
+  }
+  try {
+   
+    const response = await axios({
+      method: "POST",
+      url: `${DIGIO_BASE_URL}/client/v4/apis/kyc/fetch_id_data/${req.params.idCardType}`,
+      data: payload,
+      headers: {
+        ...getAuthHeader(),
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    });
+
+    const data = response.data;
+
+    return res.status(201).json({
+      success: true,
+      message: "Document uploaded for signature successfully (JSON)",
+      data: data,
+    });
+  } catch (error: any) {
+    console.error("Error type:", error.constructor.name);
+    console.error("Error message:", error.message);
+
+    if (error.response) {
+      return res.status(error.response.status).json({
+        success: false,
+        message: "Digio API error (JSON endpoint)",
+        error: error.response.data,
+      });
+    } else if (error.request) {
       console.error("No response received");
       return res.status(500).json({
         success: false,

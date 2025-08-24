@@ -34,8 +34,6 @@ const getGoogleClient = () => {
 };
 
 
-// --- Standard Authentication ---
-
 export const register = async (req: Request, res: Response) => {
     const { email, phone, password } = req.body;
 
@@ -142,7 +140,6 @@ export const completeProfile = async (req: Request, res: Response) => {
 };
 
 export const signIn = async (req: Request, res: Response) => {
-  // ... (keeping existing signIn function as it is correct)
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -198,8 +195,6 @@ export const forgotPassword = async (req: Request, res: Response) => {
     message: 'If an account with this email exists, a password reset link has been sent.',
   });
 };
-
-// --- Google OAuth ---
 
 export const googleOAuthStart = async (req: Request, res: Response) => {
   try {
