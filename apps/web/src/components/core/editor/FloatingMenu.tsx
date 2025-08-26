@@ -1,4 +1,5 @@
-import { FloatingMenu, type Editor } from '@tiptap/react'
+import { type Editor } from '@tiptap/react'
+import { FloatingElement as FloatingMenu } from '@/components/tiptap-ui-utils/floating-element'
 import {
   Trash2,
   Plus,
@@ -20,11 +21,11 @@ export const EditorFloatingMenu = ({ editor }: Props) => {
   return (
     <FloatingMenu
       editor={editor}
-      shouldShow={({ editor }) => editor.isActive('table')}
-      tippyOptions={{
-        duration: 100,
-        placement: 'top',
-      }}
+      // shouldShow={({ editor }) => editor.isActive('table')}
+      // tippyOptions={{
+      //   duration: 100,
+      //   placement: 'top',
+      // }}
       className="flex items-center gap-1 p-2 bg-white border border-gray-200 rounded-lg shadow-md"
     >
       <button onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>

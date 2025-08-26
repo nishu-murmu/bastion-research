@@ -1,4 +1,5 @@
-import { BubbleMenu, type Editor } from '@tiptap/react'
+import { type Editor } from '@tiptap/react'
+import { BubbleMenu } from '@tiptap/react/menus'
 import { Bold, Italic, Strikethrough, Link } from 'lucide-react'
 
 type Props = {
@@ -28,13 +29,6 @@ export const EditorBubbleMenu = ({ editor }: Props) => {
   return (
     <BubbleMenu
       editor={editor}
-      tippyOptions={{ duration: 100 }}
-      shouldShow={({ editor, view, state, from, to }) => {
-        // only show the bubble menu for text selections.
-        const { doc, selection } = state
-        const { empty } = selection
-        return from !== to && !empty
-      }}
       className="flex items-center gap-1 p-2 bg-white border border-gray-200 rounded-lg shadow-md"
     >
       <button
