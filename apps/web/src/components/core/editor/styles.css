@@ -1,4 +1,33 @@
 /* Basic editor styles */
+.tiptap-editor {
+  height: 100%;
+  background-color: white;
+}
+
+.tiptap.ProseMirror {
+  padding: 10px;
+  outline: none;
+  border: none;
+  box-shadow: none;
+  min-height: 70dvh;
+}
+
+.tiptap.ProseMirror:focus {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.tiptap-editor {
+  height: 100%;
+  overflow: auto;
+  scrollbar-width: thin;
+  border: 1px solid #ddd;
+    border-radius: 0.5rem;
+}
+
+
+
 .tiptap {
   :first-child {
     margin-top: 0;
@@ -51,6 +80,8 @@
   h6 {
     font-size: 1rem;
   }
+
+    
 
   /* Code and preformatted text styles */
   code {

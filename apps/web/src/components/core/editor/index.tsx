@@ -1,194 +1,295 @@
+"use client";
+import { useEffect } from "react";
+import { useEditor, EditorContent, useEditorState } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { TextStyle } from "@tiptap/extension-text-style";
+import Color from "@tiptap/extension-color";
+import Link from "@tiptap/extension-link";
+import Image from "@tiptap/extension-image";
+import Highlight from "@tiptap/extension-highlight";
+import "./styles.css";
 
-import { TextStyleKit } from '@tiptap/extension-text-style'
-import type { Editor } from '@tiptap/react'
-import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import "./styles.css"
+import {
+  Bold,
+  Italic,
+  Strikethrough,
+  Code,
+  Heading1,
+  Heading2,
+  Heading3,
+  List,
+  ListOrdered,
+  Quote,
+  CodeSquare,
+  Minus,
+  CornerDownLeft,
+  Undo2,
+  Redo2,
+  Eraser,
+  Pilcrow,
+  LinkIcon,
+  ImageIcon,
+  Highlighter,
+  Save,
+  Trash2,
+} from "lucide-react";
 
-const extensions = [TextStyleKit, StarterKit]
+// Extensions
+const extensions = [
+  StarterKit,
+  TextStyle,
+  Color,
+  Link.configure({
+    openOnClick: false,
+  }),
+  Image,
+  Highlight,
+];
 
-export function MenuBar({ editor }: { editor: Editor }) {
-  // Read the current editor's state, and re-render the component when it changes
+export function MenuBar({ editor }: { editor: any }) {
   const editorState = useEditorState({
     editor,
-    selector: ctx => {
-      return {
-        isBold: ctx.editor.isActive('bold') ?? false,
-        canBold: ctx.editor.can().chain().toggleBold().run() ?? false,
-        isItalic: ctx.editor.isActive('italic') ?? false,
-        canItalic: ctx.editor.can().chain().toggleItalic().run() ?? false,
-        isStrike: ctx.editor.isActive('strike') ?? false,
-        canStrike: ctx.editor.can().chain().toggleStrike().run() ?? false,
-        isCode: ctx.editor.isActive('code') ?? false,
-        canCode: ctx.editor.can().chain().toggleCode().run() ?? false,
-        canClearMarks: ctx.editor.can().chain().unsetAllMarks().run() ?? false,
-        isParagraph: ctx.editor.isActive('paragraph') ?? false,
-        isHeading1: ctx.editor.isActive('heading', { level: 1 }) ?? false,
-        isHeading2: ctx.editor.isActive('heading', { level: 2 }) ?? false,
-        isHeading3: ctx.editor.isActive('heading', { level: 3 }) ?? false,
-        isHeading4: ctx.editor.isActive('heading', { level: 4 }) ?? false,
-        isHeading5: ctx.editor.isActive('heading', { level: 5 }) ?? false,
-        isHeading6: ctx.editor.isActive('heading', { level: 6 }) ?? false,
-        isBulletList: ctx.editor.isActive('bulletList') ?? false,
-        isOrderedList: ctx.editor.isActive('orderedList') ?? false,
-        isCodeBlock: ctx.editor.isActive('codeBlock') ?? false,
-        isBlockquote: ctx.editor.isActive('blockquote') ?? false,
-        canUndo: ctx.editor.can().chain().undo().run() ?? false,
-        canRedo: ctx.editor.can().chain().redo().run() ?? false,
+    selector: (ctx) => ({
+      isBold: ctx.editor.isActive("bold"),
+      isItalic: ctx.editor.isActive("italic"),
+      isStrike: ctx.editor.isActive("strike"),
+      isCode: ctx.editor.isActive("code"),
+      isParagraph: ctx.editor.isActive("paragraph"),
+      isHeading1: ctx.editor.isActive("heading", { level: 1 }),
+      isHeading2: ctx.editor.isActive("heading", { level: 2 }),
+      isHeading3: ctx.editor.isActive("heading", { level: 3 }),
+      isBulletList: ctx.editor.isActive("bulletList"),
+      isOrderedList: ctx.editor.isActive("orderedList"),
+      isCodeBlock: ctx.editor.isActive("codeBlock"),
+      isBlockquote: ctx.editor.isActive("blockquote"),
+      canUndo: ctx.editor.can().chain().undo().run(),
+      canRedo: ctx.editor.can().chain().redo().run(),
+    }),
+  });
+
+  const Btn = ({
+    onClick,
+    disabled,
+    active,
+    icon: Icon,
+    label,
+  }: {
+    onClick: () => void;
+    disabled?: boolean;
+    active?: boolean;
+    icon: React.ElementType;
+    label: string;
+  }) => (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      title={label}
+      className={`p-2 text-sm flex items-center justify-center transition-colors 
+        ${active ? "bg-indigo-100 text-indigo-700" : "text-gray-600 hover:bg-gray-100"} 
+        disabled:opacity-40 disabled:cursor-not-allowed`}
+    >
+      <Icon size={16} />
+    </button>
+  );
+
+  // File selector for images
+  const handleImageUpload = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          editor
+            .chain()
+            .focus()
+            .setImage({ src: reader.result as string })
+            .run();
+        };
+        reader.readAsDataURL(file);
       }
-    },
-  })
+    };
+    input.click();
+  };
+
+  // Save content manually
+  const handleSave = () => {
+    const json = editor.getJSON();
+    localStorage.setItem("tiptap-content", JSON.stringify(json));
+    alert("✅ Content saved!");
+  };
+
+  // Clear content
+  const handleClear = () => {
+    editor.commands.clearContent(true);
+    localStorage.removeItem("tiptap-content");
+  };
 
   return (
-    <div className="control-group">
-      <div className="button-group">
-        <button
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          disabled={!editorState.canBold}
-          className={editorState.isBold ? 'is-active' : ''}
-        >
-          Bold
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          disabled={!editorState.canItalic}
-          className={editorState.isItalic ? 'is-active' : ''}
-        >
-          Italic
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleStrike().run()}
-          disabled={!editorState.canStrike}
-          className={editorState.isStrike ? 'is-active' : ''}
-        >
-          Strike
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleCode().run()}
-          disabled={!editorState.canCode}
-          className={editorState.isCode ? 'is-active' : ''}
-        >
-          Code
-        </button>
-        <button onClick={() => editor.chain().focus().unsetAllMarks().run()}>Clear marks</button>
-        <button onClick={() => editor.chain().focus().clearNodes().run()}>Clear nodes</button>
-        <button
-          onClick={() => editor.chain().focus().setParagraph().run()}
-          className={editorState.isParagraph ? 'is-active' : ''}
-        >
-          Paragraph
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={editorState.isHeading1 ? 'is-active' : ''}
-        >
-          H1
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={editorState.isHeading2 ? 'is-active' : ''}
-        >
-          H2
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          className={editorState.isHeading3 ? 'is-active' : ''}
-        >
-          H3
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()}
-          className={editorState.isHeading4 ? 'is-active' : ''}
-        >
-          H4
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 5 }).run()}
-          className={editorState.isHeading5 ? 'is-active' : ''}
-        >
-          H5
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 6 }).run()}
-          className={editorState.isHeading6 ? 'is-active' : ''}
-        >
-          H6
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={editorState.isBulletList ? 'is-active' : ''}
-        >
-          Bullet list
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={editorState.isOrderedList ? 'is-active' : ''}
-        >
-          Ordered list
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          className={editorState.isCodeBlock ? 'is-active' : ''}
-        >
-          Code block
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={editorState.isBlockquote ? 'is-active' : ''}
-        >
-          Blockquote
-        </button>
-        <button onClick={() => editor.chain().focus().setHorizontalRule().run()}>Horizontal rule</button>
-        <button onClick={() => editor.chain().focus().setHardBreak().run()}>Hard break</button>
-        <button onClick={() => editor.chain().focus().undo().run()} disabled={!editorState.canUndo}>
-          Undo
-        </button>
-        <button onClick={() => editor.chain().focus().redo().run()} disabled={!editorState.canRedo}>
-          Redo
-        </button>
-      </div>
+    <div className="border border-gray-200 justify-center bg-white rounded-lg shadow-sm flex flex-wrap divide-x divide-gray-200 overflow-hidden sticky top-0 z-10">
+      <Btn
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        active={editorState.isBold}
+        icon={Bold}
+        label="Bold"
+      />
+      <Btn
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        active={editorState.isItalic}
+        icon={Italic}
+        label="Italic"
+      />
+      <Btn
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        active={editorState.isStrike}
+        icon={Strikethrough}
+        label="Strikethrough"
+      />
+      <Btn
+        onClick={() => editor.chain().focus().toggleCode().run()}
+        active={editorState.isCode}
+        icon={Code}
+        label="Inline Code"
+      />
+      <Btn
+        onClick={() => editor.chain().focus().unsetAllMarks().run()}
+        icon={Eraser}
+        label="Clear Marks"
+      />
+      <Btn
+        onClick={() => editor.chain().focus().setParagraph().run()}
+        active={editorState.isParagraph}
+        icon={Pilcrow}
+        label="Paragraph"
+      />
+      <Btn
+        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+        active={editorState.isHeading1}
+        icon={Heading1}
+        label="Heading 1"
+      />
+      <Btn
+        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+        active={editorState.isHeading2}
+        icon={Heading2}
+        label="Heading 2"
+      />
+      <Btn
+        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+        active={editorState.isHeading3}
+        icon={Heading3}
+        label="Heading 3"
+      />
+      <Btn
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        active={editorState.isBulletList}
+        icon={List}
+        label="Bullet List"
+      />
+      <Btn
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        active={editorState.isOrderedList}
+        icon={ListOrdered}
+        label="Ordered List"
+      />
+      <Btn
+        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+        active={editorState.isCodeBlock}
+        icon={CodeSquare}
+        label="Code Block"
+      />
+      <Btn
+        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        active={editorState.isBlockquote}
+        icon={Quote}
+        label="Blockquote"
+      />
+      <Btn
+        onClick={() => editor.chain().focus().setHorizontalRule().run()}
+        icon={Minus}
+        label="Horizontal Rule"
+      />
+      <Btn
+        onClick={() => editor.chain().focus().setHardBreak().run()}
+        icon={CornerDownLeft}
+        label="Hard Break"
+      />
+      <Btn
+        onClick={() => editor.chain().focus().undo().run()}
+        disabled={!editorState.canUndo}
+        icon={Undo2}
+        label="Undo"
+      />
+      <Btn
+        onClick={() => editor.chain().focus().redo().run()}
+        disabled={!editorState.canRedo}
+        icon={Redo2}
+        label="Redo"
+      />
+      <Btn
+        onClick={() => {
+          const url = prompt("Enter URL");
+          if (url) editor.chain().focus().setLink({ href: url }).run();
+        }}
+        icon={LinkIcon}
+        label="Insert Link"
+      />
+      <Btn onClick={handleImageUpload} icon={ImageIcon} label="Insert Image" />
+      <Btn
+        onClick={() => editor.chain().focus().toggleHighlight().run()}
+        icon={Highlighter}
+        label="Highlight"
+      />
+
+      {/* Save / Clear */}
+      <Btn onClick={handleSave} icon={Save} label="Save" />
+      <Btn onClick={handleClear} icon={Trash2} label="Clear" />
     </div>
-  )
+  );
 }
 
-export default () => {
+export default function RichEditor() {
   const editor = useEditor({
     extensions,
-    content: `
-<h2>
-  Hi there,
-</h2>
-<p>
-  this is a <em>basic</em> example of <strong>Tiptap</strong>. Sure, there are all kind of basic text styles you’d probably expect from a text editor. But wait until you see the lists:
-</p>
-<ul>
-  <li>
-    That’s a bullet list with one …
-  </li>
-  <li>
-    … or two list items.
-  </li>
-</ul>
-<p>
-  Isn’t that great? And all of that is editable. But wait, there’s more. Let’s try a code block:
-</p>
-<pre><code class="language-css">body {
-  display: none;
-}</code></pre>
-<p>
-  I know, I know, this is impressive. It’s only the tip of the iceberg though. Give it a try and click a little bit around. Don’t forget to check the other examples too.
-</p>
-<blockquote>
-  Wow, that’s amazing. Good work, boy! 👏
-  <br />
-  — Mom
-</blockquote>
-`,
-  })
+    content: `<h2>Welcome to the editor</h2><p>Type something, or insert an <strong>image</strong>.</p>`,
+  });
+
+  // Load saved content if available
+  useEffect(() => {
+    if (editor) {
+      const saved = localStorage.getItem("tiptap-content");
+      if (saved) {
+        editor.commands.setContent(JSON.parse(saved));
+      }
+
+      // Save on every update
+      editor.on("update", ({ editor }) => {
+        localStorage.setItem(
+          "tiptap-content",
+          JSON.stringify(editor.getJSON())
+        );
+      });
+    }
+  }, [editor]);
+
+  // Prevent refresh/close without warning
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
   return (
-    <div>
-      <MenuBar editor={editor} />
-      <EditorContent editor={editor} />
+    <div className="space-y-2 max-w-4xl mx-auto">
+      {editor && <MenuBar editor={editor} />}
+      <div className="border border-gray-200 rounded-lg bg-gray shadow-sm h-[80dvh] overflow-hidden p-4">
+        <EditorContent editor={editor} className="tiptap-editor" />
+      </div>
     </div>
-  )
+  );
 }
