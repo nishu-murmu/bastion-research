@@ -268,19 +268,34 @@ const ManageSubscriptions = () => {
                   </span>
                 </td>
                 {hoveredRow === `act-${index}` && (
-                  <td className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <div className="flex gap-1">
-                      <button className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600 flex items-center gap-1">
-                        <Eye size={10} />
-                        View Invoice
+                  <td className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                    <div className="flex bg-blue-600 rounded shadow-lg">
+                      <button 
+                        className="p-2 text-white hover:bg-blue-700 rounded-l transition-colors relative group"
+                        title="View Invoice"
+                      >
+                        <Eye size={14} />
+                        <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          View Invoice
+                        </span>
                       </button>
-                      <button className="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600 flex items-center gap-1">
-                        <FileText size={10} />
-                        View Details
+                      <button 
+                        className="p-2 text-white hover:bg-blue-700 transition-colors relative group"
+                        title="View Details"
+                      >
+                        <FileText size={14} />
+                        <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          View Details
+                        </span>
                       </button>
-                      <button className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 flex items-center gap-1">
-                        <Trash2 size={10} />
-                        Delete
+                      <button 
+                        className="p-2 text-white hover:bg-blue-700 rounded-r transition-colors relative group"
+                        title="Delete"
+                      >
+                        <Trash2 size={14} />
+                        <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          Delete
+                        </span>
                       </button>
                     </div>
                   </td>
@@ -417,46 +432,57 @@ const ManageSubscriptions = () => {
 
       {/* Tabs */}
       <div className="bg-white rounded-lg mb-6">
-        <div className="flex border-b">
-          <button
-            className={`px-6 py-3 text-sm font-medium border-b-2 ${
-              activeTab === 'subscriptions'
-                ? 'border-blue-500 text-blue-600 bg-blue-50'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-            onClick={() => {
-              setActiveTab('subscriptions');
-              setCurrentPage(1);
-            }}
-          >
-            📊 Subscriptions
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium border-b-2 ${
-              activeTab === 'activities'
-                ? 'border-blue-500 text-blue-600 bg-blue-50'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-            onClick={() => {
-              setActiveTab('activities');
-              setCurrentPage(1);
-            }}
-          >
-            📋 All Activities
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium border-b-2 ${
-              activeTab === 'upcoming'
-                ? 'border-blue-500 text-blue-600 bg-blue-50'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-            onClick={() => {
-              setActiveTab('upcoming');
-              setCurrentPage(1);
-            }}
-          >
-            📅 Upcoming Subscriptions
-          </button>
+        <div className="flex justify-center border-b">
+          <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+            <button
+              className={`px-6 py-3 text-sm font-medium flex items-center gap-2 ${
+                activeTab === 'subscriptions'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+              onClick={() => {
+                setActiveTab('subscriptions');
+                setCurrentPage(1);
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 6h16v2H4V6zm2-4h12v2H6V2zm-2 8h16v8c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2v-8zm2 2v4h12v-4H4z"/>
+              </svg>
+              Subscriptions
+            </button>
+            <button
+              className={`px-6 py-3 text-sm font-medium flex items-center gap-2 border-l border-r border-gray-300 ${
+                activeTab === 'activities'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+              onClick={() => {
+                setActiveTab('activities');
+                setCurrentPage(1);
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>
+              </svg>
+              All Activities
+            </button>
+            <button
+              className={`px-6 py-3 text-sm font-medium flex items-center gap-2 ${
+                activeTab === 'upcoming'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+              onClick={() => {
+                setActiveTab('upcoming');
+                setCurrentPage(1);
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2-7h-1V2h-2v2H8V2H6v2H5c-1.1 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
+              </svg>
+              Upcoming Subscriptions
+            </button>
+          </div>
         </div>
 
         {/* Table Content */}
