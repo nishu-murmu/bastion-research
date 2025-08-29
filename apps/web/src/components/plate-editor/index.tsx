@@ -1,14 +1,12 @@
 import * as React from 'react';
-import type { Value } from 'platejs';
-
-import { Plate, usePlateEditor } from 'platejs/react';
+import { Plate, createPlateEditor } from 'platejs/react';
 import { BaseEditorKit } from '@/components/editor/editor-base-kit';
 import { Editor, EditorContainer } from '@/components/ui/editor';
 import { FixedToolbar } from '@/components/ui/fixed-toolbar';
 import { FloatingToolbar, FloatingToolbarButtons } from '@/components/ui/floating-toolbar';
 import { MarkToolbarButton } from '@/components/ui/mark-toolbar-button';
 import { ToolbarButton } from '@/components/ui/toolbar';
-import { Value } from 'platejs';
+import { Value } from '@platejs/core';
 
 const initialValue: Value = [
     {
@@ -26,17 +24,27 @@ const initialValue: Value = [
       ],
     },
     {
-      type: 'ul',
-      children: [
-        {
-          type: 'li',
-          children: [{ text: 'That’s a bullet list with one …' }],
-        },
-        {
-          type: 'li',
-          children: [{ text: '… or two list items.' }],
-        },
-      ],
+        type: 'ul',
+        children: [
+            {
+                type: 'li',
+                children: [
+                    {
+                        type: 'p',
+                        children: [{ text: 'That’s a bullet list with one …' }],
+                    },
+                ],
+            },
+            {
+                type: 'li',
+                children: [
+                    {
+                        type: 'p',
+                        children: [{ text: '… or two list items.' }],
+                    },
+                ],
+            },
+        ],
     },
     {
       type: 'p',
@@ -45,11 +53,22 @@ const initialValue: Value = [
       ],
     },
     {
-      type: 'code_block',
-      children: [{
-        type: 'code_line',
-        children: [{ text: 'body {\n  display: none;\n}' }]
-      }],
+        type: 'code_block',
+        lang: 'css',
+        children: [
+            {
+                type: 'code_line',
+                children: [{ text: 'body {' }],
+            },
+            {
+                type: 'code_line',
+                children: [{ text: '  display: none;' }],
+            },
+            {
+                type: 'code_line',
+                children: [{ text: '}' }],
+            },
+        ],
     },
     {
       type: 'p',
@@ -64,13 +83,13 @@ const initialValue: Value = [
   ];
 
 export default function PlateEditor() {
-    const editor = usePlateEditor({
+    const [editor] = React.useState(() => createPlateEditor({
         plugins: BaseEditorKit,
-        value: () => {
+        value: (() => {
             const savedValue = localStorage.getItem('plate-content');
             return savedValue ? JSON.parse(savedValue) : initialValue;
-        },
-    });
+        })(),
+    }));
 
   return (
     <Plate
