@@ -1,4 +1,4 @@
-import Editor from "@/components/core/editor";
+import PlateEditor from "@/components/plate-editor";
 import { lazy } from "react";
 import type { RouteObject } from "react-router-dom";
 
@@ -172,7 +172,7 @@ export const routes: RouteObject[] = [
           { path: "users/add", element: <AddUser /> },
           { path: "users/profile", element: <Profile /> },
           { path: "settings", element: <AdminSettings /> },
-          { path: "editor", element: <Editor /> },
+          { path: "editor", element: <PlateEditor /> },
         ],
       },
     ],
