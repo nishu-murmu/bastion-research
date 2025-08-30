@@ -1,135 +1,94 @@
-# Turborepo starter
+# Bastion Research Monorepo
 
-This Turborepo starter is maintained by the Turborepo core team.
+This monorepo contains the fullstack application for Bastion Research. It includes a React frontend, a Node/Express backend, and a shared types package.
 
-## Using this example
+## Project Structure
 
-Run the following command:
+This monorepo is managed with `pnpm` workspaces and `Turborepo`. The project is structured as follows:
 
-```sh
-npx create-turbo@latest
+-   `apps/web`: The React frontend application.
+-   `apps/server`: The Node.js/Express backend server.
+-   `packages/types`: A shared package for TypeScript types used by both the frontend and backend.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+-   [Node.js](https://nodejs.org/) (v20 or higher)
+-   [pnpm](https://pnpm.io/installation)
+
+## Getting Started
+
+1.  **Clone the repository:**
+
+    ```bash
+    git clone <repository-url>
+    cd <repository-name>
+    ```
+
+2.  **Install dependencies:**
+
+    Install all dependencies from the root of the monorepo using `pnpm`:
+
+    ```bash
+    pnpm install
+    ```
+
+3.  **Set up environment variables:**
+
+    Each application requires its own `.env` file. You can find example environment files in each application's directory (`apps/web/.env.example` and `apps/server/.env.example`).
+
+    -   **For the server (`apps/server`):**
+        Create a `.env` file in `apps/server` and add the necessary environment variables for Supabase, JWT, and other services.
+
+    -   **For the web client (`apps/web`):**
+        Create a `.env` file in `apps/web` and add the `VITE_API_BASE_URL` variable, pointing to the backend server's URL.
+
+        ```
+        VITE_API_BASE_URL=http://localhost:3000
+        ```
+
+## Development
+
+To start the development servers for both the frontend and backend, run the following command from the root of the monorepo:
+
+```bash
+pnpm dev
 ```
 
-## What's inside?
+This will start the React frontend on `http://localhost:5173` and the Node.js backend on the port specified in your server's environment variables (e.g., `3000`).
 
-This Turborepo includes the following packages/apps:
+You can also run each application individually:
 
-### Apps and Packages
+-   **Start the web client only:**
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@workspace/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@workspace/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@workspace/typescript-config`: `tsconfig.json`s used throughout the monorepo
+    ```bash
+    pnpm dev:web
+    ```
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+-   **Start the server only:**
 
-### Utilities
+    ```bash
+    pnpm dev:server
+    ```
 
-This Turborepo has some additional tools already setup for you:
+## Available Scripts
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+The following scripts are available at the root of the monorepo:
 
-### Build
+-   `pnpm build`: Build all applications.
+-   `pnpm build:web`: Build only the web application.
+-   `pnpm build:server`: Build only the server application.
+-   `pnpm dev`: Run all applications in development mode.
+-   `pnpm dev:web`: Run the web application in development mode.
+-   `pnpm dev:server`: Run the server application in development mode.
+-   `pnpm lint`: Lint all applications.
+-   `pnpm format`: Format all files with Prettier.
+-   `pnpm check-types`: Check for TypeScript errors in all packages.
 
-To build all apps and packages, run the following command:
+## Best Practices
 
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
-```
-
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+-   **Shared Types**: Use the `@repo/types` package to share TypeScript types between the frontend and backend. This ensures consistency and type safety across the entire application.
+-   **Environment Variables**: Never commit `.env` files to version control. Use `.env.example` files to document the required environment variables.
+-   **Code Formatting**: Run `pnpm format` before committing your changes to ensure consistent code style.
+-   **Linting**: Run `pnpm lint` to catch any linting errors before committing your changes.
