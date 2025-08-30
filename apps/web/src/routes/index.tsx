@@ -1,4 +1,3 @@
-import PlateEditor from "@/components/plate-editor";
 import { lazy } from "react";
 import type { RouteObject } from "react-router-dom";
 
@@ -62,6 +61,7 @@ const AllUsers = lazy(() => import("../pages/Admin/Users/AllUsers"));
 const AddUser = lazy(() => import("../pages/Admin/Users/AddUser"));
 const Profile = lazy(() => import("../pages/Admin/Users/Profile"));
 const AdminSettings = lazy(() => import("../pages/AdminSettings"));
+const EditorPage = lazy(() => import("../pages/Admin/Editor"));
 
 // Components that are used as pages
 const PodcastsBlog = lazy(() => import("../components/generic/PodcastsBlog"));
@@ -172,7 +172,7 @@ export const routes: RouteObject[] = [
           { path: "users/add", element: <AddUser /> },
           { path: "users/profile", element: <Profile /> },
           { path: "settings", element: <AdminSettings /> },
-          { path: "editor", element: <PlateEditor /> },
+          { path: "editor", element: <EditorPage /> },
         ],
       },
     ],

@@ -1,3 +1,22 @@
 
-> web@0.0.0 dev /app/apps/web
-> vite
+> bastionresearch.in@ dev /app
+> turbo run dev --parallel
+
+• Packages in scope: @repo/types, server, web
+• Running dev in 3 packages
+• Remote caching disabled
+server:dev: cache miss, executing 752275dda75877e6
+web:dev: cache miss, executing ffce70e91ebbebac
+server:dev:
+server:dev: > server@1.0.0 dev /app/apps/server
+server:dev: > nodemon src/index.ts
+server:dev:
+web:dev:
+web:dev: > web@0.0.0 dev /app/apps/web
+web:dev: > vite
+web:dev:
+server:dev: [33m[nodemon] 3.1.10[39m
+server:dev: [33m[nodemon] to restart at any time, enter `rs`[39m
+server:dev: [33m[nodemon] watching path(s): src/**/*[39m
+server:dev: [33m[nodemon] watching extensions: ts,json[39m
+server:dev: [32m[nodemon] starting `ts-node ./src/index.ts src/index.ts`[39m

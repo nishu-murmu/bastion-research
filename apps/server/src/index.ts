@@ -32,6 +32,7 @@ import jobRoutes from "./routes/job.routes";
 import membershipRoutes from "./routes/membership.routes";
 import couponRoutes from "./routes/coupon.routes";
 import applicationRoutes from "./routes/application.routes";
+import blogRoutes from "./routes/blog.routes";
 
 // API Routes
 app.use("/api/auth", authRoutes);
@@ -43,6 +44,7 @@ app.use("/api", userRoutes);
 app.use("/api", jobRoutes);
 app.use("/api", applicationRoutes);
 app.use("/api", membershipRoutes);
+app.use("/api/blog", blogRoutes);
 
 // Root endpoint
 app.get("/", (req: Request, res: Response) => {
