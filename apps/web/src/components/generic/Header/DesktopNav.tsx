@@ -1,10 +1,10 @@
 // components/Header/DesktopNav.jsx
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
+import MyAccountDropdown from "./MyAccountDropdown";
 
 const DesktopNav = ({ openSubmenu, setOpenSubmenu }) => {
   const { user } = useAuth();
-  console.log(user, "check");
   return (
     <nav className="hidden md:flex items-center space-x-8">
       <Link
@@ -65,26 +65,30 @@ const DesktopNav = ({ openSubmenu, setOpenSubmenu }) => {
         </div>
       </div>
 
-      <Link
-        to="/login"
-        className="text-gray-700 hover:text-red-600 flex items-center transition-colors"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5 mr-1"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
+      {user?.id ? (
+        <MyAccountDropdown />
+      ) : (
+        <Link
+          to="/login"
+          className="text-gray-700 hover:text-red-600 flex items-center transition-colors"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-          />
-        </svg>
-        Login
-      </Link>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 mr-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            />
+          </svg>
+          Login
+        </Link>
+      )}
 
       <Link
         to="/contact"
