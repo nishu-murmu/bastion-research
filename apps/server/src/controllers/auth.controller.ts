@@ -98,7 +98,7 @@ export const createUserAfterOnboarding = async (userData: any) => {
 // --- Standard Authentication ---
 
 export const signIn = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { email, password, isAdminLogin } = req.body;
 
   if (!email || !password) {
     return res
@@ -112,14 +112,20 @@ export const signIn = async (req: Request, res: Response) => {
       .select("*")
       .eq("email", email)
       .single();
-
     if (error || !user) {
       return res.status(404).json({ message: "User not found." });
     }
+    console.log(password, user.password);
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials." });
+    }
+
+    if (!isAdminLogin && user.role === config.roles.admin) {
+      return res
+        .status(401)
+        .json({ message: "You can't login with admin credentials." });
     }
 
     const token = generateToken(user.id, user.email);
@@ -176,7 +182,9 @@ export const getUserSession = async (req: Request, res: Response) => {
 
     const { data: user, error } = await supabase
       .from("users")
-      .select("*")
+      .select(
+        `id, username, first_name, last_name, phone, email, address_1, address_2, state, city, pin_code, date_of_birth, company, created_at, updated_at, isPremium, status, role`
+      )
       .eq("id", decoded.id)
       .single();
 
@@ -184,6 +192,7 @@ export const getUserSession = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    console.log(user, "user");
     res.status(200).json({ user });
   } catch (error) {
     res.status(401).json({ message: "Not authenticated" });

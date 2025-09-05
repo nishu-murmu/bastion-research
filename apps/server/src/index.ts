@@ -17,7 +17,7 @@ import otpRoutes from "./routes/otp.routes";
 dotenv.config();
 
 const app: Express = express();
-const port = process.env.PORT || 3003;
+const port = process.env.PORT || 3001;
 
 // Middleware
 app.use(
