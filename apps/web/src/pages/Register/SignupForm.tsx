@@ -28,7 +28,8 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
     agreeToTerms: false,
     selectedPlan: "",
   });
-  const [otpTimer, setOtpTimer] = useState(51);
+  // OTP countdown timer in seconds (10 minutes)
+  const [otpTimer, setOtpTimer] = useState(600);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -79,7 +80,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
     let timer: NodeJS.Timeout;
     if (currentStep === 2 && otpTimer > 0) {
       timer = setInterval(() => {
-        setOtpTimer((prev) => prev - 1);
+        setOtpTimer((prev) => (prev > 0 ? prev - 1 : 0));
       }, 1000);
     } else if (otpTimer === 0) {
       // Handle timer expiration
