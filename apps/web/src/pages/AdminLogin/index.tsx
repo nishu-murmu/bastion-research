@@ -1,18 +1,17 @@
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Navigate, useNavigate } from "react-router-dom";
+import axiosInstance from "@/api/axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
-import axiosInstance from "@/api/axios";
-import { Config } from "@/utils/config";
-import { toast } from "sonner";
 import { useLoader } from "@/contexts/LoaderContext";
 import { AppRoutes } from "@/routes/app-routes";
-import { queryKeys } from "@/api/queryKeys";
+import { Config } from "@/utils/config";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { Navigate, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import * as z from "zod";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -25,7 +24,6 @@ const AdminLogin = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated, isAdmin, isLoading } = useAuth();
   const { start: showLoader, stop: hideLoader } = useLoader();
-  const queryClient = useQueryClient();
 
   // Redirect immediately during render once auth is known
   const shouldRedirect = !isLoading && isAuthenticated && isAdmin;
@@ -61,7 +59,6 @@ const AdminLogin = () => {
         toast.success("Admin logged in successfully");
         login(data.user);
         navigate(AppRoutes.adminDashboard());
-        queryClient.invalidateQueries({ queryKey: [queryKeys.auth_session] });
       }
     },
     onError: (error: Error & { response: { data: { message: string } } }) => {

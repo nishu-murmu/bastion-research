@@ -36,8 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     queryKey: [queryKeys.auth_session],
     queryFn: async () => (await axiosInstance.get("/api/auth/session")).data,
     staleTime: 5 * 60 * 1000, // 5 minutes cache freshness
-    gcTime: 10 * 60 * 1000, // 10 minutes cache retention (TanStack v5: cacheTime -> gcTime)
-    retry: 1,
+    gcTime: 60 * 60 * 1000, // 10 minutes cache retention (TanStack v5: cacheTime -> gcTime)
   });
 
   useEffect(() => {
