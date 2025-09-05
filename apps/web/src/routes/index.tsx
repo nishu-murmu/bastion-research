@@ -1,6 +1,6 @@
 import Editor from "@/components/core/editor";
 import { lazy } from "react";
-import type { RouteObject } from "react-router-dom";
+import { Navigate, type RouteObject } from "react-router-dom";
 import { AppRoutes } from "./app-routes";
 
 // Layouts
@@ -107,14 +107,19 @@ export const routes: RouteObject[] = [
     ],
   },
   {
+    element: <AdminLogin />,
+    path: AppRoutes.adminLogin(),
+  },
+  {
     element: <AdminLayout />,
+    path: AppRoutes.admin(),
     children: [
       {
         element: <AdminRoute />,
         children: [
           {
-            path: AppRoutes.adminLogin(),
-            element: <AdminLogin />,
+            index: true,
+            element: <Navigate to={AppRoutes.adminDashboard()} replace />,
           },
           {
             path: AppRoutes.adminDashboard(),

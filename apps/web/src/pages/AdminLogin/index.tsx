@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { Config } from "@/utils/config";
 import { toast } from "sonner";
 import { useLoader } from "@/contexts/LoaderContext";
 import { AppRoutes } from "@/routes/app-routes";
+import { queryKeys } from "@/api/queryKeys";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -24,6 +25,7 @@ const AdminLogin = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated, isAdmin, isLoading } = useAuth();
   const { start: showLoader, stop: hideLoader } = useLoader();
+  const queryClient = useQueryClient();
 
   // Redirect immediately during render once auth is known
   const shouldRedirect = !isLoading && isAuthenticated && isAdmin;
@@ -51,12 +53,15 @@ const AdminLogin = () => {
     LoginFormValues
   >({
     mutationFn: (data) =>
-      axiosInstance.post("/api/auth/signin", data).then((res) => res.data),
+      axiosInstance
+        .post("/api/auth/signin", { ...data, isAdminLogin: true })
+        .then((res) => res.data),
     onSuccess: (data: any) => {
       if (data.user?.role === Config.roles.admin) {
         toast.success("Admin logged in successfully");
         login(data.user);
         navigate(AppRoutes.adminDashboard());
+        queryClient.invalidateQueries({ queryKey: [queryKeys.auth_session] });
       }
     },
     onError: (error: Error & { response: { data: { message: string } } }) => {
