@@ -275,7 +275,7 @@ export const getUserSession = async (req: Request, res: Response) => {
     const { data: user, error } = await supabase
       .from("users")
       .select(
-        `id, username, first_name, last_name, phone, email, address_1, address_2, state, city, pin_code, date_of_birth, company, created_at, updated_at, isPremium, status, role`
+        `id, username, first_name, last_name, phone, email, address_1, pan_card_number, address_2, state, city, pin_code, date_of_birth, company, created_at, updated_at, isPremium, status, role`
       )
       .eq("id", decoded.id)
       .single();
