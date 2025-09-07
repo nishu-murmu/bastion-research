@@ -1,6 +1,8 @@
 import axiosInstance from "@/api/axios";
 import { ArrowLeft } from "lucide-react";
 import { load } from "@cashfreepayments/cashfree-js";
+import { useNavigate } from "react-router-dom";
+import { AppRoutes } from "@/routes/app-routes";
 
 const PaymentStep: React.FC<PaymentStepProps> = ({
   plans,
@@ -14,10 +16,24 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   setIsLoading,
 }) => {
   const selectedPlanDetails = plans.find((p) => p.code === selectedPlan);
+  const navigate = useNavigate();
   const handlePayment = async () => {
     setError(null);
     setIsLoading(true);
     try {
+      if (selectedPlanDetails?.code === "free") {
+        // Directly onboard without payment
+        await axiosInstance.post("/api/auth/onboard", formData);
+        try {
+          localStorage.removeItem("onboardingFormData");
+          localStorage.removeItem("onboardingCurrentStep");
+          localStorage.removeItem("onboardingOtpTimer");
+          localStorage.removeItem("onboardingPending");
+          localStorage.setItem("onboardingOpen", "false");
+        } catch {}
+        navigate(AppRoutes.login(), { replace: true });
+        return;
+      }
       const orderResponse = await axiosInstance.post("/api/cashfree/orders", {
         plan: formData.selectedPlan,
         customer_id: formData.email,
@@ -90,6 +106,8 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
         >
           {isLoading
             ? "Processing..."
+            : selectedPlanDetails?.code === "free"
+            ? "Complete Signup"
             : `Pay ₹${selectedPlanDetails?.amount || ""}`}
         </button>
       </div>

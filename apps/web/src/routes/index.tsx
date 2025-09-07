@@ -31,6 +31,7 @@ const BastionCore = lazy(() => import("../pages/BastionCore"));
 const PaymentSuccess = lazy(() => import("../pages/PaymentSuccess"));
 const EditProfile = lazy(() => import("../pages/EditProfile"));
 const Subscription = lazy(() => import("../pages/Subscription"));
+const TransactionHistory = lazy(() => import("../pages/TransactionHistory"));
 const SpotLights = lazy(() => import("../pages/SpotLights"));
 const About = lazy(() => import("../pages/About"));
 const NotFound = lazy(() => import("../pages/NotFound"));
@@ -108,6 +109,7 @@ export const routes: RouteObject[] = [
           { path: AppRoutes.dashboard(), element: <Dashboard /> },
           { path: AppRoutes.editProfile(), element: <EditProfile /> },
           { path: AppRoutes.subscription(), element: <Subscription /> },
+          { path: AppRoutes.transactionHistory(), element: <TransactionHistory /> },
         ],
       },
     ],

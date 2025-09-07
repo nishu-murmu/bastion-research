@@ -11,10 +11,11 @@ import {
   User,
   MessageSquare,
 } from "lucide-react";
+import axiosInstance from "@/api/axios";
 
 const SingleCareer = () => {
   const params = useParams();
-  const [careerData, setCareerData] = useState(null);
+  const [careerData, setCareerData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -26,58 +27,15 @@ const SingleCareer = () => {
     message: "",
   });
 
-  // Simulate API call to fetch dynamic career data
+  // Fetch dynamic job by ID from backend
   useEffect(() => {
     const fetchCareerData = async () => {
       try {
         setLoading(true);
-        // Replace this with your actual API endpoint
-        // const response = await fetch(`/api/careers/${params.id}`);
-        // const data = await response.json();
-
-        // Simulated data - replace with actual API call
-        const simulatedData = {
-          id: params.id,
-          title:
-            "Freelance Python Developer - Quantitative Equity Research (Remote)",
-          company: "Boston Quant",
-          location: "Full-Time remote",
-          type: "Full-time",
-          postedDate: "2 days ago",
-          description: `We're looking for a skilled Python Developer to work with our Boston Quant team on various quantitative equity research solutions focused on Indian markets.
-
-If skill is your playground, and you enjoy building solutions with the dark and mysterious quant tools, this will be right up your alley.`,
-
-          responsibilities: [
-            "Build and maintain Python-based applications and create and maintain financial data pipelines",
-            "Implement technical data tools, databases, and analytics",
-            "Build metrics and tool libraries used to handover algorithmic tools effectively",
-            "Work with various REST API calls to process data and perform back-office duties",
-            "Collaborate closely with research groups and client-facing teams",
-          ],
-
-          requirements: [
-            "Proficient in Python, particularly in NumPy, Pandas, and API communications",
-            "Experience with data analysis, data cleaning, and handling large datasets",
-            "Familiar with SQL, financial instruments and trading equity market data to a basic level",
-            "Excellent communication skills and ability to work independently",
-            "Strong problem-solving skills and attention to detail",
-            "Bachelor's or Master's degree with relevant technical experience for 3+ years minimum",
-          ],
-
-          whatWeOffer: [
-            "Best-in-class exposure to quant methodology across various markets",
-            "Flexible work schedule, full-time, with self-direction",
-            "A chance to integrate head-to-head with financial research and gain different expertise for equity markets",
-          ],
-
-          jobType: "Full-Time",
-        };
-
-        // Simulate network delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        setCareerData(simulatedData);
+        const id = params.slug as string;
+        const res = await axiosInstance.get(`/api/jobs/${id}`);
+        const data = res.data;
+        setCareerData(data);
       } catch (err) {
         setError("Failed to load career details");
         console.error("Error fetching career data:", err);
@@ -85,11 +43,8 @@ If skill is your playground, and you enjoy building solutions with the dark and 
         setLoading(false);
       }
     };
-
-    if (params.id) {
-      fetchCareerData();
-    }
-  }, [params.id]);
+    if (params.slug) fetchCareerData();
+  }, [params.slug]);
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -105,8 +60,14 @@ If skill is your playground, and you enjoy building solutions with the dark and 
     e.preventDefault();
     try {
       // Replace with your actual form submission API
-      console.log("Form submitted:", formData);
-      // await fetch('/api/applications', { method: 'POST', body: JSON.stringify(formData) });
+      const id = Number(params.slug);
+      await axiosInstance.post('/api/applications', {
+        job_id: id,
+        applicant_name: formData.name,
+        email: formData.email,
+        phone: formData.mobile,
+        cover_letter: formData.message,
+      });
       alert("Application submitted successfully!");
 
       // Reset form
@@ -171,26 +132,26 @@ If skill is your playground, and you enjoy building solutions with the dark and 
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                    {careerData.title}
+                    {careerData.job_title}
                   </h1>
-                  <p className="text-lg text-blue-600 font-semibold">
-                    {careerData.company}
-                  </p>
+                  {careerData.team && (
+                    <p className="text-lg text-blue-600 font-semibold">Team: {careerData.team}</p>
+                  )}
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                 <div className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
-                  {careerData.location}
+                  {careerData.location || '—'}
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  {careerData.postedDate}
+                  {careerData.experience || '—'}
                 </div>
                 <div className="flex items-center gap-1">
                   <Home className="w-4 h-4" />
-                  {careerData.type}
+                  {careerData.job_type || careerData.commitment || '—'}
                 </div>
               </div>
             </div>
@@ -206,13 +167,13 @@ If skill is your playground, and you enjoy building solutions with the dark and 
             </div>
 
             {/* What You'll Do */}
-            {careerData.responsibilities && (
+            {careerData.responsibilities && careerData.responsibilities.length > 0 && (
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
                   What You'll Do
                 </h2>
                 <ul className="space-y-3">
-                  {careerData.responsibilities.map((responsibility, index) => (
+                  {careerData.responsibilities.map((responsibility: string, index: number) => (
                     <li
                       key={index}
                       className="flex items-start gap-3 text-gray-700"
@@ -226,13 +187,13 @@ If skill is your playground, and you enjoy building solutions with the dark and 
             )}
 
             {/* What We're Looking For */}
-            {careerData.requirements && (
+            {careerData.requirements && careerData.requirements.length > 0 && (
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
                   What We're Looking For
                 </h2>
                 <ul className="space-y-3">
-                  {careerData.requirements.map((requirement, index) => (
+                  {careerData.requirements.map((requirement: string, index: number) => (
                     <li
                       key={index}
                       className="flex items-start gap-3 text-gray-700"
@@ -246,13 +207,13 @@ If skill is your playground, and you enjoy building solutions with the dark and 
             )}
 
             {/* What We Offer */}
-            {careerData.whatWeOffer && (
+            {(careerData.benefits || careerData.whatWeOffer) && (
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
                   What We Offer
                 </h2>
                 <ul className="space-y-3">
-                  {careerData.whatWeOffer.map((offer, index) => (
+                  {(careerData.benefits || careerData.whatWeOffer).map((offer: string, index: number) => (
                     <li
                       key={index}
                       className="flex items-start gap-3 text-gray-700"

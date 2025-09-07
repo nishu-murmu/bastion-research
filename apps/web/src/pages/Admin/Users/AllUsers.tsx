@@ -3,8 +3,10 @@ import { ColDef } from 'ag-grid-community';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '@/api/axios';
 import { Edit, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
+import EditRowModal from '@/components/admin/EditRowModal';
 
 const AllUsers = () => {
   const queryClient = useQueryClient();
@@ -12,7 +14,7 @@ const AllUsers = () => {
     queryKey: ['users'],
     queryFn: () => axiosInstance.get('/api/users').then((res) => res.data),
   });
-  
+
   const updateMutation = useMutation({
     mutationFn: (payload: { id: string; body: any }) => axiosInstance.put(`/api/users/${payload.id}`, payload.body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
@@ -23,25 +25,21 @@ const AllUsers = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
   });
 
-  const ActionsRenderer = (params: any) => {
-    const current = params.data;
-    const onEdit = () => {
-      const username = window.prompt('Username', current.username) ?? current.username;
-      const email = window.prompt('Email', current.email) ?? current.email;
-      const first_name = window.prompt('First Name', current.first_name) ?? current.first_name;
-      const last_name = window.prompt('Last Name', current.last_name) ?? current.last_name;
-      updateMutation.mutate({ id: current.id, body: { username, email, first_name, last_name } });
-    };
-    const onDelete = () => {
-      if (window.confirm('Delete this user?')) deleteMutation.mutate(current.id);
-    };
-    return (
-      <div className="flex gap-2">
-        <button className="p-1 text-gray-600 hover:text-blue-600" onClick={onEdit} title="Edit"><Edit size={16} /></button>
-        <button className="p-1 text-gray-600 hover:text-red-600" onClick={onDelete} title="Delete"><Trash2 size={16} /></button>
-      </div>
-    );
+  const [editOpen, setEditOpen] = useState(false);
+  const [editRow, setEditRow] = useState<any | null>(null);
+  const openEdit = (row: any) => { setEditRow(row); setEditOpen(true); };
+  const saveEdit = (values: any) => {
+    if (!editRow) return;
+    updateMutation.mutate({ id: editRow.id, body: { username: values.username, email: values.email, first_name: values.first_name, last_name: values.last_name } });
+    setEditOpen(false);
   };
+  const removeUser = (id: string) => deleteMutation.mutate(id);
+  const ActionsRenderer = (params: any) => (
+    <div className="flex gap-2">
+      <button className="p-1 text-gray-600 hover:text-blue-600" onClick={() => params.context.openEdit(params.data)} title="Edit"><Edit size={16} /></button>
+      <button className="p-1 text-gray-600 hover:text-red-600" onClick={() => params.context.removeUser(params.data.id)} title="Delete"><Trash2 size={16} /></button>
+    </div>
+  );
 
   const columnDefs: ColDef[] = [
     { headerName: 'ID', field: 'id' },
@@ -66,8 +64,26 @@ const AllUsers = () => {
         <AgGridReact
           rowData={rowData}
           columnDefs={columnDefs}
+          defaultColDef={{ sortable: true, filter: true, resizable: true }}
+          pagination={true}
+          paginationPageSize={10}
+          context={{ openEdit, removeUser }}
         />
       </div>
+      <EditRowModal
+        open={editOpen}
+        title="Edit User"
+        fields={[
+          { name: 'username', label: 'Username' },
+          { name: 'email', label: 'Email', type: 'email' },
+          { name: 'first_name', label: 'First Name' },
+          { name: 'last_name', label: 'Last Name' },
+        ]}
+        initialValues={editRow}
+        onClose={() => setEditOpen(false)}
+        onSave={saveEdit}
+        saving={updateMutation.isPending}
+      />
     </div>
   );
 };

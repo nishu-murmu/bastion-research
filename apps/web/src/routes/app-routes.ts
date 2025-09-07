@@ -15,6 +15,7 @@ export const AppRoutes = {
   bastionCore: () => "/bastion-core",
   editProfile: () => "/edit-profile",
   subscription: () => "/subscription",
+  transactionHistory: () => "/transaction-history",
   spotlights: () => "/spotlights",
   podcasts: () => "/podcasts",
   about: () => "/about",

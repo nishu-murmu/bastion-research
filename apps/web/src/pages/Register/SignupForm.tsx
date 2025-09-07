@@ -129,7 +129,9 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
         setIsLoading(true);
         try {
           const response = await axiosInstance.get("/api/cashfree/plans");
-          setPlans(response.data.plans);
+          const apiPlans: Plan[] = response.data.plans || [];
+          const freePlan: Plan = { code: "free", name: "Freemium", amount: 0, currency: "INR" };
+          setPlans([freePlan, ...apiPlans]);
         } catch (err: any) {
           setError(err.response?.data?.message || "Failed to fetch plans.");
         } finally {

@@ -8,7 +8,7 @@ const AdminHeader = () => {
   const { logout } = useAuth();
 
   const homeRedirect = () => {
-    navigate(AppRoutes.adminLogin());
+    navigate(AppRoutes.home());
   };
   return (
     <header className="bg-gray-800 text-white shadow-md">
