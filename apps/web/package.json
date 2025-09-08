@@ -71,6 +71,8 @@
     "react-quill": "^2.0.0",
     "react-resizable-panels": "^2.1.9",
     "react-router-dom": "^7.7.1",
+    "chart.js": "^4.4.7",
+    "react-chartjs-2": "^5.2.0",
     "recharts": "^2.15.4",
     "sonner": "^1.7.4",
     "swiper": "^11.2.10",
