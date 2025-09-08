@@ -1,13 +1,12 @@
-import axiosInstance from "@/api/axios";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLoader } from "@/contexts/LoaderContext";
+import axiosInstance from "@/api/axios";
+import Loader from "@/components/generic/Loader";
 import { AppRoutes } from "@/routes/app-routes";
 import { Config } from "@/utils/config";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Navigate, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -23,19 +22,10 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 const AdminLogin = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated, isAdmin, isLoading } = useAuth();
-  const { start: showLoader, stop: hideLoader } = useLoader();
+  const queryClient = useQueryClient();
 
   // Redirect immediately during render once auth is known
   const shouldRedirect = !isLoading && isAuthenticated && isAdmin;
-
-  useEffect(() => {
-    if (isLoading) {
-      showLoader("Checking session...");
-    } else {
-      hideLoader();
-    }
-    return () => hideLoader();
-  }, [isLoading, showLoader, hideLoader]);
 
   const {
     register,
@@ -66,16 +56,24 @@ const AdminLogin = () => {
     },
   });
 
+  // Page-level loader, no context
+  const loaderOpen = isLoading || mutation.isPending;
+  const loaderMessage = isLoading
+    ? "Checking session..."
+    : mutation.isPending
+      ? "Logging in..."
+      : undefined;
+
   const onSubmit = (data: LoginFormValues) => {
     mutation.mutate(data);
   };
 
-  if (isLoading) return <></>;
   if (shouldRedirect)
     return <Navigate to={AppRoutes.adminDashboard()} replace />;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <Loader open={loaderOpen} message={loaderMessage} />
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-center text-gray-800">
           Admin Login
