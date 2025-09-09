@@ -13,7 +13,7 @@ import { useLoader } from "@/hooks/useLoader";
 import { load } from "@cashfreepayments/cashfree-js";
 import { Check, Loader2, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 type ApiPlan = {
   code: string;
@@ -51,7 +51,6 @@ const planFeatures: Record<string, string[]> = {
 const Subscription = () => {
   const { user } = useAuth();
   const loader = useLoader();
-  const [searchParams] = useSearchParams();
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,21 +74,8 @@ const Subscription = () => {
         setIsLoading(false);
       }
     };
-
-    const orderId = searchParams.get("order_id");
-    if (orderId) {
-      async function fetchOrderDetails() {
-        console.log({ orderId });
-        const response = await axiosInstance.get(
-          `/api/cashfree/orders/${orderId}`
-        );
-        console.log({ response });
-      }
-      fetchOrderDetails();
-      return;
-    }
     fetchPlans();
-  }, [searchParams]);
+  }, []);
 
   const isCurrentPlan = (code: string) => code === currentPlanCode;
 

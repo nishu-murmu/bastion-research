@@ -155,8 +155,7 @@ export const createOrderForPlan = async (req: Request, res: Response) => {
     ).replace(/\/$/, "");
     // Build return URL with optional context so client can branch behavior
     let returnUrl =
-      `${return_url}?order_id=${orderId}` ||
-      `${frontendUrl}/payment/success?order_id=${orderId}`;
+      return_url || `${frontendUrl}/payment/success?order_id=${orderId}`;
 
     const request = {
       order_id: orderId,
@@ -174,6 +173,12 @@ export const createOrderForPlan = async (req: Request, res: Response) => {
     };
 
     const response = await pgCreateOrder(request);
+    await supabase.from("payment_history").upsert({
+      payer_email: customer_email || null,
+      transaction_status: "PENDING",
+      user_id: customer_id,
+      plan_id: planRow.plan_id,
+    });
     return res
       .status(201)
       .json({ plan: selected, order: response?.data || response });
@@ -218,11 +223,62 @@ export const handleCashfreeWebhook = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Invalid webhook signature." });
     }
 
-    // Signature is valid, process the event
-    const event = JSON.parse(rawBody);
-    console.log(event, "event logs");
-    // We no longer depend on onboarding_sessions here. If required,
-    // client will finalize onboarding after payment success.
+    const webhookResponse = JSON.parse(rawBody);
+    if (webhookResponse?.type === "PAYMENT_SUCCESS_WEBHOOK") {
+      const { payment, order, customer_details } = webhookResponse?.data;
+      if (payment?.payment_status === "SUCCESS") {
+        const [response, { data: plans }] = await Promise.all([
+          pgFetchOrder(order.order_id),
+          supabase
+            .from("membership_plans")
+            .select(
+              "plan_id, plan_name, price_amount, currency, duration_months"
+            ),
+        ]);
+        const userId = response?.customer_details?.customer_id;
+        const currentPlan = plans?.find(
+          (plan) => plan.price_amount === payment?.payment_amount
+        );
+        await Promise.all([
+          supabase.from("users").update({ isPremium: true }).eq("id", userId),
+          supabase.from("subscriptions").upsert({
+            membership_id: currentPlan?.plan_id,
+            name: currentPlan?.plan_name,
+            start_date: payment?.payment_time,
+            expire_next_renewal: currentPlan?.duration_months
+              ? new Date(
+                  new Date(payment?.payment_time).getTime() +
+                    currentPlan.duration_months * 30 * 24 * 60 * 60 * 1000
+                ).toISOString()
+              : null,
+            amount: payment?.payment_amount,
+            transaction_id: payment?.payment_amount,
+            user_id: userId,
+          }),
+          supabase.from("payment_history").upsert({
+            amount: payment?.payment_amount,
+            transaction_status: payment?.payment_status,
+            plan_id: currentPlan?.plan_id,
+            user_id: userId,
+            payer_email: customer_details?.customer_email,
+          }),
+        ]);
+
+        res.status(200).json({ message: "Subscription updated." });
+      }
+    }
+    if (webhookResponse?.type === "PAYMENT_USER_DROPPED_WEBHOOK") {
+      const { payment } = webhookResponse?.data;
+      if (payment?.payment_status === "USER_DROPPED") {
+        res.status(200).json({
+          message: payment?.payment_message || "Payment user dropped.",
+        });
+      }
+    }
+    if (webhookResponse?.type === "PAYMENT_FAILED_WEBHOOK") {
+      const { error_details } = webhookResponse?.data;
+      res.status(200).json({ message: "Webhook received successfully." });
+    }
 
     res.status(200).json({ message: "Webhook received successfully." });
   } catch (error: any) {
