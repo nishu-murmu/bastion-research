@@ -3,7 +3,8 @@ import { createPortal } from "react-dom";
 import { useLoaderStore } from "@/stores/loaderStore";
 
 const Loader = () => {
-  const { isLoading, message } = useLoaderStore();
+  const isLoading = useLoaderStore((state) => state.isLoading);
+  const message = useLoaderStore((state) => state.message);
 
   // Prevent body scroll when loader is open
   useEffect(() => {
@@ -30,4 +31,3 @@ const Loader = () => {
 };
 
 export default Loader;
-

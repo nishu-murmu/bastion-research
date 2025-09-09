@@ -11,7 +11,7 @@ const RouteAnalytics = () => {
     const path = location.pathname + (location.search || "");
     axios
       .post(
-        "/analytics/track",
+        "/api/analytics/track",
         {
           path,
           title: document?.title || undefined,
@@ -27,4 +27,3 @@ const RouteAnalytics = () => {
 };
 
 export default RouteAnalytics;
-
