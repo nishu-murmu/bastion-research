@@ -46,7 +46,6 @@ interface RegisterStepProps {
 
 interface VerifyStepProps {
   otp: string[];
-  otpTimer: number;
   isLoading: boolean;
   error: string | null;
   onBack: () => void;
@@ -54,7 +53,6 @@ interface VerifyStepProps {
   updateFormData: (field: string, value: any) => void;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setError: React.Dispatch<React.SetStateAction<string>>;
-  setOtpTimer: React.Dispatch<React.SetStateAction<number>>;
   formData: OnboardingFormData;
   email: string;
   phone: string;
@@ -63,7 +61,7 @@ interface VerifyStepProps {
 interface OnboardStepProps {
   formData: { firstName: string; lastName: string; dateOfBirth: string };
   updateFormData: UpdateFormFn;
-  onBack: () => void;
+  setCurrentStep: any;
   onNext: () => void;
 }
 
@@ -78,7 +76,7 @@ interface KYCStepProps {
 
 interface PlansStepProps {
   plans: Plan[];
-  selectedPlan: string;
+  formData: OnboardingFormData;
   updateFormData: UpdateFormFn;
   onBack: () => void;
   onNext: () => void;
@@ -106,6 +104,5 @@ interface PaymentStepProps {
   onClose: () => void;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setError: React.Dispatch<React.SetStateAction<string>>;
-  setOtpTimer: React.Dispatch<React.SetStateAction<number>>;
   setCurrentStep: any;
 }

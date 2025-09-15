@@ -11,7 +11,6 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   isLoading,
   error,
   onBack,
-  onClose,
   setError,
   setIsLoading,
   setCurrentStep,
@@ -69,6 +68,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   const onBackHandler = () => {
     if (selectedPlanDetails?.name === "Freemium") {
       setCurrentStep(3);
+      setError("");
       return;
     }
     onBack();

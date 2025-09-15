@@ -33,8 +33,6 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
     { id: 5, name: "KYC", icon: "🆔" },
     { id: 6, name: "Agreement", icon: "📄" },
   ];
-  // OTP countdown timer in seconds (10 minutes)
-  const [otpTimer, setOtpTimer] = useState(600);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -43,7 +41,6 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
   useEffect(() => {
     const formDataFromStorage = localStorage.getItem("onboardingFormData");
     const stepFromStorage = localStorage.getItem("onboardingCurrentStep");
-    const otpTimerFromStorage = localStorage.getItem("onboardingOtpTimer");
     if (formDataFromStorage) {
       try {
         setFormData(JSON.parse(formDataFromStorage));
@@ -55,12 +52,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
         setCurrentStep(step);
       }
     }
-    if (otpTimerFromStorage) {
-      const t = parseInt(otpTimerFromStorage, 10);
-      if (!Number.isNaN(t) && t >= 0) {
-        setOtpTimer(t);
-      }
-    }
+    // otp timer now handled inside VerifyStep
   }, []);
 
   const updateFormData = (field: string, value: any) => {
@@ -87,6 +79,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
         localStorage.setItem("onboardingCurrentStep", String(prev));
       } catch {}
     }
+    setError("");
   };
 
   useEffect(() => {
@@ -104,30 +97,12 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
     }
   }, [formData]);
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (currentStep === 2 && otpTimer > 0) {
-      timer = setInterval(() => {
-        setOtpTimer((prev) => (prev > 0 ? prev - 1 : 0));
-      }, 1000);
-    } else if (otpTimer === 0) {
-      // Handle timer expiration
-    }
-    return () => clearInterval(timer);
-  }, [currentStep, otpTimer]);
-
-  // Persist current step and OTP timer
+  // Persist current step
   useEffect(() => {
     try {
       localStorage.setItem("onboardingCurrentStep", String(currentStep));
     } catch {}
   }, [currentStep]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("onboardingOtpTimer", String(otpTimer));
-    } catch {}
-  }, [otpTimer]);
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -156,6 +131,14 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
       password: formData.password,
       confirmPassword: formData.confirmPassword,
     };
+    const onboardFormData = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      dateOfBirth: formData.dateOfBirth,
+    };
+    const kycFormData = {
+      panCard: formData.panCard,
+    };
     switch (currentStep) {
       case 1:
         return (
@@ -176,7 +159,6 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
           <VerifyStep
             error={error}
             otp={formData.otp}
-            otpTimer={otpTimer}
             formData={formData}
             isLoading={isLoading}
             email={formData.email}
@@ -184,7 +166,6 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
             onBack={prevStep}
             setError={setError}
             nextStep={nextStep}
-            setOtpTimer={setOtpTimer}
             setIsLoading={setIsLoading}
             updateFormData={updateFormData}
           />
@@ -192,13 +173,9 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
       case 3:
         return (
           <OnboardStep
-            formData={{
-              firstName: formData.firstName,
-              lastName: formData.lastName,
-              dateOfBirth: formData.dateOfBirth,
-            }}
-            onBack={prevStep}
+            formData={onboardFormData}
             onNext={nextStep}
+            setCurrentStep={setCurrentStep}
             updateFormData={updateFormData}
           />
         );
@@ -208,7 +185,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
             plans={plans}
             error={error}
             isLoading={isLoading}
-            selectedPlan={formData.selectedPlan}
+            formData={formData}
             onBack={prevStep}
             onNext={nextStep}
             updateFormData={updateFormData}
@@ -218,9 +195,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
       case 5:
         return (
           <KYCStep
-            formData={{
-              panCard: formData.panCard,
-            }}
+            formData={kycFormData}
             onBack={prevStep}
             onNext={nextStep}
             updateFormData={updateFormData}
@@ -247,7 +222,6 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
             onBack={prevStep}
             onClose={onClose}
             setError={setError}
-            setOtpTimer={setOtpTimer}
             setIsLoading={setIsLoading}
             setCurrentStep={setCurrentStep}
           />
