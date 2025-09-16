@@ -1,50 +1,48 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Plus, Edit2, Trash2 } from "lucide-react";
-import { AgGridReact } from "ag-grid-react";
-import { ColDef, GridReadyEvent } from "ag-grid-community";
+import React, { useState } from "react";
+import { Plus, Trash2, CreditCard } from "lucide-react";
+import { ColDef } from "ag-grid-community";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "@/api/axios";
 import { endpoints } from "@/api/endpoints";
 import { queryKeys } from "@/api/queryKeys";
-import EditRowModal from "@/components/core/common/Modals/EditRowModal";
-
-// Replaced static data with API-driven content
-
-const ActionsRenderer = (params: any) => (
-  <div className="flex items-center space-x-2">
-    <button
-      onClick={() => params.context?.openEdit?.(params.data)}
-      className="p-2 text-gray-600 hover:text-blue-600"
-      title="Edit"
-    >
-      <Edit2 size={14} />
-    </button>
-    <button
-      onClick={() => params.context?.deletePlan?.(params.data.plan_id)}
-      className="p-2 text-gray-600 hover:text-red-600"
-      title="Delete"
-    >
-      <Trash2 size={14} />
-    </button>
-  </div>
-);
+import { DataTable } from "@/components/ui/data-table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useModalStore } from "@/stores/modal-store";
+import { toast } from "sonner";
 
 const PlanTypeRenderer = (params: any) => {
+  const type = params.value || "Subscription";
+  const typeColors = {
+    Free: "bg-gray-100 text-gray-800",
+    Subscription: "bg-blue-100 text-blue-800",
+    Premium: "bg-purple-100 text-purple-800",
+  };
+  
   return (
-    <span
-      className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium w-fit ${
-        params.value === "Free"
-          ? "bg-gray-100 text-gray-800"
-          : "bg-blue-100 text-blue-800"
-      }`}
-    >
-      {params.value}
+    <span className={`px-2 py-1 rounded-full text-xs font-medium ${typeColors[type] || "bg-gray-100 text-gray-800"}`}>
+      {type}
     </span>
   );
 };
 
-const MembershipPlans = () => {
+const PriceRenderer = (params: any) => {
+  const amount = params.value;
+  if (amount === 0 || amount === null || amount === undefined) {
+    return <span className="text-green-600 font-medium">Free</span>;
+  }
+  return (
+    <span className="font-medium">
+      ₹{amount.toLocaleString()}
+    </span>
+  );
+};
+
+const ManagePlans = () => {
   const [showForm, setShowForm] = useState(false);
+  const [selectedPlans, setSelectedPlans] = useState<any[]>([]);
   const [form, setForm] = useState({
     plan_name: "",
     plan_type: "Subscription",
@@ -54,42 +52,8 @@ const MembershipPlans = () => {
     wp_role: "",
   });
 
-  const createPlan = () => {
-    createMutation.mutate(form);
-    setShowForm(false);
-    setForm({
-      plan_name: "",
-      plan_type: "Subscription",
-      price_amount: 0,
-      currency: "INR",
-      duration_months: 12,
-      wp_role: "",
-    });
-  };
-  const updatePlan = (id: number | string, body: any) =>
-    updateMutation.mutate({ id, body });
-  const deletePlan = (id: number | string) => deleteMutation.mutate(id);
-  const [editOpen, setEditOpen] = useState(false);
-  const [editRow, setEditRow] = useState<any | null>(null);
-  const openEdit = (row: any) => {
-    setEditRow(row);
-    setEditOpen(true);
-  };
-  const saveEdit = (values: any) => {
-    if (!editRow) return;
-    updatePlan(editRow.plan_id, {
-      plan_name: values.plan_name,
-      plan_type: values.plan_type,
-      price_amount: Number(values.price_amount),
-      currency: values.currency,
-      duration_months: Number(values.duration_months),
-      wp_role: values.wp_role,
-    });
-    setEditOpen(false);
-  };
-  const [searchTerm, setSearchTerm] = useState("");
-  const gridRef = useRef<any>(null);
   const queryClient = useQueryClient();
+  
   const { data: plans } = useQuery({
     queryKey: [queryKeys.membership_plans],
     queryFn: () =>
@@ -99,65 +63,307 @@ const MembershipPlans = () => {
   const createMutation = useMutation({
     mutationFn: (body: any) =>
       axiosInstance.post(endpoints.membershipPlans.base, body),
-    onSuccess: () =>
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.membership_plans] }),
+      toast.success("Plan created successfully");
+      setShowForm(false);
+      resetForm();
+    },
+    onError: () => {
+      toast.error("Failed to create plan");
+    },
   });
+  
   const updateMutation = useMutation({
     mutationFn: (payload: { id: number | string; body: any }) =>
       axiosInstance.put(
         endpoints.membershipPlans.byId(payload.id),
         payload.body
       ),
-    onSuccess: () =>
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.membership_plans] }),
+      toast.success("Plan updated successfully");
+    },
   });
+  
   const deleteMutation = useMutation({
     mutationFn: (id: number | string) =>
       axiosInstance.delete(endpoints.membershipPlans.byId(id)),
-    onSuccess: () =>
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.membership_plans] }),
+      toast.success("Plan deleted successfully");
+    },
   });
 
-  const [colDefs] = useState<ColDef[]>([
-    { headerName: "Plan ID", field: "plan_id" },
-    { headerName: "Plan Name", field: "plan_name" },
+  const resetForm = () => {
+    setForm({
+      plan_name: "",
+      plan_type: "Subscription",
+      price_amount: 0,
+      currency: "INR",
+      duration_months: 12,
+      wp_role: "",
+    });
+  };
+
+  const columns: ColDef[] = [
+    { 
+      headerName: "Plan Name", 
+      field: "plan_name",
+      flex: 2,
+      minWidth: 200,
+    },
     {
       headerName: "Plan Type",
       field: "plan_type",
       cellRenderer: PlanTypeRenderer,
+      flex: 1,
+      minWidth: 120,
     },
-    { headerName: "Members", field: "members" },
-    { headerName: "Wp Role", field: "wp_role" },
-    { headerName: "Price Amount", field: "price_amount" },
-    { headerName: "Currency", field: "currency" },
-    { headerName: "Duration (months)", field: "duration_months" },
     {
-      headerName: "Actions",
-      field: "actions",
-      cellRenderer: ActionsRenderer,
-      sortable: false,
-      filter: false,
+      headerName: "Price",
+      field: "price_amount",
+      cellRenderer: PriceRenderer,
+      flex: 1,
+      minWidth: 100,
     },
-  ]);
+    { 
+      headerName: "Currency", 
+      field: "currency",
+      width: 80,
+    },
+    { 
+      headerName: "Duration", 
+      field: "duration_months",
+      valueFormatter: (params) => params.value ? `${params.value} months` : "",
+      flex: 1,
+      minWidth: 120,
+    },
+    { 
+      headerName: "Members", 
+      field: "members",
+      width: 100,
+    },
+    { 
+      headerName: "WP Role", 
+      field: "wp_role",
+      flex: 1,
+      minWidth: 120,
+    },
+  ];
 
-  useEffect(() => {
-    if (gridRef.current?.api) {
-      gridRef.current.api.setGridOption("quickFilterText", searchTerm);
-    }
-  }, [searchTerm]);
+  const bulkActions = [
+    {
+      label: "Delete Selected",
+      icon: <Trash2 className="h-4 w-4" />,
+      action: (selected: any[]) => handleBulkDelete(selected),
+      variant: "destructive" as const,
+    },
+  ];
 
-  const onGridReady = (params: GridReadyEvent) => {
-    gridRef.current = params;
+  const handleEdit = (row: any) => {
+    // Implementation for editing plans
+    console.log("Edit plan:", row);
+  };
+
+  const handleDelete = (row: any) => {
+    const setModalOpen = useModalStore.getState().set;
+    const setModalProps = useModalStore.getState().setProps;
+    
+    setModalProps("confirm", {
+      title: "Delete plan?",
+      description: `This will permanently delete the plan "${row.plan_name}".`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      tone: "danger",
+      onConfirm: () => {
+        deleteMutation.mutate(row.plan_id);
+        setModalOpen("confirm", false);
+        setModalProps("confirm", undefined);
+      },
+      onCancel: () => {
+        setModalProps("confirm", undefined);
+      },
+    });
+    setModalOpen("confirm", true);
+  };
+
+  const handleBulkDelete = (selected: any[]) => {
+    const setModalOpen = useModalStore.getState().set;
+    const setModalProps = useModalStore.getState().setProps;
+    
+    setModalProps("confirm", {
+      title: `Delete ${selected.length} plans?`,
+      description: "This action cannot be undone.",
+      confirmText: "Delete All",
+      cancelText: "Cancel",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await Promise.all(selected.map(plan => 
+            axiosInstance.delete(endpoints.membershipPlans.byId(plan.plan_id))
+          ));
+          queryClient.invalidateQueries({ queryKey: [queryKeys.membership_plans] });
+          toast.success(`${selected.length} plans deleted successfully`);
+        } catch (error) {
+          toast.error("Failed to delete some plans");
+        } finally {
+          setModalOpen("confirm", false);
+          setModalProps("confirm", undefined);
+        }
+      },
+      onCancel: () => {
+        setModalProps("confirm", undefined);
+      },
+    });
+    setModalOpen("confirm", true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createMutation.mutate(form);
   };
 
   return (
-    <div className="bg-gray-50 flex-1 overflow-y-auto">
-      <div className="mx-auto max-w-[80rem] bg-white rounded-lg shadow-sm">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-6 border-b border-gray-200">
-          <h1 className="text-xl font-semibold text-gray-900 mb-4 sm:mb-0">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
             Manage Membership Plans
           </h1>
-          <button
+          <p className="text-muted-foreground">
+            Create and manage subscription plans
+          </p>
+        </div>
+        <Button
+          onClick={() => setShowForm(!showForm)}
+          className="flex items-center space-x-2"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Add New Plan</span>
+        </Button>
+      </div>
+
+      {/* Add Plan Form */}
+      {showForm && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <CreditCard className="mr-2 h-5 w-5" />
+              Create New Plan
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="plan_name">Plan Name</Label>
+                  <Input
+                    id="plan_name"
+                    value={form.plan_name}
+                    onChange={(e) => setForm({ ...form, plan_name: e.target.value })}
+                    placeholder="Enter plan name"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="plan_type">Plan Type</Label>
+                  <select
+                    id="plan_type"
+                    value={form.plan_type}
+                    onChange={(e) => setForm({ ...form, plan_type: e.target.value })}
+                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="Free">Free</option>
+                    <option value="Subscription">Subscription</option>
+                    <option value="Premium">Premium</option>
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="price_amount">Price Amount</Label>
+                  <Input
+                    id="price_amount"
+                    type="number"
+                    value={form.price_amount}
+                    onChange={(e) => setForm({ ...form, price_amount: Number(e.target.value) })}
+                    placeholder="0"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="currency">Currency</Label>
+                  <select
+                    id="currency"
+                    value={form.currency}
+                    onChange={(e) => setForm({ ...form, currency: e.target.value })}
+                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="INR">INR</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="duration_months">Duration (Months)</Label>
+                  <Input
+                    id="duration_months"
+                    type="number"
+                    value={form.duration_months}
+                    onChange={(e) => setForm({ ...form, duration_months: Number(e.target.value) })}
+                    placeholder="12"
+                    min="1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="wp_role">WP Role</Label>
+                  <Input
+                    id="wp_role"
+                    value={form.wp_role}
+                    onChange={(e) => setForm({ ...form, wp_role: e.target.value })}
+                    placeholder="subscriber"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowForm(false);
+                    resetForm();
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? "Creating..." : "Create Plan"}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Data Table */}
+      <DataTable
+        data={plans || []}
+        columns={columns}
+        loading={loading}
+        onSelectionChange={setSelectedPlans}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        bulkActions={bulkActions}
+        searchPlaceholder="Search plans by name or type..."
+        title="Membership Plans"
+        description={`${plans?.length || 0} total plans`}
+      />
+    </div>
+  );
+};
+
+export default ManagePlans;
+
             onClick={() => setShowForm(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
           >
