@@ -1,4 +1,6 @@
 import axiosInstance from "@/api/axios";
+import { endpoints } from "@/api/endpoints";
+import DeleteConfirmationModal from "@/components/core/common/Modals/ConfirmationModal";
 import { useEditMemberStore } from "@/stores/edit-member-store";
 import { useModalStore } from "@/stores/modal-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -6,8 +8,6 @@ import { ColDef, GridReadyEvent } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { Edit, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-
-// Static mock data removed; using API instead
 
 const AvatarRenderer = (params: any) => {
   const getInitial = (name: string) =>
@@ -44,8 +44,8 @@ const ActionsRenderer = (params: any) => (
     <button
       className="p-1 text-gray-600 hover:text-red-600 rounded"
       title="Delete"
-      onClick={() => params?.context?.deleteUser?.(params?.data?.id)}
-      disabled={!params?.context?.deleteUser || !params?.data?.id}
+      onClick={() => params?.context?.openDelete?.(params?.data)}
+      disabled={!params?.context?.openDelete || !params?.data?.id}
     >
       <Trash2 size={16} />
     </button>
@@ -60,7 +60,8 @@ const MemberManagementDashboard = () => {
     error,
   } = useQuery({
     queryKey: ["users"],
-    queryFn: () => axiosInstance.get("/api/users").then((res) => res.data),
+    queryFn: () =>
+      axiosInstance.get(endpoints.users.base).then((res) => res.data),
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("Select Status");
@@ -69,13 +70,16 @@ const MemberManagementDashboard = () => {
   const gridRef = useRef<AgGridReact>(null);
   const updateMutation = useMutation({
     mutationFn: (payload: { id: string; body: any }) =>
-      axiosInstance.put(`/api/users/${payload.id}`, payload.body),
+      axiosInstance.put(endpoints.users.byId(payload.id), payload.body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["users"] }),
   });
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => axiosInstance.delete(`/api/users/${id}`),
+    mutationFn: (id: string) => axiosInstance.delete(endpoints.users.byId(id)),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["users"] }),
   });
+
+  const setModalOpen = useModalStore((s) => s.set);
+  const setModalProps = useModalStore((s) => s.setProps);
 
   const [colDefs] = useState<ColDef[]>([
     { headerName: "", field: "select", width: 50 },
@@ -115,10 +119,31 @@ const MemberManagementDashboard = () => {
   };
   // Updates are now handled inside EditMemberModal
 
-  const deleteUser = (id: string) => {
-    if (!id) return;
-    deleteMutation.mutate(id);
+  const openDelete = (row: any) => {
+    if (!row?.id) return;
+    setModalProps("confirm", {
+      title: "Delete member?",
+      description: `This action cannot be undone. This will permanently delete ${row.first_name || row.username || "this user"}.`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      tone: "danger",
+      isLoading: deleteMutation.isPending,
+      onConfirm: () => {
+        deleteMutation.mutate(row.id, {
+          onSettled: () => {
+            setModalOpen("confirm", false);
+            setModalProps("confirm", undefined);
+          },
+        });
+      },
+      onCancel: () => {
+        setModalProps("confirm", undefined);
+      },
+    });
+    setModalOpen("confirm", true);
   };
+
+  // confirmation handled by generic modal
 
   const onGridReady = (params: GridReadyEvent) => {
     // Store the API reference directly
@@ -244,7 +269,7 @@ const MemberManagementDashboard = () => {
               headerCheckbox: true,
               enableClickSelection: false,
             }}
-            context={{ openEdit, deleteUser }}
+            context={{ openEdit, openDelete }}
           />
         </div>
 
@@ -265,6 +290,8 @@ const MemberManagementDashboard = () => {
         </div>
       </div>
       {/* EditMemberModal is rendered in ModalsLayout */}
+
+      {/* Confirmation handled globally via ConfirmationModal and modal-store */}
     </div>
   );
 };
