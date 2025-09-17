@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/api/axios";
 import { endpoints } from "@/api/endpoints";
 
-const ManagePlans = () => {
+const Recommendation = () => {
   const { data: rowData, isLoading } = useQuery({
     queryKey: ["membership-plans"],
     queryFn: () =>
@@ -44,4 +44,4 @@ const ManagePlans = () => {
   );
 };
 
-export default ManagePlans;
+export default Recommendation;
