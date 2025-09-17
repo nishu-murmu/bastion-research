@@ -1,10 +1,22 @@
-import * as React from "react";
+import { cn } from "@/lib/utils";
+import {
+  ColDef,
+  GridReadyEvent,
+  SelectionChangedEvent,
+} from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef, GridReadyEvent, SelectionChangedEvent } from "ag-grid-community";
-import { Button } from "./button";
-import { Input } from "./input";
+import {
+  ChevronDown,
+  Download,
+  Edit,
+  Eye,
+  MoreHorizontal,
+  Search,
+  Trash2,
+} from "lucide-react";
+import * as React from "react";
 import { Badge } from "./badge";
-import { Checkbox } from "./checkbox";
+import { Button } from "./button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,17 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./dropdown-menu";
-import {
-  Search,
-  Filter,
-  Download,
-  Trash2,
-  Edit,
-  Eye,
-  MoreHorizontal,
-  ChevronDown,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Input } from "./input";
 
 interface DataTableProps<T = any> {
   data: T[];
@@ -49,9 +51,11 @@ interface DataTableProps<T = any> {
 const StatusRenderer = ({ value }: { value: string }) => {
   const getStatusVariant = (status: string) => {
     const s = status?.toLowerCase();
-    if (s === "active" || s === "success" || s === "completed") return "default";
+    if (s === "active" || s === "success" || s === "completed")
+      return "default";
     if (s === "pending" || s === "processing") return "secondary";
-    if (s === "failed" || s === "error" || s === "cancelled") return "destructive";
+    if (s === "failed" || s === "error" || s === "cancelled")
+      return "destructive";
     return "secondary";
   };
 
@@ -126,11 +130,12 @@ export function DataTable<T = any>({
   // Enhanced column definitions with actions
   const enhancedColumns = React.useMemo(() => {
     const cols = [...columns];
-    
+
     // Add actions column if any action handlers are provided
     if (onEdit || onDelete || onView) {
       cols.push({
         headerName: "Actions",
+        //@ts-ignore
         field: "actions",
         cellRenderer: ActionsRenderer,
         sortable: false,
@@ -152,24 +157,30 @@ export function DataTable<T = any>({
     });
   }, [columns, onEdit, onDelete, onView]);
 
-  const defaultColDef = React.useMemo(() => ({
-    sortable: true,
-    filter: true,
-    resizable: true,
-    flex: 1,
-    minWidth: 120,
-  }), []);
+  const defaultColDef = React.useMemo(
+    () => ({
+      sortable: true,
+      filter: true,
+      resizable: true,
+      flex: 1,
+      minWidth: 120,
+    }),
+    []
+  );
 
   const onGridReady = React.useCallback((params: GridReadyEvent) => {
     // Auto-size columns to fit content
     params.api.sizeColumnsToFit();
   }, []);
 
-  const onSelectionChanged = React.useCallback((event: SelectionChangedEvent) => {
-    const selected = event.api.getSelectedRows();
-    setSelectedRows(selected);
-    onSelectionChange?.(selected);
-  }, [onSelectionChange]);
+  const onSelectionChanged = React.useCallback(
+    (event: SelectionChangedEvent) => {
+      const selected = event.api.getSelectedRows();
+      setSelectedRows(selected);
+      onSelectionChange?.(selected);
+    },
+    [onSelectionChange]
+  );
 
   React.useEffect(() => {
     if (gridRef.current?.api) {
@@ -180,23 +191,28 @@ export function DataTable<T = any>({
   const handleExport = React.useCallback(() => {
     if (gridRef.current?.api) {
       gridRef.current.api.exportDataAsCsv({
-        fileName: `${title?.toLowerCase().replace(/\s+/g, '-') || 'data'}-export.csv`,
+        fileName: `${title?.toLowerCase().replace(/\s+/g, "-") || "data"}-export.csv`,
       });
     }
   }, [title]);
 
-  const context = React.useMemo(() => ({
-    onEdit,
-    onDelete,
-    onView,
-  }), [onEdit, onDelete, onView]);
+  const context = React.useMemo(
+    () => ({
+      onEdit,
+      onDelete,
+      onView,
+    }),
+    [onEdit, onDelete, onView]
+  );
 
   return (
     <div className={cn("space-y-4", className)}>
       {/* Header */}
       {(title || description) && (
         <div>
-          {title && <h2 className="text-2xl font-bold tracking-tight">{title}</h2>}
+          {title && (
+            <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
+          )}
           {description && (
             <p className="text-muted-foreground">{description}</p>
           )}
@@ -271,7 +287,10 @@ export function DataTable<T = any>({
             </div>
           </div>
         ) : (
-          <div className="ag-theme-alpine" style={{ height: 600, width: "100%" }}>
+          <div
+            className="ag-theme-alpine"
+            style={{ height: 600, width: "100%" }}
+          >
             <AgGridReact
               ref={gridRef}
               rowData={data}
@@ -305,9 +324,7 @@ export function DataTable<T = any>({
           <div>
             Showing {data.length} {data.length === 1 ? "row" : "rows"}
             {selectedRows.length > 0 && (
-              <span className="ml-2">
-                ({selectedRows.length} selected)
-              </span>
+              <span className="ml-2">({selectedRows.length} selected)</span>
             )}
           </div>
         </div>
