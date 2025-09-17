@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
+import logo from "../../src/files/favicon.webp";
 import {
   ChevronLeft,
   LayoutDashboard,
@@ -10,7 +11,6 @@ import {
   Target,
   BarChart3,
   Percent,
-  BookOpen,
   User,
   ChevronDown,
   ChevronRight,
@@ -19,12 +19,18 @@ import {
   Settings,
 } from "lucide-react";
 
+// Brand Colors
+const BrandColors = {
+  red: "#C00000",
+  blue: "#1C2852",
+  beige: "#C4B696",
+  light: "#E6E6E6",
+};
+
 const navItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/user/app/dashboard" },
   { name: "Recommendation", icon: TrendingUp, path: "/user/app/recommendation" },
   { name: "Research Hub", icon: FileText, path: "/user/app/research-hub" },
-
-  // Parent Nav with submenus
   {
     name: "My Account",
     icon: User,
@@ -54,64 +60,95 @@ export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [openMenus, setOpenMenus] = useState({});
+  const [submenuPosition, setSubmenuPosition] = useState(null);
   const location = useLocation();
+
+  const sidebarRef = useRef(null);
+  const submenuRef = useRef(null);
 
   useEffect(() => {
     setIsMobileOpen(false);
   }, [location.pathname]);
 
+  // Close submenu on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target) &&
+        submenuRef.current &&
+        !submenuRef.current.contains(event.target)
+      ) {
+        setOpenMenus({});
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const toggleSidebar = () => setIsCollapsed((s) => !s);
   const toggleMobileMenu = () => setIsMobileOpen((s) => !s);
 
-  const toggleSubMenu = (name) => {
-    setOpenMenus((prev) => ({
-      ...prev,
-      [name]: !prev[name],
-    }));
+  const toggleSubMenu = (name, e) => {
+    if (isCollapsed) {
+      // Floating submenu position when collapsed
+      const rect = e.currentTarget.getBoundingClientRect();
+      setSubmenuPosition({ top: rect.top, height: rect.height });
+    }
+    setOpenMenus((prev) => {
+      if (prev[name]) return {}; // close if already open
+      return { [name]: true }; // open only this menu
+    });
   };
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-white border-r border-gray-200">
+    <div
+      ref={sidebarRef}
+      className="flex flex-col h-full relative text-white"
+      style={{ backgroundColor: BrandColors.blue }}
+    >
       {/* Header */}
       <div
-        className={`flex items-center justify-between p-4 border-b border-gray-100 ${
+        className={`flex items-center justify-between p-4 border-b border-gray-700 ${
           isCollapsed ? "justify-center" : ""
         }`}
       >
         {!isCollapsed ? (
           <div className="flex items-center">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <BookOpen className="h-5 w-5 text-white" />
+            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+              <img src={logo} alt="Logo" className="h-5 w-5" />
             </div>
             <div className="ml-3">
-              <h1 className="text-lg font-semibold text-gray-900">Bastion Research</h1>
+              <h1 className="text-lg font-semibold text-white">
+                Bastion Research
+              </h1>
             </div>
           </div>
         ) : (
           <div className="flex items-center justify-center w-full">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <BookOpen className="h-5 w-5 text-white" />
+            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+              <img src={logo} alt="Logo" className="h-5 w-5" />
             </div>
           </div>
         )}
 
         <button
           onClick={toggleSidebar}
-          className="hidden lg:block rounded-lg hover:bg-gray-100 transition-colors"
+          className="hidden lg:block"
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           <ChevronLeft
-            className={`h-5 w-5 text-gray-500 transition-transform duration-300 ${
+            className={`h-5 w-5 text-gray-300 transition-transform duration-300 ${
               isCollapsed ? "rotate-180" : ""
             }`}
           />
         </button>
       </div>
 
-      {/* Platform / Nav */}
+      {/* Nav */}
       <div className="px-2 pt-6">
         {!isCollapsed && (
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wide mb-3 text-gray-300">
             PLATFORM
           </h2>
         )}
@@ -119,14 +156,12 @@ export default function Sidebar() {
         <nav className="space-y-1">
           {navItems.map((item) => {
             const hasSub = item.subItems && item.subItems.length > 0;
-
             const isActive =
               location.pathname === item.path ||
               location.pathname.startsWith(item.path + "/");
 
             const isSubActive =
-              hasSub &&
-              item.subItems.some((sub) => location.pathname.startsWith(sub.path));
+              hasSub && item.subItems.some((sub) => location.pathname.startsWith(sub.path));
 
             const isOpen = openMenus[item.name] || isSubActive;
 
@@ -134,15 +169,14 @@ export default function Sidebar() {
               <div key={item.name}>
                 {hasSub ? (
                   <div>
-                    {/* Parent item */}
                     <div
-                      onClick={() => toggleSubMenu(item.name)}
+                      onClick={(e) => toggleSubMenu(item.name, e)}
                       className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full cursor-pointer ${
                         isCollapsed ? "justify-center" : ""
                       } ${
                         isActive || isSubActive
-                          ? "bg-orange-50 text-orange-700 border-r-2 border-orange-500"
-                          : "text-gray-700 hover:bg-gray-100"
+                          ? "bg-blue-900 text-whote"
+                          : "text-gray-200 hover:bg-red-900"
                       }`}
                       title={isCollapsed ? item.name : undefined}
                     >
@@ -151,21 +185,17 @@ export default function Sidebar() {
                         <>
                           <span className="ml-3 flex-1">{item.name}</span>
                           {isOpen ? (
-                            <ChevronDown className="h-4 w-4 text-gray-500" />
+                            <ChevronDown className="h-4 w-4 text-gray-300" />
                           ) : (
-                            <ChevronRight className="h-4 w-4 text-gray-500" />
+                            <ChevronRight className="h-4 w-4 text-gray-300" />
                           )}
                         </>
                       )}
                     </div>
 
-                    {/* Submenus */}
-                    {isOpen && (
-                      <div
-                        className={`mt-1 space-y-1 ${
-                          isCollapsed ? "flex flex-col items-center" : "ml-8"
-                        }`}
-                      >
+                    {/* Expanded mode submenu */}
+                    {!isCollapsed && isOpen && (
+                      <div className="ml-8 mt-1 space-y-1">
                         {item.subItems.map((sub) => {
                           const isSubActive = location.pathname === sub.path;
                           return (
@@ -175,13 +205,12 @@ export default function Sidebar() {
                               onClick={() => setIsMobileOpen(false)}
                               className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
                                 isSubActive
-                                  ? "bg-orange-100 text-orange-700"
-                                  : "text-gray-600 hover:bg-gray-100"
-                              } ${isCollapsed ? "justify-center w-10 h-10" : ""}`}
-                              title={isCollapsed ? sub.name : undefined}
+                                  ? "bg-white text-blue-900"
+                                  : "text-gray-200 hover:bg-red-900"
+                              }`}
                             >
-                              <sub.icon className="h-4 w-4" />
-                              {!isCollapsed && <span className="ml-2">{sub.name}</span>}
+                              <sub.icon className="h-4 w-4 mr-2" />
+                              {sub.name}
                             </Link>
                           );
                         })}
@@ -197,8 +226,8 @@ export default function Sidebar() {
                       isCollapsed ? "justify-center" : ""
                     } ${
                       isActive
-                        ? "bg-orange-50 text-orange-700 border-r-2 border-orange-500"
-                        : "text-gray-700 hover:bg-gray-100"
+                        ? "bg-white text-blue-900"
+                        : "text-gray-200 hover:bg-red-900"
                     }`}
                   >
                     <item.icon className="h-5 w-5" />
@@ -211,21 +240,56 @@ export default function Sidebar() {
         </nav>
       </div>
 
+      {/* Floating submenu (collapsed mode) */}
+      {isCollapsed &&
+        Object.entries(openMenus).map(([menuName, isOpen]) => {
+          const parent = navItems.find((n) => n.name === menuName);
+          if (!isOpen || !parent?.subItems || !submenuPosition) return null;
+          return (
+            <div
+              ref={submenuRef}
+              key={menuName}
+              className="absolute left-full z-50 bg-blue shadow-lg rounded-lg py-2 w-48 border animate-slideIn"
+              style={{ top: submenuPosition.top - 64 }}
+            >
+              {parent.subItems.map((sub) => {
+                const isSubActive = location.pathname === sub.path;
+                return (
+                  <Link
+                    key={sub.name}
+                    to={sub.path}
+                    onClick={() => setIsMobileOpen(false)}
+                    className={`flex items-center px-3 py-2 text-sm transition-colors ${
+                      isSubActive
+                        ? "bg-blue-900 text-blue-900"
+                        : "text-gray-700 hover:bg-red-900 hover:text-white"
+                    }`}
+                  >
+                    <sub.icon className="h-4 w-4 mr-2" />
+                    {sub.name}
+                  </Link>
+                );
+              })}
+            </div>
+          );
+        })}
+
       {/* Quick Stats */}
       {!isCollapsed && (
         <div className="px-4 pt-8">
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wide mb-4 text-gray-300">
             QUICK STATS
           </h2>
-
           <div className="space-y-3">
             {quickStats.map((stat) => (
-              <div key={stat.label} className="flex items-center justify-between">
+              <div key={stat.label} className="flex items-center justify-between text-gray-200">
                 <div className="flex items-center">
                   <stat.icon className="h-4 w-4 text-gray-400 mr-2" />
-                  <span className="text-sm text-gray-600">{stat.label}</span>
+                  <span className="text-sm">{stat.label}</span>
                 </div>
-                <span className="text-sm font-semibold text-gray-900">{stat.value}</span>
+                <span className="text-sm font-semibold text-white">
+                  {stat.value}
+                </span>
               </div>
             ))}
           </div>
@@ -233,7 +297,7 @@ export default function Sidebar() {
       )}
 
       {/* Profile */}
-      <div className="mt-auto p-4 border-t border-gray-100">
+      <div className="mt-auto p-4 border-t border-gray-700">
         {!isCollapsed ? (
           <div className="flex items-center">
             {profile.avatarUrl ? (
@@ -243,7 +307,7 @@ export default function Sidebar() {
                 className="w-8 h-8 rounded-full object-cover"
               />
             ) : (
-              <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center">
                 <span className="text-sm font-medium text-white">
                   {profile.name
                     .split(" ")
@@ -253,10 +317,9 @@ export default function Sidebar() {
                 </span>
               </div>
             )}
-
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-900">{profile.name}</p>
-              <p className="text-xs text-gray-500">{profile.role}</p>
+            <div className="ml-3 text-white">
+              <p className="text-sm font-medium">{profile.name}</p>
+              <p className="text-xs text-gray-300">{profile.role}</p>
             </div>
           </div>
         ) : (
@@ -268,7 +331,7 @@ export default function Sidebar() {
                 className="w-8 h-8 rounded-full object-cover"
               />
             ) : (
-              <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center">
                 <span className="text-sm font-medium text-white">
                   {profile.name[0] || "B"}
                 </span>
