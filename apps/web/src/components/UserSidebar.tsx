@@ -97,7 +97,7 @@ export default function Sidebar() {
 
         <button
           onClick={toggleSidebar}
-          className="hidden lg:block p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+          className="hidden lg:block rounded-lg hover:bg-gray-100 transition-colors"
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           <ChevronLeft
@@ -109,7 +109,7 @@ export default function Sidebar() {
       </div>
 
       {/* Platform / Nav */}
-      <div className="px-4 pt-6">
+      <div className="px-2 pt-6">
         {!isCollapsed && (
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
             PLATFORM
@@ -124,7 +124,6 @@ export default function Sidebar() {
               location.pathname === item.path ||
               location.pathname.startsWith(item.path + "/");
 
-            // if submenu exists, check if any child is active
             const isSubActive =
               hasSub &&
               item.subItems.some((sub) => location.pathname.startsWith(sub.path));
@@ -134,26 +133,59 @@ export default function Sidebar() {
             return (
               <div key={item.name}>
                 {hasSub ? (
-                  <div
-                    onClick={() => toggleSubMenu(item.name)}
-                    className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full cursor-pointer ${
-                      isCollapsed ? "justify-center" : ""
-                    } ${
-                      isActive || isSubActive
-                        ? "bg-orange-50 text-orange-700 border-r-2 border-orange-500"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {!isCollapsed && (
-                      <>
-                        <span className="ml-3 flex-1">{item.name}</span>
-                        {isOpen ? (
-                          <ChevronDown className="h-4 w-4 text-gray-500" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 text-gray-500" />
-                        )}
-                      </>
+                  <div>
+                    {/* Parent item */}
+                    <div
+                      onClick={() => toggleSubMenu(item.name)}
+                      className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full cursor-pointer ${
+                        isCollapsed ? "justify-center" : ""
+                      } ${
+                        isActive || isSubActive
+                          ? "bg-orange-50 text-orange-700 border-r-2 border-orange-500"
+                          : "text-gray-700 hover:bg-gray-100"
+                      }`}
+                      title={isCollapsed ? item.name : undefined}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      {!isCollapsed && (
+                        <>
+                          <span className="ml-3 flex-1">{item.name}</span>
+                          {isOpen ? (
+                            <ChevronDown className="h-4 w-4 text-gray-500" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-gray-500" />
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {/* Submenus */}
+                    {isOpen && (
+                      <div
+                        className={`mt-1 space-y-1 ${
+                          isCollapsed ? "flex flex-col items-center" : "ml-8"
+                        }`}
+                      >
+                        {item.subItems.map((sub) => {
+                          const isSubActive = location.pathname === sub.path;
+                          return (
+                            <Link
+                              key={sub.name}
+                              to={sub.path}
+                              onClick={() => setIsMobileOpen(false)}
+                              className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
+                                isSubActive
+                                  ? "bg-orange-100 text-orange-700"
+                                  : "text-gray-600 hover:bg-gray-100"
+                              } ${isCollapsed ? "justify-center w-10 h-10" : ""}`}
+                              title={isCollapsed ? sub.name : undefined}
+                            >
+                              <sub.icon className="h-4 w-4" />
+                              {!isCollapsed && <span className="ml-2">{sub.name}</span>}
+                            </Link>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
                 ) : (
@@ -172,30 +204,6 @@ export default function Sidebar() {
                     <item.icon className="h-5 w-5" />
                     {!isCollapsed && <span className="ml-3">{item.name}</span>}
                   </Link>
-                )}
-
-                {/* Submenus */}
-                {!isCollapsed && hasSub && isOpen && (
-                  <div className="ml-8 mt-1 space-y-1">
-                    {item.subItems.map((sub) => {
-                      const isSubActive = location.pathname === sub.path;
-                      return (
-                        <Link
-                          key={sub.name}
-                          to={sub.path}
-                          onClick={() => setIsMobileOpen(false)}
-                          className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
-                            isSubActive
-                              ? "bg-orange-100 text-orange-700"
-                              : "text-gray-600 hover:bg-gray-100"
-                          }`}
-                        >
-                          <sub.icon className="h-4 w-4 mr-2" />
-                          {sub.name}
-                        </Link>
-                      );
-                    })}
-                  </div>
                 )}
               </div>
             );
