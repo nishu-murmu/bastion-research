@@ -304,7 +304,7 @@ export default function Sidebar() {
               <img
                 src={profile.avatarUrl}
                 alt={profile.name}
-                className="w-8 h-8 rounded-full object-cover"
+                className="w-8 h-8 object-cover"
               />
             ) : (
               <div className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center">
