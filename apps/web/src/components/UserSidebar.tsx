@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import logo from "../../src/files/favicon.webp";
+import logo from "../../public/media/favicon.webp";
 import {
   ChevronLeft,
   LayoutDashboard,
