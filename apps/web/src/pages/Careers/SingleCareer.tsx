@@ -588,14 +588,6 @@ const SingleCareer = () => {
                 Submit
               </button>
             </form>
-                <button
-                  type="submit"
-                  className="w-full bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 font-medium"
-                >
-                  Submit
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -604,4 +596,3 @@ const SingleCareer = () => {
 };
 
 export default SingleCareer;
-export default BastionJobPage;
