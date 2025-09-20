@@ -1,23 +1,24 @@
 import Editor from "@/components/core/editor";
 import { lazy } from "react";
-import type { RouteObject } from "react-router-dom";
+import { Navigate, type RouteObject } from "react-router-dom";
+import { AppRoutes } from "./app-routes";
 
 // Layouts
-const RootLayout = lazy(() => import("../layouts/RootLayout"));
+const ClientLayout = lazy(() => import("../layouts/ClientLayout"));
 const AdminLayout = lazy(() => import("../layouts/AdminLayout"));
 const UserAdminLayout = lazy(() => import("../layouts/UserAdminLayout"));
 
 // Guards
-const ProtectedRoute = lazy(() => import("../components/ProtectedRoute"));
-const AdminRoute = lazy(() => import("../components/AdminRoute"));
+const ProtectedRoute = lazy(() => import("./ClientRoutes/ProtectedRoute"));
+const AdminRoute = lazy(() => import("./AdminRoutes/AdminRoute"));
 const UserAdminRoute = lazy(() => import("../components/UserAdminRoute"));
 
 // Pages
 const Home = lazy(() => import("../pages/Home"));
 const Login = lazy(() => import("../pages/Login"));
 const Register = lazy(() => import("../pages/Register"));
-const CompleteProfile = lazy(() => import("../pages/CompleteProfile"));
-const AuthCallback = lazy(() => import("../pages/AuthCallback"));
+const ForgotPassword = lazy(() => import("../pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("../pages/ResetPassword"));
 const Dashboard = lazy(() => import("../pages/Dashboard"));
 const Contact = lazy(() => import("../pages/Contact"));
 const CareerPage = lazy(() => import("../pages/Careers"));
@@ -27,8 +28,10 @@ const PrivacyPolicy = lazy(() => import("../pages/PrivacyPolicy"));
 const TermAndCondition = lazy(() => import("../pages/TermAndCondition"));
 const Compliance = lazy(() => import("../pages/Compliance"));
 const BastionCore = lazy(() => import("../pages/BastionCore"));
+const PaymentSuccess = lazy(() => import("../pages/PaymentSuccess"));
 const EditProfile = lazy(() => import("../pages/EditProfile"));
 const Subscription = lazy(() => import("../pages/Subscription"));
+const TransactionHistory = lazy(() => import("../pages/TransactionHistory"));
 const SpotLights = lazy(() => import("../pages/SpotLights"));
 const About = lazy(() => import("../pages/About"));
 const NotFound = lazy(() => import("../pages/NotFound"));
@@ -75,57 +78,15 @@ const SmartFrameworks = lazy(
   () => import("../components/generic/SmartFrameworks")
 );
 
-// Define App Routes
-export const AppRoutes = {
-  home: () => "/",
-  login: () => "/login",
-  register: () => "/register",
-  completeProfile: () => "/complete-profile",
-  authCallback: () => "/auth/callback",
-  dashboard: () => "/dashboard",
-  contact: () => "/contact",
-  careerPage: () => "/careers",
-  singleCareerPage: () => "/careers/:slug",
-  refundPolicy: () => "/refund-policy",
-  privacyPolicy: () => "/privacy-policy",
-  termAndCondition: () => "/terms-and-conditions",
-  compliance: () => "/compliance",
-  bastionCore: () => "/bastion-core",
-  editProfile: () => "/edit-profile",
-  subscription: () => "/subscription",
-  spotlights: () => "/spotlights",
-  podcasts: () => "/podcasts",
-  about: () => "/about",
-  test: () => "/test",
-  newsletter: () => "/newsletters-archive",
-  webinar: () => "/webinars",
-  smartFrameworks: () => "/smart-frameworks",
-  adminLogin: () => "/admin/login",
-  adminDashboard: () => "/admin/dashboard",
-  adminManageMembers: () => "/admin/ar/members",
-  adminManagePlans: () => "/admin/ar/plans",
-  adminManageSubscriptions: () => "/admin/ar/subscriptions",
-  adminPaymentHistory: () => "/admin/ar/payments",
-  adminCouponManagement: () => "/admin/ar/coupons",
-  adminJobOpenings: () => "/admin/jobs/openings",
-  adminAddNewJob: () => "/admin/jobs/add",
-  adminApplications: () => "/admin/jobs/applications",
-  adminAllUsers: () => "/admin/users/all",
-  adminAddUser: () => "/admin/users/add",
-  adminProfile: () => "/admin/users/profile",
-  adminSettings: () => "/admin/settings",
-  editor: () => "/admin/editor",
-};
-
 export const routes: RouteObject[] = [
   {
-    element: <RootLayout />,
+    element: <ClientLayout />,
     children: [
       { path: AppRoutes.home(), element: <Home /> },
       { path: AppRoutes.login(), element: <Login /> },
       { path: AppRoutes.register(), element: <Register /> },
-      { path: AppRoutes.completeProfile(), element: <CompleteProfile /> },
-      { path: AppRoutes.authCallback(), element: <AuthCallback /> },
+      { path: AppRoutes.forgotPassword(), element: <ForgotPassword /> },
+      { path: AppRoutes.resetPassword(), element: <ResetPassword /> },
       { path: AppRoutes.contact(), element: <Contact /> },
       { path: AppRoutes.careerPage(), element: <CareerPage /> },
       { path: AppRoutes.singleCareerPage(), element: <SingleCareerPage /> },
@@ -147,39 +108,90 @@ export const routes: RouteObject[] = [
           { path: AppRoutes.dashboard(), element: <Dashboard /> },
           { path: AppRoutes.editProfile(), element: <EditProfile /> },
           { path: AppRoutes.subscription(), element: <Subscription /> },
+          {
+            path: AppRoutes.transactionHistory(),
+            element: <TransactionHistory />,
+          },
         ],
       },
     ],
   },
   {
-    path: "/admin/login",
     element: <AdminLogin />,
+    path: AppRoutes.adminLogin(),
   },
   {
-    path: "/admin",
     element: <AdminLayout />,
+    path: AppRoutes.admin(),
     children: [
       {
         element: <AdminRoute />,
         children: [
-          { path: "dashboard", element: <AdminDashboard /> },
-          { path: "ar/members", element: <ManageMembers /> },
-          { path: "ar/plans", element: <ManagePlans /> },
-          { path: "ar/subscriptions", element: <ManageSubscriptions /> },
-          { path: "ar/payments", element: <PaymentHistory /> },
-          { path: "ar/coupons", element: <CouponManagement /> },
-          { path: "jobs/openings", element: <JobOpenings /> },
-          { path: "jobs/add", element: <AddNewJob /> },
-          { path: "jobs/applications", element: <Applications /> },
-          { path: "users/all", element: <AllUsers /> },
-          { path: "users/add", element: <AddUser /> },
-          { path: "users/profile", element: <Profile /> },
-          { path: "settings", element: <AdminSettings /> },
-          { path: "editor", element: <Editor /> },
+          {
+            index: true,
+            element: <Navigate to={AppRoutes.adminDashboard()} replace />,
+          },
+          {
+            path: AppRoutes.adminDashboard(),
+            element: <AdminDashboard />,
+          },
+          {
+            path: AppRoutes.adminManageMembers(),
+            element: <ManageMembers />,
+          },
+          {
+            path: AppRoutes.adminManagePlans(),
+            element: <ManagePlans />,
+          },
+          {
+            path: AppRoutes.adminManageSubscriptions(),
+            element: <ManageSubscriptions />,
+          },
+          {
+            path: AppRoutes.adminPaymentHistory(),
+            element: <PaymentHistory />,
+          },
+          {
+            path: AppRoutes.adminCouponManagement(),
+            element: <CouponManagement />,
+          },
+          {
+            path: AppRoutes.adminJobOpenings(),
+            element: <JobOpenings />,
+          },
+          {
+            path: AppRoutes.adminAddNewJob(),
+            element: <AddNewJob />,
+          },
+          {
+            path: AppRoutes.adminApplications(),
+            element: <Applications />,
+          },
+          {
+            path: AppRoutes.adminAllUsers(),
+            element: <AllUsers />,
+          },
+          {
+            path: AppRoutes.adminAddUser(),
+            element: <AddUser />,
+          },
+          {
+            path: AppRoutes.adminProfile(),
+            element: <Profile />,
+          },
+          {
+            path: AppRoutes.adminSettings(),
+            element: <AdminSettings />,
+          },
+          {
+            path: AppRoutes.editor(),
+            element: <Editor />,
+          },
         ],
       },
     ],
   },
+  
   {
     path: "/user",
     element: <UserAdminLayout />,

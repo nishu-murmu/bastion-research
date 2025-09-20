@@ -1,9 +1,9 @@
-import { Suspense } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter as Router, useRoutes } from 'react-router-dom';
-import { routes } from './routes';
-
-const queryClient = new QueryClient();
+import { BrowserRouter as Router, useRoutes } from "react-router-dom";
+import { Toaster } from "./components/ui/sonner";
+import { routes } from "./routes";
+import ModalsLayout from "./layouts/ModalsLayout";
+import RouteAnalytics from "./components/RouteAnalytics";
+import Loader from "./components/generic/Loader";
 
 const AppRoutes = () => {
   const element = useRoutes(routes);
@@ -12,13 +12,13 @@ const AppRoutes = () => {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <Suspense fallback={<div>Loading...</div>}>
-          <AppRoutes />
-        </Suspense>
-      </Router>
-    </QueryClientProvider>
+    <Router>
+      <RouteAnalytics />
+      <AppRoutes />
+      <ModalsLayout />
+      <Loader />
+      <Toaster />
+    </Router>
   );
 }
 

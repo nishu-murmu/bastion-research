@@ -1,16 +1,30 @@
-import { Router } from 'express'
-import { listPlans, createOrderForPlan, getOrder, } from '../controllers/cashfree.controller'
+import { Router } from "express";
+import {
+  listPlans,
+  createOrderForPlan,
+  getOrder,
+  handleCashfreeWebhook,
+  getUserSubscription,
+  testCashfreeWebhook,
+} from "../controllers/cashfree.controller";
+import { protect } from "../middleware/auth.middleware";
 
-const router = Router()
+const router = Router();
 
 // Plans
-router.get('/plans', listPlans)
+router.get("/plans", listPlans);
 
 // Create order for selected plan
-router.post('/orders', createOrderForPlan)
+router.post("/orders", createOrderForPlan);
 
 // Fetch order status
-router.get('/orders/:orderId', getOrder)
+router.get("/orders/:orderId", getOrder);
 
-export default router
+// Get user subscription status (authenticated)
+router.get("/subscription", protect, getUserSubscription);
 
+// Webhook handler
+router.post("/webhook", handleCashfreeWebhook);
+router.get("/webhook", testCashfreeWebhook);
+
+export default router;

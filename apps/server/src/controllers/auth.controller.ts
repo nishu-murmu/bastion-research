@@ -1,11 +1,12 @@
-import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { supabase } from '../config/supabase';
-import { OAuth2Client } from 'google-auth-library';
-import { User } from '@repo/types';
+import { Request, Response } from "express";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { config } from "../utils/config";
+import { supabase } from "../supabase";
+import crypto from "crypto";
+import sendEmail from "../utils/email";
 
-const generateToken = (id: string, email: string, expiresIn: string = '1d') => {
+const generateToken = (id: string, email: string, expiresIn: string = "1d") => {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error("JWT_SECRET is not defined in environment variables.");
@@ -13,365 +14,331 @@ const generateToken = (id: string, email: string, expiresIn: string = '1d') => {
   return jwt.sign({ id, email }, secret, { expiresIn: expiresIn as any });
 };
 
-const generateTemporaryToken = (payload: object) => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET is not defined.');
+// This function will be called internally after successful payment.
+export const createUserAfterOnboarding = async (userData: any) => {
+  const {
+    email,
+    phone,
+    password,
+    firstName,
+    lastName,
+    panCard,
+    dateOfBirth,
+    address1,
+    address2,
+    state,
+    city,
+    pinCode,
+    company,
+  } = userData;
+
+  // Basic validation
+  if (
+    !email ||
+    !phone ||
+    !password ||
+    !firstName ||
+    !lastName ||
+    !dateOfBirth
+  ) {
+    console.error("Validation failed for userData:", userData);
+    throw new Error("Missing required fields for user creation.");
   }
-  // This token is short-lived, just for completing the profile.
-  return jwt.sign(payload, secret, { expiresIn: '15m' });
-};
 
-const getGoogleClient = () => {
-  const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
-  const redirectUri = `${process.env.API_BASE_URL || 'http://localhost:3003'}/api/auth/google/callback`;
+  const { data: existingUser } = await supabase
+    .from("users")
+    .select("email")
+    .eq("email", email)
+    .maybeSingle();
 
-  if (!clientId || !clientSecret) {
-    throw new Error('Google OAuth credentials are not configured');
+  if (existingUser) {
+    console.warn(`Attempted to create a user that already exists: ${email}`);
+    throw new Error(`Attempted to create a user that already exists: ${email}`);
   }
-  return new OAuth2Client({ clientId, clientSecret, redirectUri });
-};
 
+  const hashedPassword = await bcrypt.hash(password, config.saltRounds);
+  const username =
+    email.split("@")[0] + `_${Math.random().toString(36).substring(2, 7)}`;
+
+  // Create the user
+  const { data: newUser, error: insertError } = await supabase
+    .from("users")
+    .insert({
+      email,
+      phone,
+      password: hashedPassword,
+      username,
+      first_name: firstName,
+      last_name: lastName,
+      pan_card_number: panCard,
+      date_of_birth: dateOfBirth,
+      // optional address/company fields
+      address_1: address1 || null,
+      address_2: address2 || null,
+      state: state || null,
+      city: city || null,
+      pin_code: pinCode || null,
+      company: company || null,
+      status: "active",
+      isPremium: true,
+    })
+    .select("id, email")
+    .single();
+
+  if (insertError) {
+    console.error("Error inserting new user:", insertError);
+    throw insertError;
+  }
+  if (!newUser) {
+    throw new Error(
+      "User not created after onboarding, but no error was thrown."
+    );
+  }
+
+  return newUser;
+};
 
 // --- Standard Authentication ---
 
-export const register = async (req: Request, res: Response) => {
-    const { email, phone, password } = req.body;
-
-    if (!email || !phone || !password) {
-        return res.status(400).json({ message: 'Email, phone, and password are required.' });
-    }
-
-    try {
-        const { data: existingUser, error: existingUserError } = await supabase
-            .from('users')
-            .select('email, phone')
-            .or(`email.eq.${email},phone.eq.${phone}`);
-
-        if (existingUserError) throw existingUserError;
-
-        if (existingUser && existingUser.length > 0) {
-            return res.status(409).json({ message: 'User with this email or phone number already exists.' });
-        }
-
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        const username = email.split('@')[0];
-
-        const { data: newUser, error: insertError } = await supabase
-            .from('users')
-            .insert({
-                email,
-                phone,
-                password: hashedPassword,
-                username: username,
-            })
-            .select('id, email, phone')
-            .single();
-
-        if (insertError) throw insertError;
-        if (!newUser) throw new Error('User not created');
-
-        res.status(201).json({
-            message: 'User registered successfully. Please verify your OTP.',
-            user: { id: newUser.id, email: newUser.email },
-        });
-
-    } catch (error) {
-        console.error('Registration error:', error);
-        res.status(500).json({ message: 'Server error during registration.' });
-    }
-};
-
-
-export const completeProfile = async (req: Request, res: Response) => {
-    const {
-        email,
-        first_name, last_name,
-        pan_card_number, date_of_birth,
-        aadhar_card_number, bank_account_number, ifsc_code
-    } = req.body;
-
-    if (!email || !first_name || !last_name || !pan_card_number || !date_of_birth) {
-        return res.status(400).json({ message: 'Please provide all required fields.' });
-    }
-
-    try {
-        const { data: user, error: userError } = await supabase
-            .from('users')
-            .select('id')
-            .eq('email', email)
-            .single();
-
-        if (userError || !user) {
-            return res.status(404).json({ message: 'User not found.' });
-        }
-
-        const { data: updatedUser, error: updateError } = await supabase
-            .from('users')
-            .update({
-                first_name,
-                last_name,
-                pan_card_number,
-                date_of_birth,
-                aadhar_card_number,
-                bank_account_number,
-                ifsc_code,
-                status: 'active'
-            })
-            .eq('id', user.id)
-            .select('id, username, email')
-            .single();
-
-        if (updateError) throw updateError;
-        if (!updatedUser) throw new Error('User profile not completed');
-
-        const token = generateToken(updatedUser.id, updatedUser.email);
-
-        res.status(200).json({
-            message: 'User profile completed successfully',
-            token,
-            user: { id: updatedUser.id, username: updatedUser.email, email: updatedUser.email },
-        });
-    } catch (error) {
-        console.error('Complete profile error:', error);
-        res.status(500).json({ message: 'Server error during profile completion.' });
-    }
-};
-
 export const signIn = async (req: Request, res: Response) => {
-  // ... (keeping existing signIn function as it is correct)
-  const { email, password } = req.body;
+  const { email, password, isAdminLogin } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({ message: 'Please provide email and password.' });
+    return res
+      .status(400)
+      .json({ message: "Please provide email and password." });
   }
 
   try {
     const { data: user, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
+      .from("users")
+      .select("*")
+      .eq("email", email)
       .single();
-
     if (error || !user) {
-      return res.status(404).json({ message: 'User not found.' });
+      return res.status(404).json({ message: "User not found." });
     }
-
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials.' });
+      return res.status(401).json({ message: "Invalid credentials." });
+    }
+
+    if (!isAdminLogin && user.role === config.roles.admin) {
+      return res
+        .status(401)
+        .json({ message: "You can't login with admin credentials." });
     }
 
     const token = generateToken(user.id, user.email);
 
-    res.cookie('token', token, {
+    res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Set to true in production
-      sameSite: 'strict', // Or 'lax'
+      secure: process.env.NODE_ENV === "production", // Set to true in production
+      sameSite: "strict", // Or 'lax'
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
 
     res.status(200).json({
-      message: 'Signed in successfully',
-      user: { id: user.id, username: user.username, email: user.email },
+      message: "Signed in successfully",
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (error) {
-    console.error('Sign in error:', error);
-    res.status(500).json({ message: 'Server error during sign in.' });
+    console.error("Sign in error:", error);
+    res.status(500).json({ message: "Server error during sign in." });
   }
 };
 
 export const forgotPassword = async (req: Request, res: Response) => {
-  // ... (keeping existing forgotPassword function)
   const { email } = req.body;
 
   if (!email) {
-    return res.status(400).json({ message: 'Please provide an email address.' });
+    return res
+      .status(400)
+      .json({ message: "Please provide an email address." });
   }
-
-  console.log(`Password reset requested for: ${email}`);
-  res.status(200).json({
-    message: 'If an account with this email exists, a password reset link has been sent.',
-  });
-};
-
-// --- Google OAuth ---
-
-export const googleOAuthStart = async (req: Request, res: Response) => {
   try {
-    const client = getGoogleClient();
-    const url = client.generateAuthUrl({
-      access_type: 'offline',
-      prompt: 'consent',
-      scope: ['openid', 'email', 'profile'],
-    });
-    res.redirect(url);
-  } catch (error) {
-    console.error('Google OAuth start error:', error);
-    res.status(500).json({ message: 'Failed to start Google OAuth flow.' });
-  }
-};
-
-export const googleOAuthCallback = async (req: Request, res: Response) => {
-  const { code } = req.query;
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-
-  if (!code) {
-    return res.redirect(`${frontendUrl}/login?error=google_oauth_failed`);
-  }
-
-  try {
-    const client = getGoogleClient();
-    const { tokens } = await client.getToken(code as string);
-    const idToken = tokens.id_token;
-
-    if (!idToken) {
-      throw new Error('No ID token received from Google.');
-    }
-
-    const ticket = await client.verifyIdToken({
-      idToken,
-      audience: process.env.GOOGLE_OAUTH_CLIENT_ID,
-    });
-    const payload = ticket.getPayload();
-
-    if (!payload || !payload.email) {
-      throw new Error('Invalid Google token payload.');
-    }
-
-    const { email, name, sub: googleId } = payload;
-    const [firstName, ...lastNameParts] = (name || '').split(' ');
-    const lastName = lastNameParts.join(' ');
-
-    // Check if user already exists
     const { data: user, error } = await supabase
-      .from('users')
-      .select('id, email')
-      .eq('email', email)
+      .from("users")
+      .select("id, email, password")
+      .eq("email", email)
       .single();
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 = 'exact one row not found'
-      throw error;
-    }
-
-    if (user) {
-      // User exists, sign them in by setting a cookie
-      const loginToken = generateToken(user.id, user.email);
-      res.cookie('token', loginToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
+    // Always respond success even if not found to prevent user enumeration
+    if (!user || error) {
+      return res.status(200).json({
+        message: "User doesn't exists for this email, Please create one.",
+        sentStatus: "failed",
       });
-      return res.redirect(`${frontendUrl}/dashboard`); // Redirect to a protected route
-    } else {
-      // User is new, redirect to complete profile with a temporary token
-      const tempTokenPayload = { email, googleId, firstName, lastName };
-      const tempToken = generateTemporaryToken(tempTokenPayload);
-      return res.redirect(`${frontendUrl}/complete-profile?temp_token=${tempToken}`);
     }
 
-  } catch (error) {
-    console.error('Google OAuth callback error:', error);
-    return res.redirect(`${frontendUrl}/login?error=google_oauth_failed`);
+    const secret = process.env.JWT_SECRET;
+    if (!secret) throw new Error("JWT_SECRET not set");
+
+    // password version tag so token invalidates after password change
+    const pwdTag = crypto
+      .createHash("sha256")
+      .update(user.password || "")
+      .digest("hex");
+    const token = jwt.sign(
+      { sub: user.id, email: user.email, type: "pwd_reset", pv: pwdTag },
+      secret,
+      { expiresIn: "15m" }
+    );
+
+    const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const resetUrl = `${baseUrl.replace(/\/$/, "")}/reset-password?token=${token}`;
+
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: "Reset your Bastion Research password",
+        text: `We received a request to reset your password.\n\nUse the link below to set a new password. This link expires in 15 minutes.\n\n${resetUrl}\n\nIf you didn't request this, you can safely ignore this email.`,
+        html: `<p>We received a request to reset your password.</p><p>Use the link below to set a new password. This link expires in <strong>15 minutes</strong>.</p><p><a href="${resetUrl}">Reset your password</a></p><p>If you didn't request this, you can safely ignore this email.</p>`,
+      });
+    } catch (e) {
+      // Log but do not expose details
+      console.error("Failed to send reset email", e);
+    }
+
+    return res.status(200).json({
+      message:
+        "If an account with this email exists, a password reset link has been sent.",
+    });
+  } catch (e) {
+    return res.status(200).json({
+      message:
+        "If an account with this email exists, a password reset link has been sent.",
+    });
   }
 };
 
-export const completeGoogleProfile = async (req: Request, res: Response) => {
-  const { temp_token, username, phone, address_1, address_2, pan_card_number, state, city, pin_code, date_of_birth, gst_number, company } = req.body;
-
-  if (!temp_token) {
-    return res.status(400).json({ message: 'Temporary token is required.' });
+export const resetPassword = async (req: Request, res: Response) => {
+  const { token, password } = req.body as { token?: string; password?: string };
+  if (!token || !password || password.length < 6) {
+    return res
+      .status(400)
+      .json({ message: "Invalid token or password too short" });
   }
-
   try {
     const secret = process.env.JWT_SECRET;
-    if (!secret) throw new Error('JWT_SECRET not set');
-
-    const decoded = jwt.verify(temp_token, secret) as { email: string, firstName: string, lastName: string };
-    const { email, firstName, lastName } = decoded;
-
-    // All other fields are required as per the original signUp logic
-    if (!username || !phone || !address_1 || !pan_card_number || !state || !city || !pin_code || !date_of_birth) {
-      return res.status(400).json({ message: 'Please provide all required fields.' });
+    if (!secret) throw new Error("JWT_SECRET not set");
+    const decoded = jwt.verify(token, secret) as any;
+    if (!decoded || decoded.type !== "pwd_reset" || !decoded.sub) {
+      return res
+        .status(400)
+        .json({ message: "Invalid or expired reset token" });
     }
 
-    const { data: newUser, error: insertError } = await supabase
-      .from('users')
-      .insert({
-        username, first_name: firstName, last_name: lastName, phone, email, address_1, address_2,
-        pan_card_number, state, city, pin_code, date_of_birth, gst_number, company,
-        password: null, // No password for OAuth users
-        cameFromOAuth: true
-      })
-      .select('id, username, email')
+    const { data: user, error } = await supabase
+      .from("users")
+      .select("id, email, password")
+      .eq("id", decoded.sub)
       .single();
-
-    if (insertError) throw insertError;
-    if (!newUser) throw new Error('Failed to create user profile.');
-
-    const loginToken = generateToken(newUser.id, newUser.email);
-
-    res.cookie('token', loginToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
-    });
-
-    res.status(201).json({
-      message: 'User profile completed and created successfully.',
-      user: newUser,
-    });
-
-  } catch (error: any) {
-    console.error('Complete Google Profile error:', error);
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
-      return res.status(401).json({ message: 'Invalid or expired temporary token.' });
+    if (error || !user) {
+      return res.status(400).json({ message: "Invalid reset token" });
     }
-    res.status(500).json({ message: 'Server error during profile completion.' });
+
+    // Ensure token not reused after password change
+    const pwdTag = crypto
+      .createHash("sha256")
+      .update(user.password || "")
+      .digest("hex");
+    if (pwdTag !== decoded.pv) {
+      return res.status(400).json({ message: "Reset link is no longer valid" });
+    }
+
+    const hashed = await bcrypt.hash(password, config.saltRounds);
+    const { error: updError } = await supabase
+      .from("users")
+      .update({ password: hashed, updated_at: new Date().toISOString() })
+      .eq("id", user.id);
+    if (updError) {
+      console.error("Failed to update password", updError);
+      return res.status(500).json({ message: "Failed to update password" });
+    }
+
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (e) {
+    return res.status(400).json({ message: "Invalid or expired reset token" });
   }
 };
 
-
-export const getMe = async (req: Request, res: Response) => {
+export const getUserSession = async (req: Request, res: Response) => {
   try {
     const token = req.cookies.token;
 
     if (!token) {
-      return res.status(401).json({ message: 'Not authenticated' });
+      return res.status(401).json({ message: "Not authenticated" });
     }
 
     const secret = process.env.JWT_SECRET;
-    if (!secret) throw new Error('JWT_SECRET not set');
+    if (!secret) throw new Error("JWT_SECRET not set");
 
-    const decoded = jwt.verify(token, secret) as { id: string, email: string };
+    const decoded = jwt.verify(token, secret) as { id: string; email: string };
 
     const { data: user, error } = await supabase
-      .from('users')
-      .select('id, username, email, role') // Make sure to select the 'role'
-      .eq('id', decoded.id)
+      .from("users")
+      .select(
+        `id, username, first_name, last_name, phone, email, address_1, pan_card_number, address_2, state, city, pin_code, date_of_birth, company, created_at, updated_at, isPremium, status, role`
+      )
+      .eq("id", decoded.id)
       .single();
 
     if (error || !user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     res.status(200).json({ user });
-
   } catch (error) {
-    res.status(401).json({ message: 'Not authenticated' });
+    res.status(401).json({ message: "Not authenticated" });
   }
 };
 
 export const logout = (req: Request, res: Response) => {
-  res.cookie('token', '', {
+  res.cookie("token", "", {
     httpOnly: true,
     expires: new Date(0),
   });
-  res.status(200).json({ message: 'Logged out successfully' });
+  res.status(200).json({ message: "Logged out successfully" });
+};
+
+// Endpoint to finalize onboarding and create the user after payment success
+export const registerFromOnboarding = async (req: Request, res: Response) => {
+  try {
+    const userData = req.body;
+
+    // createUserAfterOnboarding already validates required fields and checks duplicates
+    const newUser = (await createUserAfterOnboarding(userData)) as {
+      id: any;
+      email: any;
+    };
+
+    // Optionally, auto-login user here by setting a cookie
+    try {
+      const token = generateToken(newUser.id, newUser.email);
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+    } catch {}
+
+    return res.status(201).json({
+      message: "User created successfully",
+      user: newUser,
+    });
+  } catch (error: any) {
+    console.error("Onboarding finalize error:", error);
+    return res.status(400).json({
+      message: error?.message || "Failed to create user from onboarding data",
+      error: error?.message,
+    });
+  }
 };

@@ -1,315 +1,309 @@
-import React, { useState, useMemo } from "react";
-import {
-  Plus,
-  Edit2,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-} from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Plus, Edit2, Trash2 } from "lucide-react";
+import { AgGridReact } from "ag-grid-react";
+import { ColDef, GridReadyEvent } from "ag-grid-community";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axiosInstance from "@/api/axios";
+import { queryKeys } from "@/api/queryKeys";
+import EditRowModal from "@/components/core/common/Modals/EditRowModal";
+
+const ActionsRenderer = (params: any) => (
+  <div className="flex items-center space-x-2">
+    <button
+      onClick={() => params?.context?.openEdit?.(params?.data)}
+      className="p-2 text-gray-600 hover:text-blue-600"
+      title="Edit"
+      disabled={!params?.context?.openEdit || !params?.data}
+    >
+      <Edit2 size={14} />
+    </button>
+    <button
+      onClick={() => params?.context?.deletePlan?.(params?.data?.plan_id)}
+      className="p-2 text-gray-600 hover:text-red-600"
+      title="Delete"
+      disabled={!params?.context?.deletePlan || !params?.data?.plan_id}
+    >
+      <Trash2 size={14} />
+    </button>
+  </div>
+);
+
+const PlanTypeRenderer = (params: any) => {
+  if (!params || !params.value) return null;
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium w-fit ${
+        params.value === "Free"
+          ? "bg-gray-100 text-gray-800"
+          : "bg-blue-100 text-blue-800"
+      }`}
+    >
+      {params.value}
+    </span>
+  );
+};
 
 const MembershipPlans = () => {
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+    plan_name: "",
+    plan_type: "Subscription",
+    price_amount: 0,
+    currency: "INR",
+    duration_months: 12,
+    wp_role: "",
+  });
+
+  const createPlan = () => {
+    if (!form.plan_name || !form.plan_type || !form.currency || !form.wp_role)
+      return;
+    createMutation.mutate(form);
+    setShowForm(false);
+    setForm({
+      plan_name: "",
+      plan_type: "Subscription",
+      price_amount: 0,
+      currency: "INR",
+      duration_months: 12,
+      wp_role: "",
+    });
+  };
+  const updatePlan = (id: number | string, body: any) => {
+    if (!id || !body) return;
+    updateMutation.mutate({ id, body });
+  };
+  const deletePlan = (id: number | string) => {
+    if (!id) return;
+    deleteMutation.mutate(id);
+  };
+  const [editOpen, setEditOpen] = useState(false);
+  const [editRow, setEditRow] = useState<any | null>(null);
+  const openEdit = (row: any) => {
+    if (!row) return;
+    setEditRow(row);
+    setEditOpen(true);
+  };
+  const saveEdit = (values: any) => {
+    if (!editRow || !values) return;
+    updatePlan(editRow.plan_id, {
+      plan_name: values.plan_name ?? "",
+      plan_type: values.plan_type ?? "",
+      price_amount: Number(values.price_amount ?? 0),
+      currency: values.currency ?? "",
+      duration_months: Number(values.duration_months ?? 0),
+      wp_role: values.wp_role ?? "",
+    });
+    setEditOpen(false);
+  };
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [hoveredRow, setHoveredRow] = useState(null);
+  const gridRef = useRef<any>(null);
+  const queryClient = useQueryClient();
+  const { data: plans } = useQuery({
+    queryKey: [queryKeys.membership_plans],
+    queryFn: () =>
+      axiosInstance.get("/api/membership-plans").then((res) => res?.data ?? []),
+  });
 
-  const plansData = [
-    {
-      id: 5,
-      name: "Freemium",
-      type: "Free",
-      priceAmount: 0,
-      currency: "INR",
-      duration: "-",
-      members: 166,
-      role: "ARMember",
-    },
-    {
-      id: 4,
-      name: "Bastion Research Core",
-      type: "Paid",
-      priceAmount: 4000,
-      currency: "INR",
-      duration: "3 months x 12 installments",
-      members: 5,
-      role: "ARMember",
-    },
-    {
-      id: 2,
-      name: "Annual Plan",
-      type: "Paid",
-      priceAmount: 15890,
-      currency: "INR",
-      duration: "12 months (One-time)",
-      members: 49,
-      role: "ARMember",
-    },
-  ];
+  const createMutation = useMutation({
+    mutationFn: (body: any) =>
+      axiosInstance.post("/api/membership-plans", body),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [queryKeys.membership_plans] }),
+  });
+  const updateMutation = useMutation({
+    mutationFn: (payload: { id: number | string; body: any }) =>
+      axiosInstance.put(`/api/membership-plans/${payload?.id}`, payload?.body),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [queryKeys.membership_plans] }),
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id: number | string) =>
+      axiosInstance.delete(`/api/membership-plans/${id}`),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [queryKeys.membership_plans] }),
+  });
 
-  const filteredPlans = useMemo(() => {
-    return plansData.filter(
-      (plan) =>
-        plan.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        plan.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        plan.id.toString().includes(searchTerm) ||
-        plan.members.toString().includes(searchTerm)
-    );
+  const [colDefs] = useState<ColDef[]>([
+    { headerName: "Plan ID", field: "plan_id" },
+    { headerName: "Plan Name", field: "plan_name" },
+    {
+      headerName: "Plan Type",
+      field: "plan_type",
+      cellRenderer: PlanTypeRenderer,
+    },
+    { headerName: "Members", field: "members" },
+    { headerName: "Wp Role", field: "wp_role" },
+    { headerName: "Price Amount", field: "price_amount" },
+    { headerName: "Currency", field: "currency" },
+    { headerName: "Duration (months)", field: "duration_months" },
+    {
+      headerName: "Actions",
+      field: "actions",
+      cellRenderer: ActionsRenderer,
+      sortable: false,
+      filter: false,
+    },
+  ]);
+
+  useEffect(() => {
+    if (gridRef.current?.api) {
+      gridRef.current.api.setGridOption("quickFilterText", searchTerm);
+    }
   }, [searchTerm]);
 
-  const totalEntries = filteredPlans.length;
-  const totalPages = Math.ceil(totalEntries / entriesPerPage);
-  const startIndex = (currentPage - 1) * entriesPerPage;
-  const endIndex = Math.min(startIndex + entriesPerPage, totalEntries);
-  const currentEntries = filteredPlans.slice(startIndex, endIndex);
-
-  const handlePlanClick = (planId) => console.log(`Clicked plan ID: ${planId}`);
-  const handleMemberClick = (members) =>
-    console.log(`Clicked members: ${members}`);
-  const handleEdit = (planId) => console.log(`Edit plan ID: ${planId}`);
-  const handleDelete = (planId) => console.log(`Delete plan ID: ${planId}`);
-  const goToPage = (page) =>
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  const onGridReady = (params: GridReadyEvent) => {
+    gridRef.current = params;
+  };
 
   return (
     <div className="bg-gray-50 flex-1 overflow-y-auto">
       <div className="mx-auto max-w-[80rem] bg-white rounded-lg shadow-sm">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-6 border-b border-gray-200">
           <h1 className="text-xl font-semibold text-gray-900 mb-4 sm:mb-0">
             Manage Membership Plans
           </h1>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+          >
             <Plus size={16} />
             Add New Plan
           </button>
         </div>
 
-        {/* Search */}
-        <div className="p-2">
+        <div className="p-6 border-b border-gray-200">
           <div className="flex justify-end">
             <div className="relative w-full sm:w-80">
               <input
                 type="text"
-                placeholder="Search"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
+                placeholder="Search..."
+                value={searchTerm ?? ""}
+                onChange={(e) => setSearchTerm(e?.target?.value ?? "")}
                 className="w-full pl-4 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
           </div>
         </div>
 
-        {/* Table */}
-        <div className="p-1">
-          <div className="overflow-x-auto w-full">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                    Plan ID
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                    Plan Name
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                    Plan Type
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                    Members
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                    Wp Role
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                    Price Amount
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                    Currency
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                    Duration
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentEntries.map((plan) => (
-                  <tr
-                    key={plan.id}
-                    className="border-b border-gray-100 hover:bg-gray-50 group relative"
-                    onMouseEnter={() => setHoveredRow(plan.id)}
-                    onMouseLeave={() => setHoveredRow(null)}
-                  >
-                    <td className="py-3 px-4">
-                      <button
-                        onClick={() => handlePlanClick(plan.id)}
-                        className="text-blue-600 hover:text-blue-800 hover:underline"
-                      >
-                        {plan.id}
-                      </button>
-                    </td>
-                    <td className="py-3 px-4">
-                      <button
-                        onClick={() => handlePlanClick(plan.id)}
-                        className="text-blue-600 hover:text-blue-800 hover:underline text-left"
-                      >
-                        {plan.name}
-                      </button>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium w-fit ${
-                          plan.type === "Free"
-                            ? "bg-gray-100 text-gray-800"
-                            : "bg-blue-100 text-blue-800"
-                        }`}
-                      >
-                        {plan.type}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <button
-                        onClick={() => handleMemberClick(plan.members)}
-                        className="text-blue-600 hover:text-blue-800 hover:underline"
-                      >
-                        {plan.members}
-                      </button>
-                    </td>
-                    <td className="py-3 px-4">{plan.role}</td>
-                    <td className="py-3 px-4">{plan.priceAmount}</td>
-                    <td className="py-3 px-4">{plan.currency}</td>
-                    <td className="py-3 px-4">{plan.duration}</td>
-                    <td className="py-3 px-4 relative">
-                      {hoveredRow === plan.id && (
-                        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex bg-blue-600 rounded shadow-lg">
-                          <button
-                            onClick={() => handleEdit(plan.id)}
-                            className="p-2 text-white hover:bg-blue-700 rounded-l transition-colors"
-                            title="Edit"
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(plan.id)}
-                            className="p-2 text-white hover:bg-blue-700 rounded-r transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
-            <div className="text-sm text-gray-700">
-              Showing {startIndex + 1} to {endIndex} of {totalEntries} entries
+        {showForm && (
+          <div className="p-6 space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <input
+                className="border p-2 rounded"
+                placeholder="Plan Name"
+                value={form?.plan_name ?? ""}
+                onChange={(e) =>
+                  setForm({ ...form, plan_name: e?.target?.value ?? "" })
+                }
+              />
+              <input
+                className="border p-2 rounded"
+                placeholder="Plan Type"
+                value={form?.plan_type ?? ""}
+                onChange={(e) =>
+                  setForm({ ...form, plan_type: e?.target?.value ?? "" })
+                }
+              />
+              <input
+                className="border p-2 rounded"
+                placeholder="Price Amount"
+                type="number"
+                value={form?.price_amount ?? 0}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    price_amount: Number(e?.target?.value ?? 0),
+                  })
+                }
+              />
+              <input
+                className="border p-2 rounded"
+                placeholder="Currency"
+                value={form?.currency ?? ""}
+                onChange={(e) =>
+                  setForm({ ...form, currency: e?.target?.value ?? "" })
+                }
+              />
+              <input
+                className="border p-2 rounded"
+                placeholder="Duration (months)"
+                type="number"
+                value={form?.duration_months ?? 0}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    duration_months: Number(e?.target?.value ?? 0),
+                  })
+                }
+              />
+              <input
+                className="border p-2 rounded"
+                placeholder="WP Role"
+                value={form?.wp_role ?? ""}
+                onChange={(e) =>
+                  setForm({ ...form, wp_role: e?.target?.value ?? "" })
+                }
+              />
             </div>
-
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-700">Show</span>
-                <select
-                  value={entriesPerPage}
-                  onChange={(e) => {
-                    setEntriesPerPage(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                  className="border border-gray-300 rounded px-2 py-1 text-sm"
-                >
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-                <span className="text-sm text-gray-700">entries</span>
-              </div>
-
-              <div className="flex items-center">
-                <button
-                  onClick={() => goToPage(1)}
-                  disabled={currentPage === 1}
-                  className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronsLeft size={16} />
-                </button>
-                <button
-                  onClick={() => goToPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-
-                <div className="flex items-center gap-1 mx-2">
-                  {[...Array(totalPages)].map((_, i) => {
-                    const page = i + 1;
-                    if (
-                      page === 1 ||
-                      page === totalPages ||
-                      (page >= currentPage - 1 && page <= currentPage + 1)
-                    ) {
-                      return (
-                        <button
-                          key={page}
-                          onClick={() => goToPage(page)}
-                          className={`px-3 py-1 text-sm rounded ${
-                            currentPage === page
-                              ? "bg-blue-600 text-white"
-                              : "text-gray-700 hover:bg-gray-100"
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      );
-                    } else if (
-                      page === currentPage - 2 ||
-                      page === currentPage + 2
-                    ) {
-                      return (
-                        <span key={page} className="px-1 text-gray-400">
-                          ...
-                        </span>
-                      );
-                    }
-                    return null;
-                  })}
-                </div>
-
-                <span className="text-sm text-gray-700 mx-2">
-                  of {totalPages}
-                </span>
-
-                <button
-                  onClick={() => goToPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronRight size={16} />
-                </button>
-                <button
-                  onClick={() => goToPage(totalPages)}
-                  disabled={currentPage === totalPages}
-                  className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronsRight size={16} />
-                </button>
-              </div>
+            <div className="flex gap-2">
+              <button
+                className="bg-blue-600 text-white px-4 py-2 rounded"
+                onClick={createPlan}
+              >
+                Save Plan
+              </button>
+              <button
+                className="px-4 py-2 rounded border"
+                onClick={() => setShowForm(false)}
+              >
+                Cancel
+              </button>
             </div>
           </div>
+        )}
+
+        <div
+          className="p-1 ag-theme-alpine"
+          style={{ height: 400, width: "100%" }}
+        >
+          <AgGridReact
+            theme="legacy"
+            ref={gridRef}
+            rowData={plans ?? []}
+            columnDefs={colDefs}
+            defaultColDef={{
+              sortable: true,
+              filter: true,
+              resizable: true,
+              flex: 1,
+            }}
+            pagination={true}
+            paginationPageSize={10}
+            paginationPageSizeSelector={[10, 25, 50, 100]}
+            onGridReady={onGridReady}
+            context={{ openEdit, deletePlan }}
+          />
         </div>
+        <EditRowModal
+          open={!!editOpen}
+          title="Edit Plan"
+          fields={[
+            { name: "plan_name", label: "Plan Name" },
+            { name: "plan_type", label: "Plan Type" },
+            { name: "price_amount", label: "Price Amount", type: "number" },
+            { name: "currency", label: "Currency" },
+            {
+              name: "duration_months",
+              label: "Duration (months)",
+              type: "number",
+            },
+            { name: "wp_role", label: "WP Role" },
+          ]}
+          initialValues={editRow ?? {}}
+          onClose={() => setEditOpen(false)}
+          onSave={saveEdit}
+          saving={!!updateMutation?.isPending}
+        />
       </div>
     </div>
   );
