@@ -5,6 +5,18 @@ import {
   createNewsletter,
   createPodcast,
   createWebinar,
+  updateNewsletter,
+  updateWebinar,
+  updatePodcast,
+  deleteNewsletter,
+  deleteWebinar,
+  deletePodcast,
+  getNewsletter,
+  getWebinar,
+  getPodcast,
+  listNewsletters,
+  listWebinars,
+  listPodcasts,
 } from '../controllers/content.controller';
 import { getContactRecipientEmail, updateContactRecipientEmail } from '../controllers/settings.controller';
 
@@ -22,9 +34,25 @@ router.get('/analytics/summary', protect, admin, getAnalyticsSummary);
 router.get('/settings/contact-email', protect, admin, getContactRecipientEmail);
 router.put('/settings/contact-email', protect, admin, updateContactRecipientEmail);
 
-// Content management
-router.post('/newsletters', protect, admin, createNewsletter);
-router.post('/webinars', protect, admin, createWebinar);
-router.post('/podcasts', protect, admin, createPodcast);
+// Content management - Newsletters
+router.get('/content/newsletters', protect, admin, listNewsletters);
+router.get('/content/newsletters/:id', protect, admin, getNewsletter);
+router.post('/content/newsletters', protect, admin, createNewsletter);
+router.put('/content/newsletters/:id', protect, admin, updateNewsletter);
+router.delete('/content/newsletters/:id', protect, admin, deleteNewsletter);
+
+// Content management - Webinars
+router.get('/content/webinars', protect, admin, listWebinars);
+router.get('/content/webinars/:id', protect, admin, getWebinar);
+router.post('/content/webinars', protect, admin, createWebinar);
+router.put('/content/webinars/:id', protect, admin, updateWebinar);
+router.delete('/content/webinars/:id', protect, admin, deleteWebinar);
+
+// Content management - Podcasts
+router.get('/content/podcasts', protect, admin, listPodcasts);
+router.get('/content/podcasts/:id', protect, admin, getPodcast);
+router.post('/content/podcasts', protect, admin, createPodcast);
+router.put('/content/podcasts/:id', protect, admin, updatePodcast);
+router.delete('/content/podcasts/:id', protect, admin, deletePodcast);
 
 export default router;

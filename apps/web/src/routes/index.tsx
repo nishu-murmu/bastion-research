@@ -67,6 +67,19 @@ const AddUser = lazy(() => import("../pages/Admin/Users/AddUser"));
 const Profile = lazy(() => import("../pages/Admin/Users/Profile"));
 const AdminSettings = lazy(() => import("../pages/AdminSettings"));
 
+// Content Management Pages
+const NewsletterManagement = lazy(() => import("../pages/Admin/Content/NewsletterManagement"));
+const WebinarManagement = lazy(() => import("../pages/Admin/Content/WebinarManagement"));
+const PodcastManagement = lazy(() => import("../pages/Admin/Content/PodcastManagement"));
+const NewsletterEditor = lazy(() => import("../pages/Admin/Content/NewsletterEditor"));
+const WebinarEditor = lazy(() => import("../pages/Admin/Content/WebinarEditor"));
+const PodcastEditor = lazy(() => import("../pages/Admin/Content/PodcastEditor"));
+
+// Public Content Pages
+const NewsletterView = lazy(() => import("../pages/NewsletterView"));
+const WebinarView = lazy(() => import("../pages/WebinarView"));
+const PodcastView = lazy(() => import("../pages/PodcastView"));
+
 // Components that are used as pages
 const PodcastsBlog = lazy(() => import("../components/generic/PodcastsBlog"));
 const Test = lazy(() => import("../components/generic/Test"));
@@ -102,6 +115,10 @@ export const routes: RouteObject[] = [
       { path: AppRoutes.newsletter(), element: <NewsletterArchive /> },
       { path: AppRoutes.webinar(), element: <Webinar /> },
       { path: AppRoutes.smartFrameworks(), element: <SmartFrameworks /> },
+      // Public content view routes
+      { path: AppRoutes.newsletterView(), element: <NewsletterView /> },
+      { path: AppRoutes.webinarView(), element: <WebinarView /> },
+      { path: AppRoutes.podcastView(), element: <PodcastView /> },
       {
         element: <ProtectedRoute />,
         children: [
@@ -186,6 +203,43 @@ export const routes: RouteObject[] = [
           {
             path: AppRoutes.editor(),
             element: <Editor />,
+          },
+          // Content Management Routes
+          {
+            path: AppRoutes.adminNewsletterManagement(),
+            element: <NewsletterManagement />,
+          },
+          {
+            path: AppRoutes.adminWebinarManagement(),
+            element: <WebinarManagement />,
+          },
+          {
+            path: AppRoutes.adminPodcastManagement(),
+            element: <PodcastManagement />,
+          },
+          {
+            path: AppRoutes.adminNewsletterCreate(),
+            element: <NewsletterEditor />,
+          },
+          {
+            path: AppRoutes.adminNewsletterEdit(),
+            element: <NewsletterEditor />,
+          },
+          {
+            path: AppRoutes.adminWebinarCreate(),
+            element: <WebinarEditor />,
+          },
+          {
+            path: AppRoutes.adminWebinarEdit(),
+            element: <WebinarEditor />,
+          },
+          {
+            path: AppRoutes.adminPodcastCreate(),
+            element: <PodcastEditor />,
+          },
+          {
+            path: AppRoutes.adminPodcastEdit(),
+            element: <PodcastEditor />,
           },
         ],
       },
