@@ -49,7 +49,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  // Start in loading state to avoid premature redirects on refresh
+  const [isLoading, setIsLoading] = useState(true);
 
   const {
     data,
@@ -82,7 +83,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     setUser(data?.user ?? null);
-    console.log(sessionLoading, "load");
     setIsLoading(sessionLoading);
   }, [data, sessionLoading]);
 
@@ -92,6 +92,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = (newUser: User) => {
     setUser(newUser);
+    // Force a refetch to ensure session is properly established
+    refetch();
   };
 
   const logout = async () => {

@@ -10,9 +10,11 @@ import couponRoutes from "./routes/coupon.routes";
 import applicationRoutes from "./routes/application.routes";
 import adminRoutes from "./routes/admin.routes";
 import analyticsRoutes from "./routes/analytics.routes";
+import contentRoutes from "./routes/content.routes";
 import authRoutes from "./routes/auth.routes";
 import digioRoutes from "./routes/digio.routes";
 import cashfreeRoutes from "./routes/cashfree.routes";
+import contactRoutes from "./routes/contact.routes";
 import otpRoutes from "./routes/otp.routes";
 import kraRoutes from "./routes/kra.routes";
 
@@ -55,6 +57,8 @@ app.use("/api", jobRoutes);
 app.use("/api", applicationRoutes);
 app.use("/api", membershipRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api", contentRoutes);
+app.use("/api", contactRoutes);
 
 app.set("trust proxy", 1); // if you use secure cookies or rely on req.protocol
 

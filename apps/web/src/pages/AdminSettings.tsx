@@ -1,10 +1,39 @@
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import axiosInstance from '@/api/axios';
+import { endpoints } from '@/api/endpoints';
+import { toast } from 'sonner';
 
 const AdminSettings = () => {
+  const [contactEmail, setContactEmail] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await axiosInstance.get(endpoints.settings.contactEmail.get);
+        setContactEmail(res.data?.email || '');
+      } catch (e) {
+        // fallback to blank
+      }
+    })();
+  }, []);
+
+  const saveContactEmail = async () => {
+    try {
+      setSaving(true);
+      await axiosInstance.put(endpoints.settings.contactEmail.update, { email: contactEmail });
+      toast.success('Contact email saved');
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Failed to save contact email');
+    } finally {
+      setSaving(false);
+    }
+  };
   return (
     <div>
       <h1 className="text-3xl font-bold mb-8">Settings Panel</h1>
@@ -19,8 +48,14 @@ const AdminSettings = () => {
             <Input id="site-name" placeholder="Enter your site name" defaultValue="Admin Dashboard" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="admin-email">Admin Email</Label>
-            <Input id="admin-email" type="email" placeholder="Enter admin email" defaultValue="admin@example.com" />
+            <Label htmlFor="admin-email">Contact Form Recipient Email</Label>
+            <Input
+              id="admin-email"
+              type="email"
+              placeholder="Enter recipient email for contact form submissions"
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+            />
           </div>
           <div className="flex items-center justify-between">
             <Label htmlFor="maintenance-mode" className="flex flex-col space-y-1">
@@ -41,8 +76,10 @@ const AdminSettings = () => {
             <Switch id="allow-registrations" defaultChecked />
           </div>
         </CardContent>
-        <CardFooter>
-          <Button>Save Changes</Button>
+        <CardFooter className="flex gap-3">
+          <Button onClick={saveContactEmail} disabled={saving}>
+            {saving ? 'Saving...' : 'Save Changes'}
+          </Button>
         </CardFooter>
       </Card>
     </div>
