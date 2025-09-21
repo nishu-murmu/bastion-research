@@ -248,15 +248,15 @@ const CouponsManagement = () => {
     // add your modal / navigation here
   };
 
-  const handleDelete = async (couponId) => {
-    try {
-      await axiosInstance.delete(`${endpoints.coupons.base}/${couponId}`);
-      await fetchCoupons(); // Refresh the list
-      setSelectedCoupons((prev) => prev.filter((id) => id !== couponId));
-    } catch (error) {
-      console.error('Failed to delete coupon:', error);
-    }
-  };
+  // const handleDelete = async (couponId) => {
+  //   try {
+  //     await axiosInstance.delete(`${endpoints.coupons.base}/${couponId}`);
+  //     await fetchCoupons(); // Refresh the list
+  //     setSelectedCoupons((prev) => prev.filter((id) => id !== couponId));
+  //   } catch (error) {
+  //     console.error('Failed to delete coupon:', error);
+  //   }
+  // };
 
   const handlePageChange = (page) => setCurrentPage(page);
   const handleItemsPerPageChange = (e) => {
