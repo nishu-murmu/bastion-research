@@ -48,7 +48,7 @@ const Login = () => {
       axiosInstance.post(endpoints.auth.signin, data).then((res) => res.data),
     onSuccess: (data) => {
       login(data.user);
-      navigate("/dashboard");
+      navigate("/user/app/dashboard");
     },
     onError(error: any) {
       toast.error(error?.response?.data?.message || error.message);

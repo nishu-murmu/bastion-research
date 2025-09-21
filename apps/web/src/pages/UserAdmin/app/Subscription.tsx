@@ -289,23 +289,24 @@ const Subscription = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-rose-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-rose-50 p-3 sm:p-4 lg:p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 sm:mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-              <Sparkles className="h-6 w-6 text-red-500" /> Plans & Pricing
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
+              <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" /> Plans & Pricing
             </h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-sm sm:text-base text-muted-foreground mt-2">
               Choose the plan that fits you best
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button
               onClick={handleRefreshSubscription}
               variant="outline"
               size="sm"
               disabled={isSubscriptionLoading}
+              className="w-full sm:w-auto"
             >
               <RefreshCw
                 className={`h-4 w-4 mr-2 ${
@@ -314,17 +315,17 @@ const Subscription = () => {
               />
               Refresh
             </Button>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="w-full sm:w-auto">
               <Link to="/dashboard">Back to Dashboard</Link>
             </Button>
           </div>
         </div>
 
         {/* Current Plan */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Current Plan</CardTitle>
-            <CardDescription>Your active membership</CardDescription>
+        <Card className="mb-6 sm:mb-8">
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="text-lg sm:text-xl">Current Plan</CardTitle>
+            <CardDescription className="text-sm">Your active membership</CardDescription>
           </CardHeader>
           <CardContent>
             {isSubscriptionLoading ? (
@@ -333,16 +334,16 @@ const Subscription = () => {
                 plan...
               </div>
             ) : (
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex-1">
+                  <h3 className="text-base sm:text-lg font-semibold">
                     {subscription?.subscription?.name ||
                       (onFreePlan
                         ? "Freemium"
                         : currentPlanCode.toUpperCase())}{" "}
                     Plan
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     {onFreePlan
                       ? "Limited access to public content"
                       : subscription?.isPremium
@@ -350,44 +351,47 @@ const Subscription = () => {
                         : "Subscription pending"}
                   </p>
                 </div>
-                <Badge
-                  variant={subscription?.isPremium ? "default" : "secondary"}
-                >
-                  {subscription?.isPremium ? "Active" : "Pending"}
-                </Badge>
-                {subscription?.subscription && (
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    <p>Amount: {formatINR(subscription.subscription.amount)}</p>
-                    <p>
-                      Started:{" "}
-                      {new Date(
-                        subscription.subscription.startDate
-                      ).toLocaleDateString()}
-                    </p>
-                    {subscription.subscription.expireDate && (
+                <div className="flex flex-col sm:items-end gap-3">
+                  <Badge
+                    variant={subscription?.isPremium ? "default" : "secondary"}
+                    className="self-start sm:self-auto"
+                  >
+                    {subscription?.isPremium ? "Active" : "Pending"}
+                  </Badge>
+                  {subscription?.subscription && (
+                    <div className="text-xs sm:text-sm text-muted-foreground space-y-1">
+                      <p>Amount: {formatINR(subscription.subscription.amount)}</p>
                       <p>
-                        Expires:{" "}
+                        Started:{" "}
                         {new Date(
-                          subscription.subscription.expireDate
+                          subscription.subscription.startDate
                         ).toLocaleDateString()}
                       </p>
-                    )}
-                  </div>
-                )}
+                      {subscription.subscription.expireDate && (
+                        <p>
+                          Expires:{" "}
+                          {new Date(
+                            subscription.subscription.expireDate
+                          ).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* Plans Grid */}
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {isPlansLoading && (
-            <div className="col-span-3 flex items-center gap-2 text-muted-foreground">
+            <div className="col-span-full flex items-center gap-2 text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> Loading plans...
             </div>
           )}
           {error && (
-            <div className="col-span-3 text-sm text-red-600">{error}</div>
+            <div className="col-span-full text-sm text-red-600">{error}</div>
           )}
           {!isPlansLoading &&
             !error &&
@@ -412,42 +416,42 @@ const Subscription = () => {
                   className={`relative ${popular ? "border-red-400 shadow-md" : ""}`}
                 >
                   {popular && (
-                    <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-red-600">
+                    <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-red-600 text-xs">
                       Most Popular
                     </Badge>
                   )}
                   {limited && (
                     <Badge
                       variant="outline"
-                      className="absolute -top-2 right-4"
+                      className="absolute -top-2 right-4 text-xs"
                     >
                       Limited
                     </Badge>
                   )}
-                  <CardHeader className="text-center">
-                    <CardTitle className="text-2xl">
+                  <CardHeader className="text-center pb-3 sm:pb-6">
+                    <CardTitle className="text-xl sm:text-2xl">
                       {plan.amount <= 0 ? "Freemium" : plan.name}
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-sm">
                       {plan.amount <= 0
                         ? "Try before you upgrade"
                         : limited
                           ? "One-time availability for lifetime"
                           : "Best value for serious investors"}
                     </CardDescription>
-                    <div className="mt-4">
-                      <span className="text-3xl font-bold">{priceLabel}</span>
+                    <div className="mt-3 sm:mt-4">
+                      <span className="text-2xl sm:text-3xl font-bold">{priceLabel}</span>
                       {plan.amount > 0 && (
-                        <span className="text-muted-foreground"> one-time</span>
+                        <span className="text-muted-foreground text-sm"> one-time</span>
                       )}
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <ul className="space-y-3">
+                  <CardContent className="space-y-3 sm:space-y-4">
+                    <ul className="space-y-2 sm:space-y-3">
                       {(planFeatures[featureKey] || []).map((feature, idx) => (
                         <li key={idx} className="flex items-center gap-2">
-                          <Check className="h-4 w-4 text-red-600" />
-                          <span className="text-sm">{feature}</span>
+                          <Check className="h-3 w-3 sm:h-4 sm:w-4 text-red-600 flex-shrink-0" />
+                          <span className="text-xs sm:text-sm">{feature}</span>
                         </li>
                       ))}
                     </ul>
@@ -460,6 +464,7 @@ const Subscription = () => {
                       }
                       disabled={disabled}
                       onClick={() => handleSubscribe(plan.code)}
+                      size="sm"
                     >
                       {checkingOut === plan.code ? (
                         <span className="inline-flex items-center gap-2">
@@ -487,18 +492,18 @@ const Subscription = () => {
         className={kycStep === "kyc" ? "sm:max-w-lg" : "sm:max-w-3xl"}
       >
         {kycStep === "kyc" ? (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
                 KYC Verification Required
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 We need your PAN details before you can upgrade to a paid plan.
                 This helps us comply with SEBI regulations.
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="subscription-pan">PAN Card*</Label>
+              <Label htmlFor="subscription-pan" className="text-sm">PAN Card*</Label>
               <Input
                 id="subscription-pan"
                 value={upgradeForm.panCard}
@@ -510,21 +515,23 @@ const Subscription = () => {
                 }
                 maxLength={10}
                 placeholder="ABCDE1234F"
+                className="text-sm"
               />
               <p className="text-xs text-muted-foreground">
                 Use uppercase letters exactly as they appear on your PAN card.
               </p>
             </div>
             {kycError && <p className="text-sm text-red-600">{kycError}</p>}
-            <div className="flex justify-end gap-3">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
               <Button
                 variant="outline"
                 onClick={handleKycModalClose}
                 disabled={kycSubmitting}
+                className="w-full sm:w-auto"
               >
                 Cancel
               </Button>
-              <Button onClick={handleKycSubmit} disabled={kycSubmitting}>
+              <Button onClick={handleKycSubmit} disabled={kycSubmitting} className="w-full sm:w-auto">
                 {kycSubmitting ? "Saving..." : "Continue"}
               </Button>
             </div>

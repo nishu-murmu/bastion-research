@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import logo from "../../public/media/favicon.webp";
 import {
   ChevronLeft,
@@ -19,8 +19,12 @@ import {
   Settings,
   Crown,
   Shield,
+  Home,
+  ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 // Brand Colors
 const BrandColors = {
@@ -54,7 +58,8 @@ const quickStats = [
 ];
 
 export default function Sidebar() {
-  const { user, subscription, isAuthenticated } = useAuth();
+  const { user, subscription, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [openMenus, setOpenMenus] = useState({});
@@ -95,6 +100,23 @@ export default function Sidebar() {
 
   const toggleSidebar = () => setIsCollapsed((s) => !s);
   const toggleMobileMenu = () => setIsMobileOpen((s) => !s);
+
+  const handleExploreWebsite = () => {
+    navigate("/");
+    setIsMobileOpen(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Logged out successfully");
+      navigate("/");
+      setIsMobileOpen(false);
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to logout. Please try again.");
+    }
+  };
 
   const toggleSubMenu = (name, e) => {
     if (isCollapsed) {
@@ -150,6 +172,53 @@ export default function Sidebar() {
             }`}
           />
         </button>
+      </div>
+
+      {/* Header Buttons */}
+      <div className={`px-4 py-3 border-b border-gray-700 ${isCollapsed ? "px-2" : ""}`}>
+        {!isCollapsed ? (
+          <div className="flex gap-2">
+            <Button
+              onClick={handleExploreWebsite}
+              variant="outline"
+              size="sm"
+              className="flex-1 bg-blue-600 border-gray-600 text-white hover:bg-white hover:text-blue-900 transition-colors"
+            >
+              <Home className="h-4 w-4 mr-2" />
+              Explore Website
+            </Button>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              size="sm"
+              className="flex-1 bg-red-600 border-gray-600 text-white hover:bg-white hover:text-red-600 hover:border-600 transition-colors"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <Button
+              onClick={handleExploreWebsite}
+              variant="outline"
+              size="icon"
+              className="w-full bg-transparent border-gray-600 text-white hover:bg-white hover:text-blue-900 transition-colors"
+              title="Explore Website"
+            >
+              <Home className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              size="icon"
+              className="w-full bg-transparent border-gray-600 text-white hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors"
+              title="Logout"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Nav */}

@@ -29,9 +29,10 @@ const TermAndCondition = lazy(() => import("../pages/TermAndCondition"));
 const Compliance = lazy(() => import("../pages/Compliance"));
 const BastionCore = lazy(() => import("../pages/BastionCore"));
 const PaymentSuccess = lazy(() => import("../pages/PaymentSuccess"));
-const EditProfile = lazy(() => import("../pages/EditProfile"));
-const Subscription = lazy(() => import("../pages/Subscription"));
-const TransactionHistory = lazy(() => import("../pages/TransactionHistory"));
+// OLD USER ADMIN PAGES - COMMENTED OUT (Now using UserAdmin layout)
+// const EditProfile = lazy(() => import("../pages/EditProfile"));
+// const Subscription = lazy(() => import("../pages/Subscription"));
+// const TransactionHistory = lazy(() => import("../pages/TransactionHistory"));
 const SpotLights = lazy(() => import("../pages/SpotLights"));
 const About = lazy(() => import("../pages/About"));
 const NotFound = lazy(() => import("../pages/NotFound"));
@@ -118,12 +119,13 @@ export const routes: RouteObject[] = [
         element: <ProtectedRoute />,
         children: [
           { path: AppRoutes.dashboard(), element: <Dashboard /> },
-          { path: AppRoutes.editProfile(), element: <EditProfile /> },
-          { path: AppRoutes.subscription(), element: <Subscription /> },
-          {
-            path: AppRoutes.transactionHistory(),
-            element: <TransactionHistory />,
-          },
+          // OLD USER ADMIN ROUTES - COMMENTED OUT (Now using UserAdmin layout)
+          // { path: AppRoutes.editProfile(), element: <EditProfile /> },
+          // { path: AppRoutes.subscription(), element: <Subscription /> },
+          // {
+          //   path: AppRoutes.transactionHistory(),
+          //   element: <TransactionHistory />,
+          // },
         ],
       },
     ],
