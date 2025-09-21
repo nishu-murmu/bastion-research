@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import axiosInstance from "@/api/axios";
+import { endpoints } from "@/api/endpoints";
+import { toast } from "sonner";
 import BackgroundShapes from "../components/generic/framer-motion.tsx";
 import {
   MapPin,
@@ -33,21 +36,37 @@ export default function ContactPage() {
     setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
   };
 
-  const onSubmit = (e) => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const onSubmit = async (e) => {
     e.preventDefault();
     if (!form.notRobot) {
-      alert("Please confirm you are not a robot.");
+      toast.error("Please confirm you are not a robot.");
       return;
     }
-    alert("Thanks. Your message has been sent.");
-    setForm({
-      name: "",
-      email: "",
-      phone: "",
-      category: "Research Ally",
-      message: "",
-      notRobot: false,
-    });
+    try {
+      setSubmitting(true);
+      await axiosInstance.post(endpoints.contact.send, {
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        category: form.category,
+        message: form.message,
+      });
+      toast.success("Thanks! Your message has been sent.");
+      setForm({
+        name: "",
+        email: "",
+        phone: "",
+        category: "Research Ally",
+        message: "",
+        notRobot: false,
+      });
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to send message");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -220,9 +239,10 @@ export default function ContactPage() {
                 type="submit"
                 className="inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-2.5 text-white font-medium shadow-lg hover:opacity-95"
                 style={{ background: colors.red }}
+                disabled={submitting}
               >
                 <Send className="w-4 h-4" />
-                SEND
+                {submitting ? "SENDING..." : "SEND"}
               </button>
             </form>
           </motion.div>

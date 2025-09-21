@@ -51,6 +51,15 @@ export const endpoints = {
   digio: {
     uploadJson: "/api/digio/esign/uploadjson",
   },
+  contact: {
+    send: "/api/contact",
+  },
+  settings: {
+    contactEmail: {
+      get: "/api/admin/settings/contact-email",
+      update: "/api/admin/settings/contact-email",
+    },
+  },
 } as const;
 
 export type Endpoints = typeof endpoints;
