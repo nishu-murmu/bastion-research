@@ -95,10 +95,10 @@ const PodcastEditor = lazy(
 // Public Content Pages
 const NewsletterView = lazy(() => import("../pages/NewsletterView"));
 const WebinarView = lazy(() => import("../pages/Webinars/WebinarView"));
-const PodcastView = lazy(() => import("../pages/PodcastView"));
+const PodcastView = lazy(() => import("../pages/Podcasts/PodcastView"));
 
 // Components that are used as pages
-const PodcastsBlog = lazy(() => import("../components/generic/PodcastsBlog"));
+const PublicPodcastsPage = lazy(() => import("../pages/Podcasts"));
 const Test = lazy(() => import("../components/generic/Test"));
 const NewsletterArchive = lazy(
   () => import("../components/generic/NewsletterArchive")
@@ -127,7 +127,7 @@ export const routes: RouteObject[] = [
       { path: AppRoutes.bastionCore(), element: <BastionCore /> },
       { path: AppRoutes.about(), element: <About /> },
       { path: AppRoutes.spotlights(), element: <SpotLights /> },
-      { path: AppRoutes.podcasts(), element: <PodcastsBlog /> },
+      { path: AppRoutes.podcasts(), element: <PublicPodcastsPage /> },
       { path: AppRoutes.test(), element: <Test /> },
       { path: AppRoutes.newsletter(), element: <NewsletterArchive /> },
       { path: AppRoutes.webinar(), element: <Webinar /> },

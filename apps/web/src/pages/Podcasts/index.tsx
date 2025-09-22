@@ -21,21 +21,21 @@ const COLORS = {
 
 const ITEMS_PER_PAGE = 12;
 
-const PublicWebinarsPage = () => {
+const PublicPodcastsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const { data: rowData = [], isLoading: loading } = useQuery({
-    queryKey: [queryKeys.webinars],
+    queryKey: [queryKeys.podcasts],
     queryFn: () =>
       axiosInstance
-        .get(endpoints.content.webinars.base)
+        .get(endpoints.content.podcasts.base)
         .then((res) => res.data),
   });
   const { start, stop } = useLoader();
 
   const totalPages = Math.ceil(rowData.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentWebinars = useMemo(
+  const currentPodcasts = useMemo(
     () => rowData.slice(startIndex, startIndex + ITEMS_PER_PAGE),
     [currentPage, rowData]
   );
@@ -74,10 +74,10 @@ const PublicWebinarsPage = () => {
               className="text-4xl font-bold mb-4"
               style={{ color: COLORS.blue }}
             >
-              Bastion Webinars
+              Bastion Podcasts
             </h1>
             <p className="text-gray-600 max-w-2xl">
-              Stay informed with Bastion Webinars, your go-to source for the
+              Stay informed with Bastion Podcasts, your go-to source for the
               latest insights, trends, and updates in the world of business and
               technology
             </p>
@@ -88,18 +88,18 @@ const PublicWebinarsPage = () => {
         <div>
           <div className="max-w-7xl mx-auto py-8">
             {/* Podcast Cards Grid */}
-            {currentWebinars.length > 0 ? (
+            {currentPodcasts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                {currentWebinars.map((webinar) => (
+                {currentPodcasts.map((podcast) => (
                   <div
-                    key={webinar.id}
+                    key={podcast.id}
                     className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col"
                   >
                     {/* Image */}
                     <div className="aspect-video overflow-hidden bg-gray-100">
                       <img
-                        src={`https://img.youtube.com/vi/${new URL(webinar.video_url).pathname.split("/").at(-1)}/sddefault.jpg`}
-                        alt={webinar.title}
+                        src={podcast.imageUrl}
+                        alt={podcast.title}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -112,7 +112,7 @@ const PublicWebinarsPage = () => {
 
                           {/* Date */}
                           <span className="text-sm text-gray-500">
-                            {webinar.date}
+                            {podcast.date}
                           </span>
                         </div>
 
@@ -121,23 +121,23 @@ const PublicWebinarsPage = () => {
                           className="text-lg font-bold mb-2 leading-tight"
                           style={{ color: COLORS.blue }}
                         >
-                          {webinar.title}
+                          {podcast.title}
                         </h3>
                       </div>
 
                       {/* Buttons */}
                       <div className="flex gap-3 mt-auto">
                         <a
-                          href={AppRoutes.webinarView().replace(
+                          href={AppRoutes.podcastView().replace(
                             ":id",
-                            webinar.id
+                            podcast.id
                           )}
                           className="flex-1 bg-red-600 text-white text-center py-2 rounded-lg font-medium"
                         >
                           Read Now
                         </a>
                         <button
-                          onClick={() => handleShare(webinar.id)}
+                          onClick={() => handleShare(podcast.id)}
                           className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg font-medium"
                         >
                           Share Link
@@ -149,7 +149,7 @@ const PublicWebinarsPage = () => {
               </div>
             ) : (
               <div className="text-center text-gray-600 py-8">
-                <p>No webinars found. Please check back later.</p>
+                <p>No podcasts found. Please check back later.</p>
               </div>
             )}
 
@@ -202,4 +202,4 @@ const PublicWebinarsPage = () => {
   );
 };
 
-export default PublicWebinarsPage;
+export default PublicPodcastsPage;

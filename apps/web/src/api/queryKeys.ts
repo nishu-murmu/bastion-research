@@ -5,4 +5,5 @@ export const queryKeys = {
   applications: "applications",
   users: "users",
   webinars: "webinars",
+  podcasts: "podcasts",
 };

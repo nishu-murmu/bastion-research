@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight, Crown, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BackgroundShapes from "./framer-motion.tsx";
-import { newsletterApi, Newsletter } from "@/api/content";
+import { newsletterApi } from "@/api/content";
 import { toast } from "sonner";
 
 // Brand Colors
@@ -14,13 +14,6 @@ const COLORS = {
   white: "#ffffff",
   black: "#000000",
 };
-
-// Mock data for categories (you can make this dynamic later)
-const categories = [
-  "Learning of the Week",
-  "Topical Update", 
-  "Scratch Pad"
-];
 
 const ITEMS_PER_PAGE = 12;
 
@@ -51,8 +44,8 @@ const NewsletterArchive = () => {
       const data = await newsletterApi.getAll();
       setNewsletters(data);
     } catch (error: any) {
-      toast.error('Failed to load newsletters');
-      console.error('Error loading newsletters:', error);
+      toast.error("Failed to load newsletters");
+      console.error("Error loading newsletters:", error);
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +58,10 @@ const NewsletterArchive = () => {
       filtered = filtered.filter(
         (newsletter) =>
           newsletter.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (newsletter.sub_title && newsletter.sub_title.toLowerCase().includes(searchQuery.toLowerCase()))
+          (newsletter.sub_title &&
+            newsletter.sub_title
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase()))
       );
     }
 
@@ -107,10 +103,10 @@ const NewsletterArchive = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -296,8 +292,8 @@ const NewsletterArchive = () => {
                         </div>
                       </div>
                     </div>
-              ))}
-            </div>
+                  ))}
+                </div>
 
                 {/* No Results */}
                 {filteredNewsletters.length === 0 && (
@@ -317,45 +313,47 @@ const NewsletterArchive = () => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-12">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-
-                {[...Array(totalPages)].map((_, index) => {
-                  const page = index + 1;
-                  const isActive = page === currentPage;
-
-                  return (
+                  <div className="flex justify-center items-center gap-2 mt-12">
                     <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                        isActive
-                          ? "text-white shadow-md"
-                          : "text-gray-700 hover:bg-gray-100 border border-gray-300"
-                      }`}
-                      style={{
-                        backgroundColor: isActive ? COLORS.red : COLORS.white,
-                      }}
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
                     >
-                      {page}
+                      <ChevronLeft className="h-5 w-5" />
                     </button>
-                  );
-                })}
 
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </div>
+                    {[...Array(totalPages)].map((_, index) => {
+                      const page = index + 1;
+                      const isActive = page === currentPage;
+
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => handlePageChange(page)}
+                          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                            isActive
+                              ? "text-white shadow-md"
+                              : "text-gray-700 hover:bg-gray-100 border border-gray-300"
+                          }`}
+                          style={{
+                            backgroundColor: isActive
+                              ? COLORS.red
+                              : COLORS.white,
+                          }}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  </div>
                 )}
               </>
             )}
