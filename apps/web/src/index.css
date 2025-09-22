@@ -1,6 +1,8 @@
 @import "ag-grid-community/styles/ag-grid.css";
 @import "ag-grid-community/styles/ag-theme-alpine.css";
 @import "./styles/ag-grid-custom.css";
+@import "./styles/_variables.scss";
+@import "./styles/_keyframe-animations.scss";
 
 @tailwind base;
 @tailwind components;
@@ -131,4 +133,3 @@
 .animate-slide-in {
   animation: slideIn 0.2s ease-out;
 }
-
