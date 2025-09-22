@@ -9,8 +9,6 @@ const AdminLayout = lazy(() => import("../layouts/AdminLayout"));
 const UserAdminLayout = lazy(() => import("../layouts/UserAdminLayout"));
 
 // Guards
-const ProtectedRoute = lazy(() => import("./ClientRoutes/ProtectedRoute"));
-const AdminRoute = lazy(() => import("./AdminRoutes/AdminRoute"));
 const UserAdminRoute = lazy(() => import("../components/UserAdminRoute"));
 
 // Pages
@@ -28,13 +26,8 @@ const PrivacyPolicy = lazy(() => import("../pages/PrivacyPolicy"));
 const TermAndCondition = lazy(() => import("../pages/TermAndCondition"));
 const Compliance = lazy(() => import("../pages/Compliance"));
 const BastionCore = lazy(() => import("../pages/BastionCore"));
-const PaymentSuccess = lazy(() => import("../pages/PaymentSuccess"));
-// OLD USER ADMIN PAGES - COMMENTED OUT (Now using UserAdmin layout)
-// const EditProfile = lazy(() => import("../pages/EditProfile"));
-// const Subscription = lazy(() => import("../pages/Subscription"));
-// const TransactionHistory = lazy(() => import("../pages/TransactionHistory"));
 const SpotLights = lazy(() => import("../pages/SpotLights"));
-const About = lazy(() => import("../pages/About"));
+const About = lazy(() => import("../pages/AboutUs"));
 const NotFound = lazy(() => import("../pages/NotFound"));
 
 // User Admin Pages
@@ -56,13 +49,11 @@ const UserAdminSubscription = lazy(
 const UserAdminTransactionHistory = lazy(
   () => import("@/pages/UserAdmin/app/TransactionHistory")
 );
-const UserAdminLogout = lazy(
-  () => import("@/pages/UserAdmin/app/UserLogout")
-);
+const UserAdminLogout = lazy(() => import("@/pages/UserAdmin/app/UserLogout"));
 
 // Admin Pages
 const AdminLogin = lazy(() => import("../pages/AdminLogin"));
-const AdminDashboard = lazy(() => import("../pages/AdminDashboard"));
+const AdminDashboard = lazy(() => import("../pages/Admin/Dashboard"));
 const ManageMembers = lazy(() => import("../pages/Admin/AR/ManageMembers"));
 const ManagePlans = lazy(() => import("../pages/Admin/AR/ManagePlans"));
 const ManageSubscriptions = lazy(
@@ -78,28 +69,39 @@ const Applications = lazy(() => import("../pages/Admin/Jobs/Applications"));
 const AllUsers = lazy(() => import("../pages/Admin/Users/AllUsers"));
 const AddUser = lazy(() => import("../pages/Admin/Users/AddUser"));
 const Profile = lazy(() => import("../pages/Admin/Users/Profile"));
-const AdminSettings = lazy(() => import("../pages/AdminSettings"));
+const AdminSettings = lazy(() => import("../pages/Admin/Settings"));
 
-// Content Management Pages
-const NewsletterManagement = lazy(() => import("../pages/Admin/Content/NewsletterManagement"));
-const WebinarManagement = lazy(() => import("../pages/Admin/Content/WebinarManagement"));
-const PodcastManagement = lazy(() => import("../pages/Admin/Content/PodcastManagement"));
-const NewsletterEditor = lazy(() => import("../pages/Admin/Content/NewsletterEditor"));
-const WebinarEditor = lazy(() => import("../pages/Admin/Content/WebinarEditor"));
-const PodcastEditor = lazy(() => import("../pages/Admin/Content/PodcastEditor"));
+const NewsletterManagement = lazy(
+  () => import("../pages/Admin/Content/NewsletterManagement")
+);
+const WebinarManagement = lazy(
+  () => import("../pages/Admin/Content/WebinarManagement")
+);
+const PodcastManagement = lazy(
+  () => import("../pages/Admin/Content/PodcastManagement")
+);
+const NewsletterEditor = lazy(
+  () => import("../pages/Admin/Content/NewsletterEditor")
+);
+const WebinarEditor = lazy(
+  () => import("../pages/Admin/Content/WebinarEditor")
+);
+const PodcastEditor = lazy(
+  () => import("../pages/Admin/Content/PodcastEditor")
+);
 
 // Public Content Pages
 const NewsletterView = lazy(() => import("../pages/NewsletterView"));
-const WebinarView = lazy(() => import("../pages/WebinarView"));
-const PodcastView = lazy(() => import("../pages/PodcastView"));
+const WebinarView = lazy(() => import("../pages/Webinars/WebinarView"));
+const PodcastView = lazy(() => import("../pages/Podcasts/PodcastView"));
 
 // Components that are used as pages
-const PodcastsBlog = lazy(() => import("../components/generic/PodcastsBlog"));
+const PublicPodcastsPage = lazy(() => import("../pages/Podcasts"));
 const Test = lazy(() => import("../components/generic/Test"));
 const NewsletterArchive = lazy(
   () => import("../components/generic/NewsletterArchive")
 );
-const Webinar = lazy(() => import("../components/generic/Webinar"));
+const Webinar = lazy(() => import("../pages/Webinars"));
 const SmartFrameworks = lazy(
   () => import("../components/generic/SmartFrameworks")
 );
@@ -123,28 +125,15 @@ export const routes: RouteObject[] = [
       { path: AppRoutes.bastionCore(), element: <BastionCore /> },
       { path: AppRoutes.about(), element: <About /> },
       { path: AppRoutes.spotlights(), element: <SpotLights /> },
-      { path: AppRoutes.podcasts(), element: <PodcastsBlog /> },
+      { path: AppRoutes.podcasts(), element: <PublicPodcastsPage /> },
       { path: AppRoutes.test(), element: <Test /> },
       { path: AppRoutes.newsletter(), element: <NewsletterArchive /> },
       { path: AppRoutes.webinar(), element: <Webinar /> },
       { path: AppRoutes.smartFrameworks(), element: <SmartFrameworks /> },
-      // Public content view routes
       { path: AppRoutes.newsletterView(), element: <NewsletterView /> },
       { path: AppRoutes.webinarView(), element: <WebinarView /> },
       { path: AppRoutes.podcastView(), element: <PodcastView /> },
-      {
-        element: <ProtectedRoute />,
-        children: [
-          { path: AppRoutes.dashboard(), element: <Dashboard /> },
-          // OLD USER ADMIN ROUTES - COMMENTED OUT (Now using UserAdmin layout)
-          // { path: AppRoutes.editProfile(), element: <EditProfile /> },
-          // { path: AppRoutes.subscription(), element: <Subscription /> },
-          // {
-          //   path: AppRoutes.transactionHistory(),
-          //   element: <TransactionHistory />,
-          // },
-        ],
-      },
+      { path: AppRoutes.dashboard(), element: <Dashboard /> },
     ],
   },
   {
@@ -156,110 +145,105 @@ export const routes: RouteObject[] = [
     path: AppRoutes.admin(),
     children: [
       {
-        element: <AdminRoute />,
-        children: [
-          {
-            index: true,
-            element: <Navigate to={AppRoutes.adminDashboard()} replace />,
-          },
-          {
-            path: AppRoutes.adminDashboard(),
-            element: <AdminDashboard />,
-          },
-          {
-            path: AppRoutes.adminManageMembers(),
-            element: <ManageMembers />,
-          },
-          {
-            path: AppRoutes.adminManagePlans(),
-            element: <ManagePlans />,
-          },
-          {
-            path: AppRoutes.adminManageSubscriptions(),
-            element: <ManageSubscriptions />,
-          },
-          {
-            path: AppRoutes.adminPaymentHistory(),
-            element: <PaymentHistory />,
-          },
-          {
-            path: AppRoutes.adminCouponManagement(),
-            element: <CouponManagement />,
-          },
-          {
-            path: AppRoutes.adminJobOpenings(),
-            element: <JobOpenings />,
-          },
-          {
-            path: AppRoutes.adminAddNewJob(),
-            element: <AddNewJob />,
-          },
-          {
-            path: AppRoutes.adminApplications(),
-            element: <Applications />,
-          },
-          {
-            path: AppRoutes.adminAllUsers(),
-            element: <AllUsers />,
-          },
-          {
-            path: AppRoutes.adminAddUser(),
-            element: <AddUser />,
-          },
-          {
-            path: AppRoutes.adminProfile(),
-            element: <Profile />,
-          },
-          {
-            path: AppRoutes.adminSettings(),
-            element: <AdminSettings />,
-          },
-          {
-            path: AppRoutes.editor(),
-            element: <Editor />,
-          },
-          // Content Management Routes
-          {
-            path: AppRoutes.adminNewsletterManagement(),
-            element: <NewsletterManagement />,
-          },
-          {
-            path: AppRoutes.adminWebinarManagement(),
-            element: <WebinarManagement />,
-          },
-          {
-            path: AppRoutes.adminPodcastManagement(),
-            element: <PodcastManagement />,
-          },
-          {
-            path: AppRoutes.adminNewsletterCreate(),
-            element: <NewsletterEditor />,
-          },
-          {
-            path: AppRoutes.adminNewsletterEdit(),
-            element: <NewsletterEditor />,
-          },
-          {
-            path: AppRoutes.adminWebinarCreate(),
-            element: <WebinarEditor />,
-          },
-          {
-            path: AppRoutes.adminWebinarEdit(),
-            element: <WebinarEditor />,
-          },
-          {
-            path: AppRoutes.adminPodcastCreate(),
-            element: <PodcastEditor />,
-          },
-          {
-            path: AppRoutes.adminPodcastEdit(),
-            element: <PodcastEditor />,
-          },
-        ],
+        index: true,
+        element: <Navigate to={AppRoutes.adminDashboard()} replace />,
+      },
+      {
+        path: AppRoutes.adminDashboard(),
+        element: <AdminDashboard />,
+      },
+      {
+        path: AppRoutes.adminManageMembers(),
+        element: <ManageMembers />,
+      },
+      {
+        path: AppRoutes.adminManagePlans(),
+        element: <ManagePlans />,
+      },
+      {
+        path: AppRoutes.adminManageSubscriptions(),
+        element: <ManageSubscriptions />,
+      },
+      {
+        path: AppRoutes.adminPaymentHistory(),
+        element: <PaymentHistory />,
+      },
+      {
+        path: AppRoutes.adminCouponManagement(),
+        element: <CouponManagement />,
+      },
+      {
+        path: AppRoutes.adminJobOpenings(),
+        element: <JobOpenings />,
+      },
+      {
+        path: AppRoutes.adminAddNewJob(),
+        element: <AddNewJob />,
+      },
+      {
+        path: AppRoutes.adminApplications(),
+        element: <Applications />,
+      },
+      {
+        path: AppRoutes.adminAllUsers(),
+        element: <AllUsers />,
+      },
+      {
+        path: AppRoutes.adminAddUser(),
+        element: <AddUser />,
+      },
+      {
+        path: AppRoutes.adminProfile(),
+        element: <Profile />,
+      },
+      {
+        path: AppRoutes.adminSettings(),
+        element: <AdminSettings />,
+      },
+      {
+        path: AppRoutes.editor(),
+        element: <Editor />,
+      },
+      // Content Management Routes
+      {
+        path: AppRoutes.adminNewsletterManagement(),
+        element: <NewsletterManagement />,
+      },
+      {
+        path: AppRoutes.adminWebinarManagement(),
+        element: <WebinarManagement />,
+      },
+      {
+        path: AppRoutes.adminPodcastManagement(),
+        element: <PodcastManagement />,
+      },
+      {
+        path: AppRoutes.adminNewsletterCreate(),
+        element: <NewsletterEditor />,
+      },
+      {
+        path: AppRoutes.adminNewsletterEdit(),
+        element: <NewsletterEditor />,
+      },
+      {
+        path: AppRoutes.adminWebinarCreate(),
+        element: <WebinarEditor />,
+      },
+      {
+        path: AppRoutes.adminWebinarEdit(),
+        element: <WebinarEditor />,
+      },
+      {
+        path: AppRoutes.adminPodcastCreate(),
+        element: <PodcastEditor />,
+      },
+      {
+        path: AppRoutes.adminPodcastEdit(),
+        element: <PodcastEditor />,
       },
     ],
   },
-  
+
   {
     path: "/user",
     element: <UserAdminLayout />,
@@ -271,9 +255,18 @@ export const routes: RouteObject[] = [
           { path: "app/dashboard", element: <UserAdminDashboard /> },
           { path: "app/recommendation", element: <UserAdminRecommendation /> },
           { path: "app/research-hub", element: <UserAdminResearchHub /> },
-          { path: "app/account/edit-profile", element: <UserAdminEditProfile /> },
-          { path: "app/account/subscription", element: <UserAdminSubscription /> },
-          { path: "app/account/transactions", element: <UserAdminTransactionHistory /> },
+          {
+            path: "app/account/edit-profile",
+            element: <UserAdminEditProfile />,
+          },
+          {
+            path: "app/account/subscription",
+            element: <UserAdminSubscription />,
+          },
+          {
+            path: "app/account/transactions",
+            element: <UserAdminTransactionHistory />,
+          },
           { path: "app/account/logout", element: <UserAdminLogout /> },
         ],
       },
