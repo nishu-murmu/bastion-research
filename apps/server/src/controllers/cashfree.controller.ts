@@ -235,18 +235,18 @@ export const handleCashfreeWebhook = async (req: Request, res: Response) => {
         const currentPlan = plans?.find(
           (plan) => plan.price_amount === payment?.payment_amount
         );
-        const [, payment_history_response] = await Promise.all([
-          supabase
-            .from("users")
-            .update({ isPremium: true, status: "active" })
-            .eq("id", customer_details?.customer_id),
-          supabase.from("payment_history").insert({
+        supabase
+          .from("users")
+          .update({ isPremium: true, status: "active" })
+          .eq("id", customer_details?.customer_id);
+        const payment_history_response = await supabase
+          .from("payment_history")
+          .insert({
             transaction_status: payment?.payment_status,
             plan_id: currentPlan?.plan_id,
             user_id: customer_details?.customer_id,
             payer_email: customer_details?.customer_email,
-          }),
-        ]);
+          });
         console.log(payment_history_response, "response======>");
         supabase.from("subscriptions").upsert({
           membership_id: currentPlan?.plan_id,

@@ -8,6 +8,13 @@ export default defineConfig(() => ({
   build: {
     outDir: "public_html",
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: "modern",
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
