@@ -225,7 +225,7 @@ export const handleCashfreeWebhook = async (req: Request, res: Response) => {
     }
 
     const webhookResponse = JSON.parse(rawBody);
-    console.log({ webhookResponse });
+    console.log({ webhookResponse, dd: webhookResponse?.data?.test_object });
     if (webhookResponse?.type === "PAYMENT_SUCCESS_WEBHOOK") {
       const { payment, order, customer_details } = webhookResponse?.data;
       if (payment?.payment_status === "SUCCESS") {
