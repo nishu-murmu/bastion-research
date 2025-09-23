@@ -225,27 +225,26 @@ export const handleCashfreeWebhook = async (req: Request, res: Response) => {
 
     const webhookResponse = JSON.parse(rawBody);
     if (webhookResponse?.type === "PAYMENT_SUCCESS_WEBHOOK") {
-      const { payment, order, customer_details } = webhookResponse?.data;
+      const { payment, customer_details } = webhookResponse?.data;
       if (payment?.payment_status === "SUCCESS") {
-        const [response, { data: plans }] = await Promise.all([
-          pgFetchOrder(order.order_id),
-          supabase
-            .from("membership_plans")
-            .select(
-              "plan_id, plan_name, price_amount, currency, duration_months"
-            ),
-        ]);
-        const userId = response?.data?.customer_details?.customer_id;
+        const { data: plans } = await supabase
+          .from("membership_plans")
+          .select(
+            "plan_id, plan_name, price_amount, currency, duration_months"
+          );
         const currentPlan = plans?.find(
           (plan) => plan.price_amount === payment?.payment_amount
         );
         const [, payment_history_response] = await Promise.all([
-          supabase.from("users").update({ isPremium: true }).eq("id", userId),
+          supabase
+            .from("users")
+            .update({ isPremium: true, status: "active" })
+            .eq("id", customer_details?.customer_id),
           supabase.from("payment_history").upsert({
             amount: payment?.payment_amount,
             transaction_status: payment?.payment_status,
             plan_id: currentPlan?.plan_id,
-            user_id: userId,
+            user_id: customer_details?.customer_id,
             payer_email: customer_details?.customer_email,
           }),
         ]);
@@ -263,21 +262,29 @@ export const handleCashfreeWebhook = async (req: Request, res: Response) => {
           amount: payment?.payment_amount,
           //@ts-ignore
           transaction_id: payment_history_response?.transaction_id,
-          user_id: userId,
+          user_id: customer_details?.customer_id,
         });
         return res.status(200).json({ message: "Subscription updated." });
       }
     }
     if (webhookResponse?.type === "PAYMENT_USER_DROPPED_WEBHOOK") {
-      const { payment } = webhookResponse?.data;
+      const { payment, customer_details } = webhookResponse?.data;
       if (payment?.payment_status === "USER_DROPPED") {
+        supabase
+          .from("users")
+          .update({ status: "pending" })
+          .eq("id", customer_details?.customer_id);
         return res.status(200).json({
           message: payment?.payment_message || "Payment user dropped.",
         });
       }
     }
     if (webhookResponse?.type === "PAYMENT_FAILED_WEBHOOK") {
-      const { payment } = webhookResponse?.data;
+      const { payment, customer_details } = webhookResponse?.data;
+      supabase
+        .from("users")
+        .update({ status: "pending" })
+        .eq("id", customer_details?.customer_id);
       return res
         .status(200)
         .json({ message: payment?.payment_message || "Payment failed!" });
