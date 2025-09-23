@@ -241,7 +241,6 @@ export const handleCashfreeWebhook = async (req: Request, res: Response) => {
             .update({ isPremium: true, status: "active" })
             .eq("id", customer_details?.customer_id),
           supabase.from("payment_history").upsert({
-            amount: payment?.payment_amount,
             transaction_status: payment?.payment_status,
             plan_id: currentPlan?.plan_id,
             user_id: customer_details?.customer_id,
