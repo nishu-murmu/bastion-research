@@ -17,6 +17,7 @@ import cashfreeRoutes from "./routes/cashfree.routes";
 import contactRoutes from "./routes/contact.routes";
 import otpRoutes from "./routes/otp.routes";
 import kraRoutes from "./routes/kra.routes";
+import imagesRoutes from "./routes/images.routes";
 
 dotenv.config();
 
@@ -59,6 +60,7 @@ app.use("/api", membershipRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/content", contentRoutes);
 app.use("/api", contactRoutes);
+app.use("/api/images", imagesRoutes);
 
 app.set("trust proxy", 1); // if you use secure cookies or rely on req.protocol
 

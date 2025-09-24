@@ -1,15 +1,23 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Search, Edit, Trash2, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
-import { AgGridReact } from 'ag-grid-react';
-import { ColDef, GridReadyEvent } from 'ag-grid-community';
-import axiosInstance from '@/api/axios';
-import { endpoints } from '@/api/endpoints';
-import ConfirmationModal from '@/components/core/common/Modals/ConfirmationModal';
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import {
+  Search,
+  Edit,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  X,
+} from "lucide-react";
+import { AgGridReact } from "ag-grid-react";
+import { ColDef, GridReadyEvent } from "ag-grid-community";
+import axiosInstance from "@/api/axios";
+import { endpoints } from "@/api/endpoints";
+import ConfirmationModal from "@/components/core/common/Modals/ConfirmationModal";
 
 const CouponsManagement = () => {
   const [coupons, setCoupons] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [bulkAction, setBulkAction] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [bulkAction, setBulkAction] = useState("");
   const [selectedCoupons, setSelectedCoupons] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -18,83 +26,83 @@ const CouponsManagement = () => {
   const [couponToDelete, setCouponToDelete] = useState<number | null>(null);
 
   // New: filters
-  const [activeFilter, setActiveFilter] = useState('all'); // 'all' | 'active' | 'inactive'
-  const [validityFilter, setValidityFilter] = useState('all'); // 'all' | 'valid' | 'expired' | 'unlimited'
+  const [activeFilter, setActiveFilter] = useState("all"); // 'all' | 'active' | 'inactive'
+  const [validityFilter, setValidityFilter] = useState("all"); // 'all' | 'valid' | 'expired' | 'unlimited'
 
   // Dummy data
   const dummyData = [
     {
       id: 1,
-      label: '',
-      code: '101%',
-      discount: '15,390.00 INR',
-      startDate: 'May 8, 2025',
-      expireDate: 'Unlimited',
+      label: "",
+      code: "101%",
+      discount: "15,390.00 INR",
+      startDate: "May 8, 2025",
+      expireDate: "Unlimited",
       active: true,
-      subscription: 'All Membership Plans and paid posts',
+      subscription: "All Membership Plans and paid posts",
       used: 0,
-      allowedUses: 'Unlimited'
+      allowedUses: "Unlimited",
     },
     {
       id: 2,
-      label: '',
-      code: '100%',
-      discount: '15,889.15 INR',
-      startDate: 'May 8, 2025',
-      expireDate: 'Unlimited',
+      label: "",
+      code: "100%",
+      discount: "15,889.15 INR",
+      startDate: "May 8, 2025",
+      expireDate: "Unlimited",
       active: true,
-      subscription: 'All Membership Plans and paid posts',
+      subscription: "All Membership Plans and paid posts",
       used: 6,
-      allowedUses: 'Unlimited'
+      allowedUses: "Unlimited",
     },
     {
       id: 3,
-      label: '',
-      code: 'BASTION15',
-      discount: '15.00%',
-      startDate: 'December 9, 2024',
-      expireDate: 'December 14, 2024',
+      label: "",
+      code: "BASTION15",
+      discount: "15.00%",
+      startDate: "December 9, 2024",
+      expireDate: "December 14, 2024",
       active: true,
-      subscription: 'Annual Plan\nAll Paid Posts',
+      subscription: "Annual Plan\nAll Paid Posts",
       used: 0,
-      allowedUses: '1'
+      allowedUses: "1",
     },
     {
       id: 4,
-      label: 'Puzzle Promo Code',
-      code: 'YOUDIDIT',
-      discount: '20.00%',
-      startDate: 'November 2, 2024',
-      expireDate: 'Unlimited',
+      label: "Puzzle Promo Code",
+      code: "YOUDIDIT",
+      discount: "20.00%",
+      startDate: "November 2, 2024",
+      expireDate: "Unlimited",
       active: true,
-      subscription: 'Annual Plan\nAll Paid Posts',
+      subscription: "Annual Plan\nAll Paid Posts",
       used: 2,
-      allowedUses: '200'
+      allowedUses: "200",
     },
     {
       id: 5,
-      label: 'Discount to ISB Alumnus',
-      code: 'ISBALUM',
-      discount: '15.00%',
-      startDate: 'October 4, 2024',
-      expireDate: 'Unlimited',
+      label: "Discount to ISB Alumnus",
+      code: "ISBALUM",
+      discount: "15.00%",
+      startDate: "October 4, 2024",
+      expireDate: "Unlimited",
       active: true,
-      subscription: 'Annual Plan\nAll Paid Posts',
+      subscription: "Annual Plan\nAll Paid Posts",
       used: 1,
-      allowedUses: 'Unlimited'
+      allowedUses: "Unlimited",
     },
     {
       id: 6,
-      label: 'Discount to Close Friends',
-      code: 'INNERCIRCLE',
-      discount: '25.00%',
-      startDate: 'June 3, 2024',
-      expireDate: 'December 31, 2024',
+      label: "Discount to Close Friends",
+      code: "INNERCIRCLE",
+      discount: "25.00%",
+      startDate: "June 3, 2024",
+      expireDate: "December 31, 2024",
       active: true,
-      subscription: 'Annual Plan\nAll Paid Posts',
+      subscription: "Annual Plan\nAll Paid Posts",
       used: 1,
-      allowedUses: 'Unlimited'
-    }
+      allowedUses: "Unlimited",
+    },
   ];
 
   const handleDelete = async (couponId) => {
@@ -109,7 +117,7 @@ const CouponsManagement = () => {
       await fetchCoupons(); // Refresh the list
       setSelectedCoupons((prev) => prev.filter((id) => id !== couponToDelete));
     } catch (error) {
-      console.error('Failed to delete coupon:', error);
+      console.error("Failed to delete coupon:", error);
     } finally {
       setIsConfirmationOpen(false);
       setCouponToDelete(null);
@@ -117,7 +125,7 @@ const CouponsManagement = () => {
   };
 
   // helpers
-  const isUnlimited = (d) => (d || '').toLowerCase() === 'unlimited';
+  const isUnlimited = (d) => (d || "").toLowerCase() === "unlimited";
 
   const isExpired = (d) => {
     if (!d || isUnlimited(d)) return false;
@@ -125,8 +133,8 @@ const CouponsManagement = () => {
     if (isNaN(parsed.getTime())) return false; // if not parseable, treat as not expired
     const today = new Date();
     // compare date-only to avoid time edge-cases
-    parsed.setHours(0,0,0,0);
-    today.setHours(0,0,0,0);
+    parsed.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
     return parsed < today;
   };
 
@@ -141,7 +149,7 @@ const CouponsManagement = () => {
       const response = await axiosInstance.get(endpoints.coupons.base);
       setCoupons(response.data || []);
     } catch (error) {
-      console.error('Failed to fetch coupons:', error);
+      console.error("Failed to fetch coupons:", error);
       // Fallback to dummy data if API fails
       setCoupons(dummyData);
     }
@@ -149,28 +157,31 @@ const CouponsManagement = () => {
 
   // Derived filtered list (search + filters)
   const filteredCoupons = useMemo(() => {
-    const term = (searchTerm || '').toLowerCase().trim();
+    const term = (searchTerm || "").toLowerCase().trim();
 
     return coupons.filter((c) => {
       // search across label, code, subscription
-      const label = (c.label || '').toLowerCase();
-      const code = (c.code || '').toLowerCase();
-      const subscription = (c.subscription || '').toLowerCase();
+      const label = (c.label || "").toLowerCase();
+      const code = (c.code || "").toLowerCase();
+      const subscription = (c.subscription || "").toLowerCase();
       const matchesSearch =
-        !term || label.includes(term) || code.includes(term) || subscription.includes(term);
+        !term ||
+        label.includes(term) ||
+        code.includes(term) ||
+        subscription.includes(term);
 
       // active filter
       const matchesActive =
-        activeFilter === 'all' ||
-        (activeFilter === 'active' && c.active) ||
-        (activeFilter === 'inactive' && !c.active);
+        activeFilter === "all" ||
+        (activeFilter === "active" && c.active) ||
+        (activeFilter === "inactive" && !c.active);
 
       // validity filter
       const matchesValidity =
-        validityFilter === 'all' ||
-        (validityFilter === 'valid' && isValidNow(c.expireDate)) ||
-        (validityFilter === 'expired' && isExpired(c.expireDate)) ||
-        (validityFilter === 'unlimited' && isUnlimited(c.expireDate));
+        validityFilter === "all" ||
+        (validityFilter === "valid" && isValidNow(c.expireDate)) ||
+        (validityFilter === "expired" && isExpired(c.expireDate)) ||
+        (validityFilter === "unlimited" && isUnlimited(c.expireDate));
 
       return matchesSearch && matchesActive && matchesValidity;
     });
@@ -188,7 +199,9 @@ const CouponsManagement = () => {
   useEffect(() => {
     setCurrentPage(1);
     // also clear select-all state when data slice changes
-    setSelectedCoupons((prev) => prev.filter((id) => filteredCoupons.some((c) => c.id === id)));
+    setSelectedCoupons((prev) =>
+      prev.filter((id) => filteredCoupons.some((c) => c.id === id))
+    );
   }, [searchTerm, activeFilter, validityFilter, itemsPerPage, coupons]);
 
   const handleSearch = (e) => setSearchTerm(e.target.value);
@@ -198,31 +211,31 @@ const CouponsManagement = () => {
     if (!bulkAction || selectedCoupons.length === 0) return;
 
     try {
-      if (bulkAction === 'delete') {
+      if (bulkAction === "delete") {
         // Delete coupons one by one
         await Promise.all(
-          selectedCoupons.map(id => 
+          selectedCoupons.map((id) =>
             axiosInstance.delete(`${endpoints.coupons.base}/${id}`)
           )
         );
         await fetchCoupons(); // Refresh the list
-      } else if (bulkAction === 'activate' || bulkAction === 'deactivate') {
+      } else if (bulkAction === "activate" || bulkAction === "deactivate") {
         // Update coupons one by one
         await Promise.all(
-          selectedCoupons.map(id => 
+          selectedCoupons.map((id) =>
             axiosInstance.put(`${endpoints.coupons.base}/${id}`, {
-              active: bulkAction === 'activate'
+              active: bulkAction === "activate",
             })
           )
         );
         await fetchCoupons(); // Refresh the list
       }
     } catch (error) {
-      console.error('Failed to perform bulk action:', error);
+      console.error("Failed to perform bulk action:", error);
     }
 
     setSelectedCoupons([]);
-    setBulkAction('');
+    setBulkAction("");
   };
 
   const handleSelectAll = (e) => {
@@ -235,18 +248,21 @@ const CouponsManagement = () => {
       });
     } else {
       const currentPageIds = new Set(getCurrentPageCoupons().map((c) => c.id));
-      setSelectedCoupons((prev) => prev.filter((id) => !currentPageIds.has(id)));
+      setSelectedCoupons((prev) =>
+        prev.filter((id) => !currentPageIds.has(id))
+      );
     }
   };
 
   const handleSelectCoupon = (couponId) => {
     setSelectedCoupons((prev) =>
-      prev.includes(couponId) ? prev.filter((id) => id !== couponId) : [...prev, couponId]
+      prev.includes(couponId)
+        ? prev.filter((id) => id !== couponId)
+        : [...prev, couponId]
     );
   };
 
   const handleEdit = (couponId) => {
-    console.log('Edit coupon:', couponId);
     // add your modal / navigation here
   };
 
@@ -267,15 +283,15 @@ const CouponsManagement = () => {
   };
 
   const formatExpireDate = (date) => {
-    if (isUnlimited(date)) return 'Unlimited';
+    if (isUnlimited(date)) return "Unlimited";
     if (isExpired(date)) {
       return <span className="text-red-500">{date}</span>;
     }
     return date;
-    };
+  };
 
   const renderSubscription = (subscription) => {
-    return (subscription || '').split('\n').map((line, index) => (
+    return (subscription || "").split("\n").map((line, index) => (
       <div key={index} className="text-sm text-gray-600">
         {line}
       </div>
@@ -301,18 +317,16 @@ const CouponsManagement = () => {
   const StatusRenderer = (params: any) => (
     <span
       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-        params.value
-          ? 'bg-green-100 text-green-800'
-          : 'bg-red-100 text-red-800'
+        params.value ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
       }`}
     >
-      {params.value ? 'Active' : 'Inactive'}
+      {params.value ? "Active" : "Inactive"}
     </span>
   );
 
   const ExpireDateRenderer = (params: any) => {
     const date = params.value;
-    if (isUnlimited(date)) return 'Unlimited';
+    if (isUnlimited(date)) return "Unlimited";
     if (isExpired(date)) {
       return <span className="text-red-500">{date}</span>;
     }
@@ -341,8 +355,8 @@ const CouponsManagement = () => {
   // AgGrid Column Definitions
   const columnDefs: ColDef[] = [
     {
-      headerName: '',
-      field: 'id',
+      headerName: "",
+      field: "id",
       width: 50,
       checkboxSelection: false,
       headerCheckboxSelection: false,
@@ -351,41 +365,42 @@ const CouponsManagement = () => {
       filter: false,
     },
     {
-      headerName: 'Code',
-      field: 'code',
+      headerName: "Code",
+      field: "code",
       cellRenderer: CodeRenderer,
     },
     {
-      headerName: 'Label',
-      field: 'label',
-      valueFormatter: (params) => params.value || '-',
+      headerName: "Label",
+      field: "label",
+      valueFormatter: (params) => params.value || "-",
     },
     {
-      headerName: 'Discount',
-      field: 'discount',
+      headerName: "Discount",
+      field: "discount",
     },
     {
-      headerName: 'Start Date',
-      field: 'startDate',
+      headerName: "Start Date",
+      field: "startDate",
     },
     {
-      headerName: 'Expire Date',
-      field: 'expireDate',
+      headerName: "Expire Date",
+      field: "expireDate",
       cellRenderer: ExpireDateRenderer,
     },
     {
-      headerName: 'Status',
-      field: 'active',
+      headerName: "Status",
+      field: "active",
       cellRenderer: StatusRenderer,
     },
     {
-      headerName: 'Used',
-      field: 'used',
-      valueFormatter: (params) => `${params.value} / ${params.data.allowedUses}`,
+      headerName: "Used",
+      field: "used",
+      valueFormatter: (params) =>
+        `${params.value} / ${params.data.allowedUses}`,
     },
     {
-      headerName: 'Actions',
-      field: 'actions',
+      headerName: "Actions",
+      field: "actions",
       cellRenderer: ActionsRenderer,
       sortable: false,
       filter: false,
@@ -414,7 +429,10 @@ const CouponsManagement = () => {
         <div className="flex flex-wrap gap-4 items-center">
           <div className="flex-1 min-w-64">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={20}
+              />
               <input
                 type="text"
                 placeholder="Search coupons..."
@@ -424,7 +442,7 @@ const CouponsManagement = () => {
               />
             </div>
           </div>
-          
+
           <select
             value={activeFilter}
             onChange={(e) => setActiveFilter(e.target.value)}
@@ -450,7 +468,9 @@ const CouponsManagement = () => {
         {/* Bulk Actions */}
         {selectedCoupons.length > 0 && (
           <div className="mt-4 flex items-center gap-2">
-            <span className="text-sm text-gray-600">{selectedCoupons.length} selected</span>
+            <span className="text-sm text-gray-600">
+              {selectedCoupons.length} selected
+            </span>
             <select
               value={bulkAction}
               onChange={handleBulkActionChange}
@@ -474,7 +494,10 @@ const CouponsManagement = () => {
 
       {/* AgGrid Table */}
       <div className="bg-white rounded-lg shadow-sm border">
-        <div className="rounded-md border bg-white ag-theme-alpine" style={{ height: 600, width: "100%" }}>
+        <div
+          className="rounded-md border bg-white ag-theme-alpine"
+          style={{ height: 600, width: "100%" }}
+        >
           <AgGridReact
             theme="legacy"
             rowData={filteredCoupons}
