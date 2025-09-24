@@ -4,13 +4,8 @@ import { supabase } from "../supabase";
 // Newsletters
 export async function createNewsletter(req: Request, res: Response) {
   try {
-    const {
-      title,
-      sub_title,
-      headline_image_url,
-      html_content,
-      footer_content,
-    } = req.body;
+    const { title, sub_title, headline_image_url, contents, footer_content } =
+      req.body;
     if (!title) return res.status(400).json({ error: "title is required" });
 
     const { data, error } = await supabase
@@ -19,7 +14,7 @@ export async function createNewsletter(req: Request, res: Response) {
         title,
         sub_title: sub_title ?? null,
         headline_image_url: headline_image_url ?? null,
-        html_content: html_content ?? null,
+        contents: contents ?? null,
         footer_content: footer_content ?? null,
       })
       .select("*")
@@ -78,14 +73,14 @@ export async function listWebinars(_req: Request, res: Response) {
 // Podcasts
 export async function createPodcast(req: Request, res: Response) {
   try {
-    const { title, html_content, video_url } = req.body;
+    const { title, contents, video_url } = req.body;
     if (!title) return res.status(400).json({ error: "title is required" });
 
     const { data, error } = await supabase
       .from("podcasts")
       .insert({
         title,
-        html_content: html_content ?? null,
+        contents: contents ?? null,
         video_url: video_url ?? null,
       })
       .select("*")
@@ -135,13 +130,8 @@ export async function getNewsletter(req: Request, res: Response) {
 export async function updateNewsletter(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const {
-      title,
-      sub_title,
-      headline_image_url,
-      html_content,
-      footer_content,
-    } = req.body;
+    const { title, sub_title, headline_image_url, contents, footer_content } =
+      req.body;
 
     if (!id) return res.status(400).json({ error: "ID is required" });
     if (!title) return res.status(400).json({ error: "title is required" });
@@ -152,7 +142,7 @@ export async function updateNewsletter(req: Request, res: Response) {
         title,
         sub_title: sub_title ?? null,
         headline_image_url: headline_image_url ?? null,
-        html_content: html_content ?? null,
+        contents: contents ?? null,
         footer_content: footer_content ?? null,
       })
       .eq("id", id)
@@ -269,7 +259,7 @@ export async function getPodcast(req: Request, res: Response) {
 export async function updatePodcast(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const { title, html_content, video_url } = req.body;
+    const { title, contents, video_url } = req.body;
 
     if (!id) return res.status(400).json({ error: "ID is required" });
     if (!title) return res.status(400).json({ error: "title is required" });
@@ -278,7 +268,7 @@ export async function updatePodcast(req: Request, res: Response) {
       .from("podcasts")
       .update({
         title,
-        html_content: html_content ?? null,
+        contents: contents ?? null,
         video_url: video_url ?? null,
       })
       .eq("id", id)

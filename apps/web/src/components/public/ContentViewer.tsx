@@ -21,13 +21,7 @@ interface ContentViewerProps {
 const ContentViewer: React.FC<ContentViewerProps> = ({ type, api, onBack }) => {
   const { id } = useParams();
   const [content, setContent] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (id) {
-      loadContent();
-    }
-  }, [id]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const loadContent = async () => {
     try {
@@ -35,12 +29,18 @@ const ContentViewer: React.FC<ContentViewerProps> = ({ type, api, onBack }) => {
       const data = await api.getById(id!);
       setContent(data);
     } catch (error: any) {
+      console.log(error);
       toast.error("Failed to load content");
-      onBack();
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (id) {
+      loadContent();
+    }
+  }, [id]);
 
   const handleShare = () => {
     const url = window.location.href;
@@ -157,15 +157,8 @@ const ContentViewer: React.FC<ContentViewerProps> = ({ type, api, onBack }) => {
           </Card>
 
           {/* Main Content */}
-          {content.html_content && (
-            <Card>
-              <CardContent className="pt-6">
-                <div
-                  className="prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: content.html_content }}
-                />
-              </CardContent>
-            </Card>
+          {content.contents && (
+            <CardContentComponent contents={content.contents} />
           )}
 
           {/* Video (for webinars and podcasts) */}
@@ -196,10 +189,16 @@ const ContentViewer: React.FC<ContentViewerProps> = ({ type, api, onBack }) => {
           {content.footer_content && type === "newsletter" && (
             <Card>
               <CardContent className="pt-6">
-                <div
-                  className="prose max-w-none text-sm text-gray-600"
-                  dangerouslySetInnerHTML={{ __html: content.footer_content }}
-                />
+                <div className="simple-editor-wrapper">
+                  <div className="simple-editor-content">
+                    <div
+                      className="tiptap ProseMirror simple-editor prose max-w-none"
+                      dangerouslySetInnerHTML={{
+                        __html: content.footer_content,
+                      }}
+                    />
+                  </div>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -249,3 +248,22 @@ const ContentViewer: React.FC<ContentViewerProps> = ({ type, api, onBack }) => {
 };
 
 export default ContentViewer;
+
+export const CardContentComponent = ({ contents }) => {
+  return (
+    <Card>
+      <CardContent className="pt-6">
+        <div className="simple-editor-wrapper">
+          <div className="simple-editor-content">
+            <div
+              className="tiptap ProseMirror simple-editor prose max-w-none"
+              dangerouslySetInnerHTML={{
+                __html: contents,
+              }}
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import ContentEditor from '@/components/admin/ContentEditor';
-import { newsletterApi, Newsletter } from '@/api/content';
-import { toast } from 'sonner';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import ContentEditor from "@/components/admin/ContentEditor";
+import { newsletterApi } from "@/api/content";
+import { toast } from "sonner";
 
 const NewsletterEditor: React.FC = () => {
   const { id } = useParams();
@@ -22,8 +22,8 @@ const NewsletterEditor: React.FC = () => {
       const data = await newsletterApi.getById(id!);
       setInitialData(data);
     } catch (error: any) {
-      toast.error('Failed to load newsletter');
-      navigate('/admin/content/newsletters');
+      toast.error("Failed to load newsletter");
+      navigate("/admin/content/newsletters");
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +52,7 @@ const NewsletterEditor: React.FC = () => {
 
   return (
     <ContentEditor
-      type="newsletter"
+      type="newsletters"
       initialData={initialData}
       onSave={handleSave}
     />

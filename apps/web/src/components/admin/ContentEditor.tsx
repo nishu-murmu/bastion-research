@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import Editor from "@/components/core/editor";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Save, Eye } from "lucide-react";
-import { toast } from "sonner";
-import Editor from "@/components/core/editor";
 import { useEditorStore } from "@/stores/editor-store";
+import { ArrowLeft, Eye, Save } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
 export type ContentType = "newsletters" | "webinars" | "podcasts";
 
@@ -32,7 +32,7 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
     title: "",
     sub_title: "",
     headline_image_url: "",
-    html_content: "",
+    contents: "",
     footer_content: "",
     video_url: "",
     is_premium: false,
@@ -47,7 +47,7 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
         title: initialData.title || "",
         sub_title: initialData.sub_title || "",
         headline_image_url: initialData.headline_image_url || "",
-        html_content: initialData.html_content || "",
+        contents: initialData.contents || "",
         footer_content: initialData.footer_content || "",
         video_url: initialData.video_url || "",
         is_premium: initialData.is_premium || false,
@@ -70,7 +70,7 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
 
     setIsLoading(true);
     try {
-      await onSave(formData);
+      await onSave({ ...formData, contents: editorStore.editor.getHTML() });
       toast.success(
         `${type.charAt(0).toUpperCase() + type.slice(1)} ${isEdit ? "updated" : "created"} successfully`
       );
@@ -188,7 +188,6 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
             <Button
               variant="outline"
               onClick={() => {
-                console.log(editorStore.editor.getHTML(), "response hai");
                 setFormData((prev) => ({
                   ...prev,
                   html_content: editorStore.editor.getHTML(),
@@ -251,12 +250,18 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
               </CardHeader>
               <CardContent>
                 {isPreview ? (
-                  <div
-                    className="prose max-w-none"
-                    dangerouslySetInnerHTML={{ __html: formData.html_content }}
-                  />
+                  <div className="simple-editor-wrapper">
+                    <div className="simple-editor-content">
+                      <div
+                        className="tiptap ProseMirror simple-editor prose max-w-none"
+                        dangerouslySetInnerHTML={{
+                          __html: formData.contents,
+                        }}
+                      />
+                    </div>
+                  </div>
                 ) : (
-                  <Editor />
+                  <Editor contents={formData?.contents} />
                 )}
               </CardContent>
             </Card>
