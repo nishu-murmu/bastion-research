@@ -4,7 +4,7 @@ import { supabase } from "../supabase";
 // Newsletters
 export async function createNewsletter(req: Request, res: Response) {
   try {
-    const { title, sub_title, headline_image_url, contents, footer_content } =
+    const { title, sub_title, headline_image_url, contents, footer_content, category } =
       req.body;
     if (!title) return res.status(400).json({ error: "title is required" });
 
@@ -16,6 +16,7 @@ export async function createNewsletter(req: Request, res: Response) {
         headline_image_url: headline_image_url ?? null,
         contents: contents ?? null,
         footer_content: footer_content ?? null,
+        category: category ?? null,
       })
       .select("*")
       .single();
@@ -130,7 +131,7 @@ export async function getNewsletter(req: Request, res: Response) {
 export async function updateNewsletter(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const { title, sub_title, headline_image_url, contents, footer_content } =
+    const { title, sub_title, headline_image_url, contents, footer_content, category } =
       req.body;
 
     if (!id) return res.status(400).json({ error: "ID is required" });
@@ -144,6 +145,7 @@ export async function updateNewsletter(req: Request, res: Response) {
         headline_image_url: headline_image_url ?? null,
         contents: contents ?? null,
         footer_content: footer_content ?? null,
+        category: category ?? null,
       })
       .eq("id", id)
       .select("*")
