@@ -134,3 +134,37 @@ Learn more about the power of Turborepo:
 - [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
 - [Configuration Options](https://turborepo.com/docs/reference/configuration)
 - [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+
+## Research Feature (Admin + Public)
+
+This repository includes a Research feature similar to Newsletters/Webinars/Podcasts.
+
+- Backend
+  - New Supabase table: `public.research` with snake_case columns.
+  - Endpoints:
+    - Public: `GET /content/research`, `GET /content/research/:id`
+    - Admin (auth required): `GET/POST/PUT/DELETE /api/admin/content/research` and `GET/PUT/DELETE /api/admin/content/research/:id`
+  - File uploads: `POST /api/files/upload` expects multipart/form-data field `file` (PDF), returns a public URL.
+
+- Database setup
+  - Apply SQL at `apps/server/sql/2025-09-25_create_research_table.sql` to your Supabase/Postgres instance.
+
+- Frontend
+  - Admin pages: `/admin/content/research`, `/admin/content/research/create`, `/admin/content/research/:id/edit`
+  - Public pages: `/research`, `/research/:id` (renders PDF via react-pdf)
+
+## Mailchimp Newsletter Integration
+
+The newsletters experience now consumes your Mailchimp campaign RSS feed end-to-end:
+
+- **Server configuration**
+  - `MAILCHIMP_RSS_URL` (required) — Mailchimp RSS feed URL (e.g. `https://<dc>.campaign-archive.com/feed?...`).
+  - `MAILCHIMP_RSS_CACHE_SECONDS` (optional) — In-memory cache TTL for the feed. Defaults to 300 seconds.
+- **Web app configuration**
+  - `VITE_MAILCHIMP_MANAGE_URL` (optional) — Direct link to your Mailchimp dashboard. Used by the admin panel “Open Mailchimp” buttons. Falls back to `https://login.mailchimp.com/` when omitted.
+
+Admin users can visit `/admin/content/newsletters` to:
+
+- Browse Mailchimp-sourced campaigns with search and quick links to the public page or Mailchimp archive.
+- Trigger a manual “Sync Latest” to bypass the cache after updating a campaign in Mailchimp.
+- Follow the guided workflow (at `/admin/content/newsletters/create` or `/:id/edit`) explaining that authoring happens in Mailchimp while the React app stays in sync via the RSS feed.

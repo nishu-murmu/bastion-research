@@ -12,12 +12,11 @@ import adminRoutes from "./routes/admin.routes";
 import analyticsRoutes from "./routes/analytics.routes";
 import contentRoutes from "./routes/content.routes";
 import authRoutes from "./routes/auth.routes";
-import digioRoutes from "./routes/digio.routes";
 import cashfreeRoutes from "./routes/cashfree.routes";
 import contactRoutes from "./routes/contact.routes";
 import otpRoutes from "./routes/otp.routes";
-import kraRoutes from "./routes/kra.routes";
 import imagesRoutes from "./routes/images.routes";
+import filesRoutes from "./routes/files.routes";
 
 dotenv.config();
 
@@ -48,6 +47,7 @@ app.use(
 );
 app.use(
   express.json({
+    limit: process.env.BODY_PARSER_LIMIT || "5mb",
     verify: (req: any, res, buf) => {
       req.rawBody = buf.toString();
     },
@@ -63,10 +63,8 @@ app.get("/healthcheck", (req: Request, res: Response) => {
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/digio", digioRoutes);
 app.use("/api/cashfree", cashfreeRoutes);
 app.use("/api/otp", otpRoutes);
-app.use("/api/kra", kraRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api", userRoutes);
 app.use("/api", jobRoutes);
@@ -76,6 +74,7 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/content", contentRoutes);
 app.use("/api", contactRoutes);
 app.use("/api/images", imagesRoutes);
+app.use("/api/files", filesRoutes);
 
 app.set("trust proxy", 1); // if you use secure cookies or rely on req.protocol
 

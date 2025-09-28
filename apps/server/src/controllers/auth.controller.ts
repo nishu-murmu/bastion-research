@@ -30,6 +30,10 @@ export const createUserAfterOnboarding = async (userData: any) => {
     city,
     pinCode,
     company,
+    panVerification,
+    agreementSignatureUrl,
+    agreementSignaturePath,
+    agreementSignedAt,
   } = userData;
 
   // Basic validation
@@ -43,6 +47,14 @@ export const createUserAfterOnboarding = async (userData: any) => {
   ) {
     console.error("Validation failed for userData:", userData);
     throw new Error("Missing required fields for user creation.");
+  }
+
+  if (!panVerification || !panVerification.valid) {
+    throw new Error("PAN must be verified before onboarding can be completed.");
+  }
+
+  if (!agreementSignatureUrl) {
+    throw new Error("Agreement signature is required to finalize onboarding.");
   }
 
   const { data: existingUser } = await supabase
@@ -95,6 +107,53 @@ export const createUserAfterOnboarding = async (userData: any) => {
     );
   }
 
+  // Try to persist optional metadata (ignore missing column errors)
+  try {
+    const optionalPayload: Record<string, any> = {};
+    if (panVerification?.referenceId) {
+      optionalPayload.pan_verification_reference = panVerification.referenceId;
+    }
+    if (panVerification?.status) {
+      optionalPayload.pan_verification_status = panVerification.status;
+    }
+    if (panVerification?.checkedAt) {
+      optionalPayload.pan_verified_at = panVerification.checkedAt;
+    }
+    if (agreementSignatureUrl) {
+      optionalPayload.agreement_signature_url = agreementSignatureUrl;
+    }
+    if (agreementSignaturePath) {
+      optionalPayload.agreement_signature_path = agreementSignaturePath;
+    }
+    if (agreementSignedAt) {
+      optionalPayload.agreement_signed_at = agreementSignedAt;
+    }
+
+    if (Object.keys(optionalPayload).length > 0) {
+      const { error: metadataError } = await supabase
+        .from("users")
+        .update(optionalPayload)
+        .eq("id", newUser.id);
+
+      if (metadataError) {
+        const msg = metadataError?.message || "";
+        if (/column .* does not exist/i.test(msg)) {
+          console.warn(
+            "Optional onboarding metadata columns missing. Skipping persistence.",
+            msg
+          );
+        } else {
+          console.error(
+            "Failed to persist onboarding metadata for user",
+            metadataError
+          );
+        }
+      }
+    }
+  } catch (metaErr) {
+    console.error("Unexpected error while saving onboarding metadata", metaErr);
+  }
+
   return newUser;
 };
 
@@ -115,6 +174,7 @@ export const signIn = async (req: Request, res: Response) => {
       .select("*")
       .eq("email", email)
       .single();
+    console.log(user, "user");
     if (error || !user) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -128,6 +188,15 @@ export const signIn = async (req: Request, res: Response) => {
       return res
         .status(401)
         .json({ message: "You can't login with admin credentials." });
+    }
+
+    // If trying to login via admin portal, enforce admin role explicitly
+    if (isAdminLogin && user.role !== config.roles.admin) {
+      return res
+        .status(401)
+        .json({
+          message: "Only administrators can sign in to the admin panel.",
+        });
     }
 
     const token = generateToken(user.id, user.email);

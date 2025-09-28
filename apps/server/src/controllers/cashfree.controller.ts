@@ -11,11 +11,22 @@ const CF_ENV = (process.env.CASHFREE_ENV || "SANDBOX").toUpperCase() as
   | "SANDBOX"
   | "PRODUCTION";
 const CF_API_VERSION = "2023-08-01";
+const CF_VERIFICATION_CLIENT_ID =
+  process.env.CASHFREE_VERIFICATION_CLIENT_ID || CF_APP_ID;
+const CF_VERIFICATION_CLIENT_SECRET =
+  process.env.CASHFREE_VERIFICATION_CLIENT_SECRET || CF_SECRET;
+const CF_VERIFICATION_API_VERSION =
+  process.env.CASHFREE_VERIFICATION_API_VERSION || "2022-09-12";
 
 const getBaseUrl = () =>
   CF_ENV === "PRODUCTION"
     ? "https://api.cashfree.com/pg"
     : "https://sandbox.cashfree.com/pg";
+
+const getVerificationBaseUrl = () =>
+  CF_ENV === "PRODUCTION"
+    ? "https://api.cashfree.com/verification"
+    : "https://sandbox.cashfree.com/verification";
 
 // Initialize Cashfree (required for v>=5 SDK)
 const ensureCashfreeConfigured = () => {
@@ -29,6 +40,21 @@ const ensureCashfreeConfigured = () => {
       : (Cashfree as any).SANDBOX;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _cf = new (Cashfree as any)(envConst, CF_APP_ID, CF_SECRET);
+};
+
+const getVerificationHeaders = () => {
+  if (!CF_VERIFICATION_CLIENT_ID || !CF_VERIFICATION_CLIENT_SECRET) {
+    throw new Error(
+      "Cashfree verification credentials are not configured. Set CASHFREE_VERIFICATION_CLIENT_ID and CASHFREE_VERIFICATION_CLIENT_SECRET or reuse CASHFREE_APP_ID/CASHFREE_SECRET."
+    );
+  }
+
+  return {
+    "x-api-version": CF_VERIFICATION_API_VERSION,
+    "x-client-id": CF_VERIFICATION_CLIENT_ID,
+    "x-client-secret": CF_VERIFICATION_CLIENT_SECRET,
+    "Content-Type": "application/json",
+  };
 };
 
 // Helper to call PGCreateOrder compatible with different SDK signatures
@@ -82,6 +108,86 @@ type PublicPlan = {
   currency: string;
 };
 
+const normalizePanResponse = (data: any = {}) => ({
+  referenceId: data.reference_id ?? data.referenceId,
+  valid: data.valid ?? false,
+  status: data.valid === true ? "VALID" : data.valid === false ? "INVALID" : "PENDING",
+  registeredName: data.registered_name,
+  nameProvided: data.name_provided,
+  nameMatchScore: data.name_match_score,
+  nameMatchResult: data.name_match_result,
+  message: data.message,
+  fatherName: data.father_name,
+  panHolderType: data.type,
+  raw: data,
+});
+
+export const verifyPan = async (req: Request, res: Response) => {
+  try {
+    const { pan, name } = req.body as { pan?: string; name?: string };
+
+    if (!pan || !name) {
+      return res
+        .status(400)
+        .json({ message: "pan and name are required for verification" });
+    }
+
+    const payload = {
+      pan: pan.trim().toUpperCase(),
+      name: name.trim(),
+    };
+    console.log("Using Cashfree creds:", {
+      clientId: process.env.CASHFREE_VERIFICATION_CLIENT_ID,
+      clientSecret: process.env.CASHFREE_VERIFICATION_CLIENT_SECRET,
+    });
+  
+    const url = `${getVerificationBaseUrl()}/pan`;
+    const headers = getVerificationHeaders();
+    const response = await axios.post(url, payload, { headers });
+console.log("url from verify pan",url)
+console.log(headers)
+return res.status(200).json({
+      ...normalizePanResponse(response?.data),
+    });
+  } catch (error: any) {
+    const status = error?.response?.status || 500;
+    const message =
+      error?.response?.data?.message ||
+      error?.message ||
+      "Failed to verify PAN";
+    return res.status(status).json({
+      message,
+      data: error?.response?.data,
+    });
+  }
+};
+
+export const getPanVerificationStatus = async (req: Request, res: Response) => {
+  try {
+    const { referenceId } = req.params as { referenceId?: string };
+    if (!referenceId) {
+      return res.status(400).json({ message: "referenceId is required" });
+    }
+
+    const url = `${getVerificationBaseUrl()}/pan/${referenceId}`;
+    const headers = getVerificationHeaders();
+    const response = await axios.get(url, { headers });
+    return res.status(200).json({
+      ...normalizePanResponse(response?.data),
+    });
+  } catch (error: any) {
+    const status = error?.response?.status || 500;
+    const message =
+      error?.response?.data?.message ||
+      error?.message ||
+      "Failed to fetch PAN verification status";
+    return res.status(status).json({
+      message,
+      data: error?.response?.data,
+    });
+  }
+};
+
 export const listPlans = async (_req: Request, res: Response) => {
   try {
     const { data, error } = await supabase
@@ -113,8 +219,14 @@ export const listPlans = async (_req: Request, res: Response) => {
 
 export const createOrderForPlan = async (req: Request, res: Response) => {
   try {
-    const { plan, customer_id, customer_email, customer_phone, return_url } =
-      req.body;
+    const {
+      plan,
+      customer_id,
+      customer_email,
+      customer_phone,
+      return_url,
+      metadata,
+    } = req.body;
     if (!plan) return res.status(400).json({ message: "plan is required" });
     if (!customer_id)
       return res.status(400).json({ message: "customer_id is required" });
@@ -151,6 +263,16 @@ export const createOrderForPlan = async (req: Request, res: Response) => {
     let returnUrl =
       return_url || `${frontendUrl}/payment/success?order_id=${orderId}`;
 
+    const orderTags =
+      metadata && typeof metadata === "object"
+        ? Object.fromEntries(
+            Object.entries(metadata).filter(
+              ([, value]) =>
+                value !== undefined && value !== null && value !== ""
+            )
+          )
+        : undefined;
+
     const request = {
       order_id: orderId,
       order_amount: selected.amount,
@@ -164,7 +286,12 @@ export const createOrderForPlan = async (req: Request, res: Response) => {
       order_meta: {
         return_url: returnUrl,
       },
+      order_tags: orderTags,
     };
+
+    if (!orderTags || Object.keys(orderTags).length === 0) {
+      delete (request as any).order_tags;
+    }
 
     const response = await pgCreateOrder(request);
     await supabase.from("payment_history").upsert({
@@ -243,13 +370,15 @@ export const handleCashfreeWebhook = async (req: Request, res: Response) => {
             user_id: customer_details?.customer_id,
             payer_email: customer_details?.customer_email,
             transaction_id: crypto.randomUUID(),
+            created_at: payment?.payment_time,
           })
-          .single();
+          .maybeSingle();
 
-        const [_, payment_history_response] = await Promise.all([
+        const [_, paymentHistoryResult] = await Promise.all([
           updateUserPromise,
           insertPaymentHistoryPromise,
         ]);
+        console.log(paymentHistoryResult, "result");
 
         await supabase.from("subscriptions").upsert({
           membership_id: currentPlan?.plan_id,
@@ -263,7 +392,7 @@ export const handleCashfreeWebhook = async (req: Request, res: Response) => {
             : null,
           amount: payment?.payment_amount,
           //@ts-ignore
-          transaction_id: payment_history_response?.transaction_id,
+          transaction_id: paymentHistoryResult?.transaction_id,
           user_id: customer_details?.customer_id,
         });
         return res.status(200).json({ message: "Subscription updated." });
@@ -330,16 +459,17 @@ export const getUserSubscription = async (req: Request, res: Response) => {
     const [userResult, subscriptionResult] = await Promise.all([
       supabase.from("users").select("isPremium").eq("id", userId).single(),
       supabase
-        .from("user_subscriptions") // Assume a new table or API endpoint
+        .from("subscriptions") // Assume a new table or API endpoint
         .select(
           `
           name,
           start_date,
-          expire_date,
+          expire_next_renewal,
           amount,
           transaction_id,
+          membership_id,
           created_at,
-          occurrence_type
+          membership_plans(occurrence_type)
         `
         )
         .eq("user_id", userId)
@@ -353,7 +483,14 @@ export const getUserSubscription = async (req: Request, res: Response) => {
     }
 
     const user = userResult.data;
-    const subscription = subscriptionResult.data;
+    const subscription = !subscriptionResult?.data
+      ? null
+      : {
+          ...subscriptionResult.data,
+          occurrence_type:
+            //@ts-ignore
+            subscriptionResult?.data?.membership_plans?.occurrence_type,
+        };
 
     // Determine current plan based on subscription or default to free
     let currentPlan = "free";
@@ -365,6 +502,8 @@ export const getUserSubscription = async (req: Request, res: Response) => {
         currentPlan = subscription.name.includes("Core") ? "3m" : "free";
       }
     }
+    //@ts-ignore
+    delete subscription?.membership_plans;
 
     const response = {
       isPremium: user?.isPremium || false,
@@ -373,7 +512,7 @@ export const getUserSubscription = async (req: Request, res: Response) => {
         ? {
             name: subscription.name,
             startDate: subscription.start_date,
-            expireDate: subscription.expire_date,
+            expireNextRenewal: subscription.expire_next_renewal,
             amount: subscription.amount,
             transactionId: subscription.transaction_id,
             occurrence_type: subscription.occurrence_type, // Include occurrence_type

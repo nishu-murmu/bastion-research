@@ -18,7 +18,6 @@ interface Webinar {
   id: string;
   title: string;
   video_url?: string;
-  contents?: string;
   created_at: string;
 }
 

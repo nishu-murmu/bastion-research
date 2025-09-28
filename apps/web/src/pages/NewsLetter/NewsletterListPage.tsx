@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight, Crown, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BackgroundShapes from "../../components/generic/framer-motion.tsx";
-import { newsletterApi } from "@/api/content";
+import { mailchimpNewsletterApi } from "@/api/mailchimp";
 import { toast } from "sonner";
 import { Newsletter } from "@packages/types";
 
@@ -42,8 +42,11 @@ const NewsletterArchive = () => {
   const loadNewsletters = async () => {
     try {
       setIsLoading(true);
-      const data = await newsletterApi.getAll();
-      setNewsletters(data);
+      const data = await mailchimpNewsletterApi.getAll();
+      const sorted = [...data].sort((a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setNewsletters(sorted);
     } catch (error: any) {
       toast.error("Failed to load newsletters");
       console.error("Error loading newsletters:", error);
@@ -56,14 +59,19 @@ const NewsletterArchive = () => {
     let filtered = newsletters;
 
     if (searchQuery) {
-      filtered = filtered.filter(
-        (newsletter) =>
-          newsletter.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (newsletter.sub_title &&
-            newsletter.sub_title
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase()))
-      );
+      const term = searchQuery.toLowerCase();
+      filtered = filtered.filter((newsletter) => {
+        const titleMatch = newsletter.title
+          ?.toLowerCase()
+          .includes(term);
+        const subtitleMatch = newsletter.sub_title
+          ?.toLowerCase()
+          .includes(term);
+        const plainMatch = newsletter.plain_text
+          ?.toLowerCase()
+          .includes(term);
+        return Boolean(titleMatch || subtitleMatch || plainMatch);
+      });
     }
 
     if (activeFilter !== "all") {
@@ -108,13 +116,16 @@ const NewsletterArchive = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
   };
 
+<<<<<<< HEAD
   const filters = useMemo(() => {
     const categoryCounts = newsletters.reduce((acc, newsletter) => {
       const category = newsletter.category || "uncategorized";
@@ -129,6 +140,16 @@ const NewsletterArchive = () => {
       { id: "topical-update", label: "Topical Update", count: categoryCounts["topical-update"] || 0 },
     ];
   }, [newsletters]);
+=======
+  const getSubtitle = (newsletter: Newsletter) =>
+    newsletter.sub_title || newsletter.plain_text || "";
+
+  const filters = [
+    { id: "all", label: "All", count: newsletters.length },
+    // For now, we'll show all newsletters since we don't have categories in the database
+    // You can add a category field to the database later if needed
+  ];
+>>>>>>> 32ac28218429a3fd7a4a0a59b4ca059d8d4f39e2
 
   return (
     <div
@@ -240,9 +261,11 @@ const NewsletterArchive = () => {
               <>
                 {/* Newsletter Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                  {currentNewsletters.map((newsletter) => (
-                    <div
-                      key={newsletter.id}
+                  {currentNewsletters.map((newsletter) => {
+                    const summary = getSubtitle(newsletter);
+                    return (
+                      <div
+                        key={newsletter.id}
                       className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col"
                     >
                       {/* Image */}
@@ -282,9 +305,9 @@ const NewsletterArchive = () => {
                           </h3>
 
                           {/* Sub Title */}
-                          {newsletter.sub_title && (
+                          {summary && (
                             <p className="text-gray-600 mb-2 text-sm">
-                              {newsletter.sub_title}
+                              {summary}
                             </p>
                           )}
                         </div>
@@ -306,7 +329,8 @@ const NewsletterArchive = () => {
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* No Results */}

@@ -1,33 +1,3 @@
-import axiosInstance from "./axios";
-
-// Types
-export interface Newsletter {
-  id: string;
-  title: string;
-  sub_title?: string;
-  headline_image_url?: string;
-  html_content?: string;
-  footer_content?: string;
-  created_at: string;
-}
-
-export interface Webinar {
-  id: string;
-  title: string;
-  video_url?: string;
-  created_at: string;
-}
-
-export interface Podcast {
-  id: string;
-  title: string;
-  html_content?: string;
-  video_url?: string;
-  created_at: string;
-}
-
-// Centralized API endpoint paths used across the app
-// Grouped by domain for clarity; values remain the same to avoid breaking behavior
 export const endpoints = {
   auth: {
     session: "/api/auth/session",
@@ -75,8 +45,14 @@ export const endpoints = {
     orderById: (id: string | number) => `/api/cashfree/orders/${id}`,
     subscription: "/api/cashfree/subscription",
   },
-  digio: {
-    uploadJson: "/api/digio/esign/uploadjson",
+  cashfreeVerification: {
+    verifyPan: "/api/cashfree/verification/pan",
+    panStatus: (referenceId: string | number) =>
+      `/api/cashfree/verification/pan/${referenceId}`,
+  },
+  files: {
+    upload: "/api/files/upload",
+    signatures: "/api/files/signatures",
   },
   contact: {
     send: "/api/contact",
@@ -88,12 +64,30 @@ export const endpoints = {
     },
   },
   content: {
+    research: {
+      base: "/content/research",
+      byId: (id: string) => `/content/research/${id}`,
+      admin: {
+        base: "/api/admin/content/research",
+        byId: (id: string) => `/api/admin/content/research/${id}`,
+      },
+    },
     newsletters: {
       base: "/content/newsletters",
       byId: (id: string) => `/content/newsletters/${id}`,
       admin: {
         base: "/api/admin/content/newsletters",
         byId: (id: string) => `/api/admin/content/newsletters/${id}`,
+      },
+    },
+    mailchimp: {
+      newsletters: {
+        base: "/content/mailchimp/newsletters",
+        byId: (id: string) => `/content/mailchimp/newsletters/${id}`,
+        admin: {
+          base: "/api/admin/content/mailchimp/newsletters",
+          byId: (id: string) => `/api/admin/content/mailchimp/newsletters/${id}`,
+        },
       },
     },
     webinars: {

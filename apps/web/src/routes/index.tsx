@@ -1,4 +1,3 @@
-import Editor from "@/components/core/editor";
 import { lazy } from "react";
 import { Navigate, type RouteObject } from "react-router-dom";
 import { AppRoutes } from "./app-routes";
@@ -89,6 +88,12 @@ const WebinarEditor = lazy(
 const PodcastEditor = lazy(
   () => import("../pages/Admin/Content/PodcastEditor")
 );
+const ResearchManagement = lazy(
+  () => import("../pages/Admin/Content/ResearchManagement")
+);
+const ResearchEditor = lazy(
+  () => import("../pages/Admin/Content/ResearchEditor")
+);
 
 // Public Content Pages
 const NewsletterView = lazy(
@@ -106,8 +111,12 @@ const NewsletterArchive = lazy(
   () => import("../pages/NewsLetter/NewsletterListPage")
 );
 const Webinar = lazy(() => import("../pages/Webinars/WebinarsListPage"));
+const ResearchList = lazy(() => import("../pages/Research/ResearchListPage"));
 const SmartFrameworks = lazy(
   () => import("../components/generic/SmartFrameworks")
+);
+const ResearchView = lazy(
+  () => import("../pages/Research/SingleResearchPage")
 );
 
 export const routes: RouteObject[] = [
@@ -133,10 +142,12 @@ export const routes: RouteObject[] = [
       { path: AppRoutes.test(), element: <Test /> },
       { path: AppRoutes.newsletter(), element: <NewsletterArchive /> },
       { path: AppRoutes.webinar(), element: <Webinar /> },
+      { path: AppRoutes.research(), element: <ResearchList /> },
       { path: AppRoutes.smartFrameworks(), element: <SmartFrameworks /> },
       { path: AppRoutes.newsletterView(), element: <NewsletterView /> },
       { path: AppRoutes.webinarView(), element: <WebinarView /> },
       { path: AppRoutes.podcastView(), element: <PodcastView /> },
+      { path: AppRoutes.researchView(), element: <ResearchView /> },
       { path: AppRoutes.dashboard(), element: <Dashboard /> },
     ],
   },
@@ -205,11 +216,6 @@ export const routes: RouteObject[] = [
         element: <AdminSettings />,
       },
       {
-        path: AppRoutes.editor(),
-        element: <Editor />,
-      },
-      // Content Management Routes
-      {
         path: AppRoutes.adminNewsletterManagement(),
         element: <NewsletterManagement />,
       },
@@ -220,6 +226,10 @@ export const routes: RouteObject[] = [
       {
         path: AppRoutes.adminPodcastManagement(),
         element: <PodcastManagement />,
+      },
+      {
+        path: AppRoutes.adminResearchManagement(),
+        element: <ResearchManagement />,
       },
       {
         path: AppRoutes.adminNewsletterCreate(),
@@ -244,6 +254,14 @@ export const routes: RouteObject[] = [
       {
         path: AppRoutes.adminPodcastEdit(),
         element: <PodcastEditor />,
+      },
+      {
+        path: AppRoutes.adminResearchCreate(),
+        element: <ResearchEditor />,
+      },
+      {
+        path: AppRoutes.adminResearchEdit(),
+        element: <ResearchEditor />,
       },
     ],
   },
