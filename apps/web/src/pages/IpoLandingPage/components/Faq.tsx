@@ -59,7 +59,7 @@ const Faq = () => {
               Compliance and conflicts of interest?
               <span className="ml-4 text-slate-400 group-open:rotate-180 transition-transform">▼</span>
             </summary>
-            <p className="mt-3 text-sm text-slate-600">Published by <strong>{"<Firm Name>"}</strong>, SEBI Registered Research Analyst <strong>{"<RA ID>"}</strong>. We rely on publicly available sources (RHP/DRHP etc.). No guaranteed returns. Disclosures included in every brief.</p>
+            <p className="mt-3 text-sm text-slate-600">Published by <strong>{"BASTION RESEARCH"}</strong>, SEBI Registered Research Analyst <strong>{"INH000013712"}</strong>. We rely on publicly available sources (RHP/DRHP etc.). No guaranteed returns. Disclosures included in every brief.</p>
           </details>
         </div>
       </div>
