@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, AlertCircle, Loader2, RefreshCcw } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  RefreshCcw,
+} from "lucide-react";
 import axiosInstance from "@/api/axios";
 import { endpoints } from "@/api/endpoints";
 import { toast } from "sonner";
@@ -15,9 +21,8 @@ const KYCStep: React.FC<KYCStepProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
-  const [verification, setVerification] = useState<PanVerificationSummary | null>(
-    formData.panVerification || null
-  );
+  const [verification, setVerification] =
+    useState<PanVerificationSummary | null>(formData.panVerification || null);
 
   useEffect(() => {
     setVerification(formData.panVerification || null);
@@ -49,7 +54,7 @@ const KYCStep: React.FC<KYCStepProps> = ({
         endpoints.cashfreeVerification.verifyPan,
         {
           pan,
-          name: fullName,
+          name: "Gurav",
         }
       );
 

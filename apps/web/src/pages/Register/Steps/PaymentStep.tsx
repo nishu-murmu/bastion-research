@@ -93,20 +93,6 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
 
     setIsLoading(true);
     try {
-      if (selectedPlanDetails?.name === "Freemium") {
-        // Directly onboard without payment
-        await axiosInstance.post(endpoints.auth.onboard, formData);
-        try {
-          localStorage.removeItem("onboardingFormData");
-          localStorage.removeItem("onboardingCurrentStep");
-          localStorage.removeItem("onboardingOtpTimer");
-          localStorage.removeItem("onboardingPending");
-          localStorage.setItem("onboardingOpen", "false");
-        } catch {}
-        navigate(AppRoutes.login(), { replace: true });
-        return;
-      }
-
       const orderResponse = await axiosInstance.post(
         endpoints.cashfree.orders,
         {
@@ -151,8 +137,8 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
     onBack();
   };
 
-  // Show different content for Freemium plan
-  if (selectedPlanDetails?.name === "Freemium") {
+  // Show different content for Freemium plan (disabled – free tier removed)
+  if (false && selectedPlanDetails?.name === "Freemium") {
     return (
       <div className="space-y-6">
         <div className="text-center">

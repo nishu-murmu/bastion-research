@@ -44,6 +44,7 @@ export const sendOtp = async (req: Request, res: Response) => {
 
     // 3. Send the OTP via Twilio
     try {
+      console.log({ twilioFromNumber, phone }, "=============");
       await twilioClient.messages.create({
         body: `Your verification code is: ${otp}`,
         from: twilioFromNumber,
@@ -71,7 +72,9 @@ export const verifyOtp = async (req: Request, res: Response) => {
     const entry = otpStore.get(phone);
 
     if (!entry) {
-      return res.status(400).json({ message: "No OTP found. Please request one." });
+      return res
+        .status(400)
+        .json({ message: "No OTP found. Please request one." });
     }
 
     const { otp: storedOtp, expiresAt } = entry;

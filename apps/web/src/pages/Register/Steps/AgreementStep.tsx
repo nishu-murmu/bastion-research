@@ -1,8 +1,15 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { ArrowLeft, RotateCcw, Check } from "lucide-react";
 import SignaturePad from "signature_pad";
 import axiosInstance from "@/api/axios";
 import { endpoints } from "@/api/endpoints";
+import useDigioSdk from "@/hooks/use-digio-sdk";
 
 const AGREEMENT_SUMMARY = [
   "Investment Risks: All investments carry risk of loss. Past performance does not guarantee future results.",
@@ -22,16 +29,38 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
   const signaturePadRef = useRef<SignaturePad | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEsignSubmitting, setIsEsignSubmitting] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [existingSignatureUrl, setExistingSignatureUrl] = useState<string | null>(
-    () => formData?.agreementSignatureUrl || null
-  );
+  const [existingSignatureUrl, setExistingSignatureUrl] = useState<
+    string | null
+  >(() => (formData as any)?.agreementSignatureUrl || null);
+  console.log(formData, "check form");
 
   const identifier = useMemo(() => {
     const email = formData?.email?.trim();
     const phone = formData?.phone?.trim();
     return email || phone || "";
   }, [formData]);
+
+  // Configure Digio to open in an iframe (popup within the page)
+  const { init: initDigio, submit: submitDigio } = useDigioSdk({
+    environment: "sandbox",
+    is_iframe: true,
+    callback: (response: any) => {
+      if (
+        response &&
+        Object.prototype.hasOwnProperty.call(response, "error_code")
+      ) {
+        setError(response?.message || "E-signing failed. Please try again.");
+        setIsEsignSubmitting(false);
+        return;
+      }
+      // Mark agreement as signed on successful completion
+      updateFormData("agreementSignedAt", new Date().toISOString());
+      setIsEsignSubmitting(false);
+      onNext();
+    },
+  });
 
   const handleBeginStroke = useCallback(() => {
     setError(null);
@@ -64,7 +93,10 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
     }
 
     signaturePadRef.current?.off();
-    signaturePadRef.current?.removeEventListener("beginStroke", handleBeginStroke);
+    signaturePadRef.current?.removeEventListener(
+      "beginStroke",
+      handleBeginStroke
+    );
     signaturePadRef.current?.removeEventListener("endStroke", handleEndStroke);
 
     const pad = new SignaturePad(canvas, {
@@ -161,6 +193,70 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
     }
   };
 
+  // Load a PDF from the public folder and return base64 (without data: prefix)
+  const fetchPublicPdfAsBase64 = async (relativePath: string) => {
+    const response = await fetch(relativePath);
+    if (!response.ok) {
+      throw new Error(`Failed to load PDF: ${response.statusText}`);
+    }
+    const buffer = await response.arrayBuffer();
+    const base64 = btoa(
+      String.fromCharCode(...new Uint8Array(buffer as ArrayBuffer))
+    );
+    return base64;
+  };
+
+  const handleEsign = async () => {
+    setError(null);
+    if (!agreeToTerms) {
+      setError("Please accept the terms before continuing.");
+      return;
+    }
+    if (!identifier) {
+      setError("Missing customer identifier (email or phone).");
+      return;
+    }
+    try {
+      setIsEsignSubmitting(true);
+      // Must be called on user gesture to avoid popup blockers
+      initDigio();
+
+      // Create a Digio document on backend (JSON base64 approach)
+      const fileBase64 = await fetchPublicPdfAsBase64(
+        "/media/" + encodeURIComponent("Website analystics.pdf")
+      );
+      const resp = await axiosInstance.post(endpoints.digio.esignUploadJson, {
+        file_data: fileBase64,
+        file_name: "Website analystics.pdf",
+        will_self_sign: true,
+        include_authentication_url: true,
+        signers: [
+          {
+            identifier,
+            name: formData?.email || formData?.phone || "User",
+          },
+        ],
+      });
+
+      const documentId =
+        resp?.data?.data?.id || resp?.data?.data?.document_id || resp?.data?.id;
+      if (!documentId) {
+        throw new Error("Failed to create e-sign request (no document id)");
+      }
+
+      // Open the Digio flow in iframe and submit for signing
+      submitDigio(documentId, identifier);
+    } catch (e: any) {
+      console.error(e);
+      setError(
+        e?.response?.data?.message ||
+          e?.message ||
+          "Failed to start e-signing. Please try again."
+      );
+      setIsEsignSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -231,6 +327,27 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
               )}
             </div>
           )}
+        </div>
+
+        <div className="border rounded-xl p-4 bg-white">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">
+              Or e-sign using Digio (opens as in-page popup)
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleEsign}
+            disabled={isEsignSubmitting}
+            className="w-full bg-gray-900 text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition-colors disabled:bg-gray-400"
+          >
+            {isEsignSubmitting
+              ? "Starting e-signing..."
+              : "E-sign Agreement (Popup)"}
+          </button>
+          <p className="text-xs text-gray-500 mt-2">
+            This will open a secure Digio signing popup inside this page.
+          </p>
         </div>
       </div>
 

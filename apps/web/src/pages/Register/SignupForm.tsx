@@ -73,7 +73,9 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
       const next = { ...prev, [field]: value } as OnboardingFormData;
 
       if (
-        (field === "firstName" || field === "lastName" || field === "panCard") &&
+        (field === "firstName" ||
+          field === "lastName" ||
+          field === "panCard") &&
         prev.panVerification
       ) {
         next.panVerification = null;
