@@ -11,7 +11,7 @@ import VerifyStep from "./Steps/VerifyStep";
 import { endpoints } from "@/api/endpoints";
 
 const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
-  const [currentStep, setCurrentStep] = useState(5);
+  const [currentStep, setCurrentStep] = useState(6);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<OnboardingFormData>({
     email: "",
@@ -40,9 +40,9 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
     { id: 1, name: "Register", icon: "👤" },
     { id: 2, name: "Verify", icon: "✓" },
     { id: 3, name: "Onboard", icon: "📋" },
-    { id: 4, name: "Plans", icon: "📋" },
-    { id: 5, name: "KYC", icon: "🆔" },
-    { id: 6, name: "Agreement", icon: "📄" },
+    { id: 4, name: "KYC", icon: "🆔" },
+    { id: 5, name: "Agreement", icon: "📄" },
+    { id: 6, name: "Plans", icon: "📋" },
     { id: 7, name: "Payment", icon: "💳" },
   ];
   const [isLoading, setIsLoading] = useState(false);
@@ -212,18 +212,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
         );
       case 4:
         return (
-          <PlansStep
-            plans={plans}
-            error={error}
-            isLoading={isLoading}
-            formData={formData}
-            onBack={prevStep}
-            onNext={nextStep}
-            updateFormData={updateFormData}
-          />
-        );
-      case 5:
-        return (
+
           <KYCStep
             formData={kycFormData}
             onBack={prevStep}
@@ -231,11 +220,24 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
             updateFormData={updateFormData}
           />
         );
-      case 6:
+      case 5:
         return (
           <AgreementStep
             agreeToTerms={formData.agreeToTerms}
+            //@ts-ignore
             formData={{ email: formData.email, phone: formData.phone }}
+            onBack={prevStep}
+            onNext={nextStep}
+            updateFormData={updateFormData}
+          />
+        );
+      case 6:
+        return (
+          <PlansStep
+            plans={plans}
+            error={error}
+            isLoading={isLoading}
+            formData={formData}
             onBack={prevStep}
             onNext={nextStep}
             updateFormData={updateFormData}

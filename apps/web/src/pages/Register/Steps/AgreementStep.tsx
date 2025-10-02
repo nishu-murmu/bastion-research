@@ -1,22 +1,16 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { ArrowLeft, RotateCcw, Check } from "lucide-react";
-import SignaturePad from "signature_pad";
 import axiosInstance from "@/api/axios";
 import { endpoints } from "@/api/endpoints";
 import useDigioSdk from "@/hooks/use-digio-sdk";
+import { handlePersonalizedPdf } from "@/utils/pdf";
+import { ArrowLeft } from "lucide-react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
+import SignaturePad from "signature_pad";
 
-const AGREEMENT_SUMMARY = [
-  "Investment Risks: All investments carry risk of loss. Past performance does not guarantee future results.",
-  "Service Agreement: You agree to pay applicable fees for the services provided.",
-  "Privacy: We will protect your personal information as outlined in our privacy policy.",
-  "Compliance: You confirm that the provided KYC details are accurate and authorize Bastion to retain a digital signature of this agreement.",
-];
 
 const AgreementStep: React.FC<AgreementStepProps> = ({
   agreeToTerms,
@@ -25,17 +19,23 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
   onNext,
   formData,
 }) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const pdfUrl = 'https://ftuuyfhfrhvlllfwfbjx.supabase.co/storage/v1/object/public/system_docs/INVESTMENT%20RESEARCH%20SERVICE%20AGREEMENT.pdf';
   const signaturePadRef = useRef<SignaturePad | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pdfUrlWithAddress, setPdfUrlWithAddress] = useState('');
   const [isEsignSubmitting, setIsEsignSubmitting] = useState(false);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [existingSignatureUrl, setExistingSignatureUrl] = useState<
-    string | null
-  >(() => (formData as any)?.agreementSignatureUrl || null);
-  console.log(formData, "check form");
+  const storedFormData = JSON.parse(localStorage.getItem("onboardingFormData") || "")
 
+  const actualAddress = `
+  Name: ${storedFormData.firstName} ${storedFormData.lastName}\n
+  PAN: ${storedFormData.panCard}\n
+  Address: ${storedFormData.address1}\n
+  ${storedFormData.address2}\n
+  Email: ${storedFormData.email}\n
+  Phone Number: ${storedFormData.phone}
+  `
+  
   const identifier = useMemo(() => {
     const email = formData?.email?.trim();
     const phone = formData?.phone?.trim();
@@ -62,76 +62,15 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
     },
   });
 
-  const handleBeginStroke = useCallback(() => {
-    setError(null);
-    setIsDrawing(true);
-    setExistingSignatureUrl(null);
-  }, []);
-
-  const handleEndStroke = useCallback(() => {
-    setIsDrawing(false);
-  }, []);
-
-  const initialiseSignaturePad = React.useCallback(() => {
-    if (!canvasRef.current) return;
-    const canvas = canvasRef.current;
-    const parent = canvas.parentElement;
-    if (!parent) return;
-
-    const ratio = Math.max(window.devicePixelRatio || 1, 1);
-    const width = parent.clientWidth;
-    const height = 220;
-    canvas.width = width * ratio;
-    canvas.height = height * ratio;
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      ctx.scale(ratio, ratio);
-      ctx.clearRect(0, 0, width, height);
-    }
-
-    signaturePadRef.current?.off();
-    signaturePadRef.current?.removeEventListener(
-      "beginStroke",
-      handleBeginStroke
-    );
-    signaturePadRef.current?.removeEventListener("endStroke", handleEndStroke);
-
-    const pad = new SignaturePad(canvas, {
-      minWidth: 0.5,
-      maxWidth: 2.5,
-      penColor: "#111827",
-    });
-    const padAny = pad as any;
-    padAny.addEventListener?.("beginStroke", handleBeginStroke);
-    padAny.addEventListener?.("endStroke", handleEndStroke);
-    signaturePadRef.current = pad;
-  }, [handleBeginStroke, handleEndStroke]);
-
   useEffect(() => {
-    initialiseSignaturePad();
-    const handleResize = () => initialiseSignaturePad();
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      const padAny = signaturePadRef.current as any;
-      padAny?.removeEventListener?.("beginStroke", handleBeginStroke);
-      padAny?.removeEventListener?.("endStroke", handleEndStroke);
-      signaturePadRef.current?.off();
-      signaturePadRef.current = null;
-    };
-  }, [handleBeginStroke, handleEndStroke, initialiseSignaturePad]);
+    (async () => {
+      const base64Value = await handlePersonalizedPdf(pdfUrl, actualAddress);
+      const pdfDataUrl = `data:application/pdf;base64,${base64Value}`;
+      console.log({ pdfDataUrl, pdfUrl });
+      setPdfUrlWithAddress(pdfDataUrl);
+    })();
+  }, []);
 
-  const clearSignature = () => {
-    signaturePadRef.current?.clear();
-    setExistingSignatureUrl(null);
-    updateFormData("agreementSignatureUrl", "");
-    updateFormData("agreementSignaturePath", "");
-    updateFormData("agreementSignedAt", "");
-    setError(null);
-  };
 
   const handleSubmit = async () => {
     setError(null);
@@ -148,13 +87,13 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
     const signaturePad = signaturePadRef.current;
     const hasNewSignature = signaturePad && !signaturePad.isEmpty();
 
-    if (!hasNewSignature && !existingSignatureUrl) {
+    if (!hasNewSignature ) {
       setError("Please provide your signature to continue.");
       return;
     }
 
     // Reuse signature already uploaded (user navigating back)
-    if (!hasNewSignature && existingSignatureUrl) {
+    if (!hasNewSignature) {
       updateFormData("agreementSignedAt", new Date().toISOString());
       onNext();
       return;
@@ -177,7 +116,6 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
       updateFormData("agreementSignatureUrl", url);
       updateFormData("agreementSignaturePath", path || "");
       updateFormData("agreementSignedAt", new Date().toISOString());
-      setExistingSignatureUrl(url);
       signaturePad?.clear();
       onNext();
     } catch (err: any) {
@@ -191,19 +129,6 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  // Load a PDF from the public folder and return base64 (without data: prefix)
-  const fetchPublicPdfAsBase64 = async (relativePath: string) => {
-    const response = await fetch(relativePath);
-    if (!response.ok) {
-      throw new Error(`Failed to load PDF: ${response.statusText}`);
-    }
-    const buffer = await response.arrayBuffer();
-    const base64 = btoa(
-      String.fromCharCode(...new Uint8Array(buffer as ArrayBuffer))
-    );
-    return base64;
   };
 
   const handleEsign = async () => {
@@ -220,14 +145,9 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
       setIsEsignSubmitting(true);
       // Must be called on user gesture to avoid popup blockers
       initDigio();
-
-      // Create a Digio document on backend (JSON base64 approach)
-      const fileBase64 = await fetchPublicPdfAsBase64(
-        "/media/" + encodeURIComponent("Website analystics.pdf")
-      );
       const resp = await axiosInstance.post(endpoints.digio.esignUploadJson, {
-        file_data: fileBase64,
-        file_name: "Website analystics.pdf",
+        file_data: pdfUrlWithAddress,
+        file_name: "Agreement.pdf",
         will_self_sign: true,
         include_authentication_url: true,
         signers: [
@@ -268,13 +188,9 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
         </p>
       </div>
 
-      <div className="max-h-48 overflow-y-auto border rounded-lg p-4 text-sm text-gray-700">
+      <div className="max-h-[300px] overflow-y-auto border rounded-lg p-4 text-sm text-gray-700">
         <h3 className="font-semibold mb-3">Summary</h3>
-        <ul className="list-disc list-inside space-y-2">
-          {AGREEMENT_SUMMARY.map((item, index) => (
-            <li key={index}>{item}</li>
-          ))}
-        </ul>
+       <PdfPreview pdfUrl={pdfUrlWithAddress} />
       </div>
 
       <div className="space-y-3">
@@ -291,50 +207,7 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
           </span>
         </label>
 
-        <div className="border border-dashed border-gray-300 rounded-xl p-4 bg-white">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">
-              Draw your signature below
-            </span>
-            <button
-              type="button"
-              onClick={clearSignature}
-              className="flex items-center text-xs text-gray-500 hover:text-gray-700"
-            >
-              <RotateCcw size={14} className="mr-1" /> Reset
-            </button>
-          </div>
-
-          {existingSignatureUrl ? (
-            <div className="flex flex-col items-center space-y-2">
-              <img
-                src={existingSignatureUrl}
-                alt="Existing signature"
-                className="max-h-40 object-contain"
-              />
-              <p className="text-xs text-gray-500 flex items-center">
-                <Check size={14} className="mr-1 text-green-600" /> Signature on
-                file
-              </p>
-            </div>
-          ) : (
-            <div className="bg-gray-50 rounded-lg">
-              <canvas ref={canvasRef} className="w-full rounded-lg bg-white" />
-              {!isDrawing && (
-                <p className="text-xs text-gray-500 text-center py-2">
-                  Sign inside the box using your mouse or touch input.
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-
         <div className="border rounded-xl p-4 bg-white">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">
-              Or e-sign using Digio (opens as in-page popup)
-            </span>
-          </div>
           <button
             type="button"
             onClick={handleEsign}
@@ -345,9 +218,6 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
               ? "Starting e-signing..."
               : "E-sign Agreement (Popup)"}
           </button>
-          <p className="text-xs text-gray-500 mt-2">
-            This will open a secure Digio signing popup inside this page.
-          </p>
         </div>
       </div>
 
@@ -373,3 +243,17 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
 };
 
 export default AgreementStep;
+
+function PdfPreview({pdfUrl,}: {pdfUrl: string}) {
+  return (
+    <div style={{ width: '100%', height: '120vh' }}>
+      <iframe
+        src={pdfUrl}
+        width="100%"
+        height="100%"
+        style={{ border: 'none' }}
+        title="PDF Preview"
+      />
+    </div>
+  );
+}

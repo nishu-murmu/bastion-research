@@ -1,12 +1,12 @@
 import { Router } from 'express'
 import multer from 'multer'
 import {
-  initiateSignature,
   getDocumentDetails,
   downloadSignedDocument,
   cancelSignatureRequest,
   digioWebhook,
-  initiateSignatureJSON
+  initiateSignatureJSON,
+  testDigioWebhook
 } from '../controllers/digio.controller'
 
 const router = Router()
@@ -19,12 +19,6 @@ if (DIGIO_DISABLED) {
     return res.status(503).json({ message: 'Digio is temporarily disabled' })
   })
 } else {
-  // Start a signature request by uploading a PDF
-  // Accept any multipart fields; controller will pick 'file' or 'pdf'
-  router.post('/esign/upload', upload.any(), initiateSignature)
- 
-  // Start a signature request by uploading a PDF (JSON with base64)
-  // Send PDF as base64 in file_data field
   router.post("/esign/uploadjson", initiateSignatureJSON);
 
   // Document detail/status
@@ -38,6 +32,7 @@ if (DIGIO_DISABLED) {
 
   // Webhook receiver (configure URL in Digio dashboard)
   router.post('/webhook', digioWebhook)
+  router.get('/webhook', testDigioWebhook)
 }
 
 export default router
