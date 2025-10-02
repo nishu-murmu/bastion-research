@@ -381,6 +381,7 @@ const Subscription = () => {
                     {subscription?.subscription?.name ||
                       (onFreePlan
                         ? "No Active"
+                        //@ts-ignore
                         : String(currentPlanCode).replaceAll("_", " ").toUpperCase())}{" "}
                     Plan
                   </h3>
@@ -596,6 +597,7 @@ const Subscription = () => {
         ) : (
           <AgreementStep
             agreeToTerms={upgradeForm.agreeToTerms}
+            //@ts-ignore
             formData={{ email: user?.email || "", phone: user?.phone || "" }}
             onBack={handleAgreementBack}
             onNext={handleAgreementComplete}

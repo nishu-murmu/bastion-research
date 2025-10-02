@@ -8,6 +8,7 @@ import {
   initiateSignatureJSON,
   testDigioWebhook
 } from '../controllers/digio.controller'
+import optionalAuth from "../middleware/optionalAuth.middleware";
 
 const router = Router()
 const DIGIO_DISABLED = process.env.DIGIO_DISABLED === 'true' ? true : false
@@ -19,7 +20,7 @@ if (DIGIO_DISABLED) {
     return res.status(503).json({ message: 'Digio is temporarily disabled' })
   })
 } else {
-  router.post("/esign/uploadjson", initiateSignatureJSON);
+  router.post("/esign/uploadjson", optionalAuth, initiateSignatureJSON);
 
   // Document detail/status
   router.get('/esign/:documentId', getDocumentDetails)
@@ -36,4 +37,3 @@ if (DIGIO_DISABLED) {
 }
 
 export default router
-

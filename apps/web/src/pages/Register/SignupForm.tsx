@@ -9,9 +9,12 @@ import PlansStep from "./Steps/PlansStep";
 import RegisterStep from "./Steps/RegisterStep";
 import VerifyStep from "./Steps/VerifyStep";
 import { endpoints } from "@/api/endpoints";
+import { useAuth } from "@/contexts/AuthContext";
 
 const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
-  const [currentStep, setCurrentStep] = useState(6);
+  const { user } = useAuth();
+
+  const [currentStep, setCurrentStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<OnboardingFormData>({
     email: "",
@@ -53,20 +56,25 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     const formDataFromStorage = localStorage.getItem("onboardingFormData");
-    const stepFromStorage = localStorage.getItem("onboardingCurrentStep");
     if (formDataFromStorage) {
       try {
         setFormData(JSON.parse(formDataFromStorage));
       } catch {}
     }
-    if (stepFromStorage) {
-      const step = parseInt(stepFromStorage, 10);
-      if (!Number.isNaN(step) && step >= 1 && step <= maxStep) {
-        setCurrentStep(step);
-      }
+  }, [currentStep]);
+
+
+  useEffect(() => {
+    const shouldResumeOnboarding = user?.status === "onboarding";
+    const agreementSigned = user?.status === "agreement_signed";
+    if(shouldResumeOnboarding) {
+      setCurrentStep(5)
     }
-    // otp timer now handled inside VerifyStep
-  }, []);
+    if(agreementSigned) {
+      setCurrentStep(6)
+    }
+  }, [user])
+
 
   const updateFormData = (field: string, value: any) => {
     setFormData((prev) => {
@@ -119,7 +127,6 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
     setSteps(stepsValues);
   }, [plans.length]);
 
-  // Persist current step
   useEffect(() => {
     try {
       localStorage.setItem("onboardingCurrentStep", String(currentStep));
@@ -128,7 +135,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     const fetchPlans = async () => {
-      if (currentStep === 4) {
+      if (currentStep >= 5) {
         setIsLoading(true);
         try {
           const response = await axiosInstance.get(endpoints.cashfree.plans);

@@ -197,19 +197,31 @@ export const getPanVerificationStatus = async (req: Request, res: Response) => {
 
 export const listPlans = async (_req: Request, res: Response) => {
   try {
-    const { data, error } = await supabase
+    // Try to fetch canonical plans; if none found, fallback to all
+    let plansRows: any[] | null = null;
+    let qError: any = null;
+
+    const { data: filtered, error: filteredErr } = await supabase
       .from("membership_plans")
       .select("plan_id, plan_name, price_amount, currency, plan_code, tier")
       .in("plan_code", ["core", "core_annual", "research_hub"]);
-
-    if (error) {
-      return res.status(500).json({ message: error.message });
+    if (!filteredErr && filtered && filtered.length > 0) {
+      plansRows = filtered;
+    } else {
+      const { data: allData, error: allErr } = await supabase
+        .from("membership_plans")
+        .select("plan_id, plan_name, price_amount, currency, plan_code, tier")
+        .order("plan_id", { ascending: true });
+      plansRows = allData || [];
+      qError = allErr;
     }
 
-    const plans: PublicPlan[] = (data || [])
-      .filter(
-        (p: any) => typeof p?.price_amount === "number" && p.price_amount >= 0
-      )
+    if (qError) {
+      return res.status(500).json({ message: qError.message });
+    }
+
+    const plans: PublicPlan[] = (plansRows || [])
+      .filter((p: any) => typeof p?.price_amount === "number" && p.price_amount >= 0)
       .map((p: any) => ({
         code: String(p.plan_id),
         name: p.plan_name,
@@ -221,9 +233,7 @@ export const listPlans = async (_req: Request, res: Response) => {
 
     return res.status(200).json({ plans });
   } catch (err: any) {
-    return res
-      .status(500)
-      .json({ message: err?.message || "Failed to fetch plans" });
+    return res.status(500).json({ message: err?.message || "Failed to fetch plans" });
   }
 };
 
@@ -236,7 +246,11 @@ export const createOrderForPlan = async (req: Request, res: Response) => {
       customer_phone,
       return_url,
       metadata,
+      discount_amount
     } = req.body;
+
+     console.log(req.body, '==========')
+
     if (!plan) return res.status(400).json({ message: "plan is required" });
     if (!customer_id)
       return res.status(400).json({ message: "customer_id is required" });
@@ -251,7 +265,7 @@ export const createOrderForPlan = async (req: Request, res: Response) => {
 
     const { data: planRows, error } = await supabase
       .from("membership_plans")
-      .select("plan_id, plan_name, price_amount, currency, plan_code, tier")
+      .select("plan_id, plan_name, price_amount, currency, tier")
       .eq("plan_id", planId)
       .limit(1);
 
@@ -262,34 +276,16 @@ export const createOrderForPlan = async (req: Request, res: Response) => {
     const selected: PublicPlan = {
       code: String(planRow.plan_id),
       name: planRow.plan_name,
-      amount: planRow.price_amount,
+      amount: discount_amount,
       currency: planRow.currency || "INR",
-      plan_code: planRow.plan_code,
       tier: planRow.tier,
     };
     const orderId = `order_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
     const frontendUrl = (
       process.env.FRONTEND_URL || "http://localhost:5173"
     ).replace(/\/$/, "");
-    // Build return URL with optional context so client can branch behavior
     let returnUrl =
       return_url || `${frontendUrl}/payment/success?order_id=${orderId}`;
-
-    const orderTagsBase =
-      metadata && typeof metadata === "object"
-        ? Object.fromEntries(
-            Object.entries(metadata).filter(
-              ([, value]) =>
-                value !== undefined && value !== null && value !== ""
-            )
-          )
-        : {};
-
-    const orderTags = {
-      ...orderTagsBase,
-      plan_id: planRow.plan_id,
-      plan_code: planRow.plan_code,
-    } as any;
 
     const request = {
       order_id: orderId,
@@ -304,12 +300,8 @@ export const createOrderForPlan = async (req: Request, res: Response) => {
       order_meta: {
         return_url: returnUrl,
       },
-      order_tags: orderTags,
     };
 
-    if (!orderTags || Object.keys(orderTags).length === 0) {
-      delete (request as any).order_tags;
-    }
 
     const response = await pgCreateOrder(request);
     await supabase.from("payment_history").upsert({

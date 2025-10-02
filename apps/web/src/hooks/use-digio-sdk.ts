@@ -1,10 +1,11 @@
+import { Config } from "@/utils/config";
 import { useRef, useCallback } from "react";
 
 // Digio SDK is loaded globally via <script> in index.html
 
 interface DigioOptions {
   environment: "production" | "sandbox";
-  callback: (response: any) => void;
+  callback?: (response: any) => void;
   logo?: string;
   theme?: {
     primaryColor?: string;
@@ -21,21 +22,10 @@ interface DigioOptions {
 
 const DEFAULT_OPTIONS: DigioOptions = {
   environment: "sandbox",
-  callback: (response: any) => {
-    if (
-      response &&
-      Object.prototype.hasOwnProperty.call(response, "error_code")
-    ) {
-      // Handle error
-      console.log("error occurred in process", response);
-      return;
-    }
-    console.log("Signing completed successfully:", response);
-  },
-  logo: "https://www.mylogourl.com/image.jpeg",
+  logo: Config.logo,
   theme: {
-    primaryColor: "#AB3498",
-    secondaryColor: "#000000",
+    primaryColor: "#c9122d",
+    secondaryColor: "#1d2a53",
   },
 };
 
@@ -53,7 +43,8 @@ const useDigioSdk = (options?: Partial<DigioOptions>) => {
       throw new Error("Digio SDK not loaded");
     }
     if (!digioRef.current) {
-      digioRef.current = new window.Digio({ ...DEFAULT_OPTIONS, ...options });
+      const actualOptions = { ...DEFAULT_OPTIONS, ...options }
+      digioRef.current = new window.Digio(actualOptions);
     }
     return digioRef.current;
   }, [options]);

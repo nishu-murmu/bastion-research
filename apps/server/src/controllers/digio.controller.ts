@@ -50,7 +50,6 @@ export const initiateSignatureJSON = async (req: Request, res: Response) => {
       console.log("Stripped data URL prefix from file_data.");
     }
 
-    // Basic validation for base64
     if (typeof file_data !== "string" || file_data.length < 10) {
       return res.status(400).json({
         message: "file_data appears to be invalid or empty.",
@@ -116,7 +115,6 @@ export const initiateSignatureJSON = async (req: Request, res: Response) => {
       }),
     };
 
-    // Make the JSON request to Digio API
     const response = await axios({
       method: "POST",
       url: `${DIGIO_BASE_URL}/v2/client/document/uploadpdf`,
@@ -129,10 +127,6 @@ export const initiateSignatureJSON = async (req: Request, res: Response) => {
       timeout: 60000,
     });
 
-    console.log("JSON request completed successfully=====>");
-    console.log("Response status:", response.status);
-    console.log("Response data:", response.data);
-
     const data = response.data;
 
     try {
@@ -140,17 +134,20 @@ export const initiateSignatureJSON = async (req: Request, res: Response) => {
       const doc_status = "created";
       const identifier = signersArray?.[0]?.identifier || "unknown";
 
-      console.log({identifier, document_id, status: doc_status})
+      const user_id = anyReq?.user && anyReq.user.id ? anyReq.user.id : null;
+
       if (document_id && identifier) {
         await supabase
           .from("digio_documents")
-          .insert({ identifier, document_id, status: doc_status });
-        console.log("Saved to database:", { identifier, document_id });
+          .insert([{ document_id, status: doc_status, user_id }])
+          .select();
+
       }
     } catch (dbError) {
       console.log("Database save failed (non-critical):", dbError);
     }
 
+    console.log(data, 'data hai ====>')
     return res.status(201).json({
       success: true,
       message: "Document uploaded for signature successfully (JSON)",
@@ -297,6 +294,7 @@ export const digioWebhook = async (req: Request, res: Response) => {
     }
 
     const event = body;
+    console.log(event, 'event=====>')
 
     // Normalize fields from Digio style payloads
     const documentId =
@@ -315,12 +313,11 @@ export const digioWebhook = async (req: Request, res: Response) => {
           "esign.v3.sign.pending": "pending",
         };
         const normalized = statusMap[eventType] || String(eventType || "");
-        const raw_response = JSON.stringify(event);
 
         // Attempt to update existing row by document_id
         await supabase
           .from("digio_documents")
-          .update({ status: normalized, raw_response })
+          .update({ status: normalized })
           .eq("document_id", documentId);
       }
     } catch {

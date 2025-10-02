@@ -1,15 +1,14 @@
 import axiosInstance from "@/api/axios";
 import { endpoints } from "@/api/endpoints";
+import { useAuth } from "@/contexts/AuthContext";
 import useDigioSdk from "@/hooks/use-digio-sdk";
 import { handlePersonalizedPdf } from "@/utils/pdf";
 import { ArrowLeft } from "lucide-react";
 import React, {
   useEffect,
   useMemo,
-  useRef,
   useState
 } from "react";
-import SignaturePad from "signature_pad";
 
 
 const AgreementStep: React.FC<AgreementStepProps> = ({
@@ -20,12 +19,13 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
   formData,
 }) => {
   const pdfUrl = 'https://ftuuyfhfrhvlllfwfbjx.supabase.co/storage/v1/object/public/system_docs/INVESTMENT%20RESEARCH%20SERVICE%20AGREEMENT.pdf';
-  const signaturePadRef = useRef<SignaturePad | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pdfUrlWithAddress, setPdfUrlWithAddress] = useState('');
   const [isEsignSubmitting, setIsEsignSubmitting] = useState(false);
+  const [documentId, setDocumentId] = useState('');
   const storedFormData = JSON.parse(localStorage.getItem("onboardingFormData") || "")
+  const {user} = useAuth()
 
   const actualAddress = `
   Name: ${storedFormData.firstName} ${storedFormData.lastName}\n
@@ -46,7 +46,7 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
   const { init: initDigio, submit: submitDigio } = useDigioSdk({
     environment: "sandbox",
     is_iframe: true,
-    callback: (response: any) => {
+    callback: async (response: any) => {
       if (
         response &&
         Object.prototype.hasOwnProperty.call(response, "error_code")
@@ -55,10 +55,14 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
         setIsEsignSubmitting(false);
         return;
       }
-      // Mark agreement as signed on successful completion
-      updateFormData("agreementSignedAt", new Date().toISOString());
-      setIsEsignSubmitting(false);
-      onNext();
+      if(response?.digio_doc_id && response?.message === "Signed Successfully") {
+        await axiosInstance.put(endpoints.users.update(user?.id), {
+          status: "agreement_signed"
+        })
+        updateFormData("agreementSignedAt", new Date().toISOString());
+        setIsEsignSubmitting(false);
+        onNext();
+      }
     },
   });
 
@@ -66,70 +70,10 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
     (async () => {
       const base64Value = await handlePersonalizedPdf(pdfUrl, actualAddress);
       const pdfDataUrl = `data:application/pdf;base64,${base64Value}`;
-      console.log({ pdfDataUrl, pdfUrl });
       setPdfUrlWithAddress(pdfDataUrl);
     })();
   }, []);
 
-
-  const handleSubmit = async () => {
-    setError(null);
-    if (!agreeToTerms) {
-      setError("Please accept the terms before continuing.");
-      return;
-    }
-
-    if (!identifier) {
-      setError("Missing customer identifier (email or phone).");
-      return;
-    }
-
-    const signaturePad = signaturePadRef.current;
-    const hasNewSignature = signaturePad && !signaturePad.isEmpty();
-
-    if (!hasNewSignature ) {
-      setError("Please provide your signature to continue.");
-      return;
-    }
-
-    // Reuse signature already uploaded (user navigating back)
-    if (!hasNewSignature) {
-      updateFormData("agreementSignedAt", new Date().toISOString());
-      onNext();
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      const dataUrl = signaturePad!.toDataURL("image/png");
-      const response = await axiosInstance.post(endpoints.files.signatures, {
-        dataUrl,
-        identifier,
-      });
-
-      const url = response?.data?.url as string | undefined;
-      const path = response?.data?.path as string | undefined;
-      if (!url) {
-        throw new Error("Signature upload did not return a URL");
-      }
-
-      updateFormData("agreementSignatureUrl", url);
-      updateFormData("agreementSignaturePath", path || "");
-      updateFormData("agreementSignedAt", new Date().toISOString());
-      signaturePad?.clear();
-      onNext();
-    } catch (err: any) {
-      console.error("Signature upload failed", err);
-      setError(
-        err?.response?.data?.message ||
-          err?.response?.data?.error ||
-          err?.message ||
-          "Failed to store signature. Please try again."
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleEsign = async () => {
     setError(null);
@@ -158,14 +102,15 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
         ],
       });
 
-      const documentId =
+      const _documentId =
         resp?.data?.data?.id || resp?.data?.data?.document_id || resp?.data?.id;
-      if (!documentId) {
+        console.log(_documentId, 'check id')
+        setDocumentId(_documentId)
+      if (!_documentId) {
         throw new Error("Failed to create e-sign request (no document id)");
       }
 
-      // Open the Digio flow in iframe and submit for signing
-      submitDigio(documentId, identifier);
+      submitDigio(_documentId, identifier);
     } catch (e: any) {
       console.error(e);
       setError(
@@ -230,13 +175,13 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
         >
           <ArrowLeft size={20} className="mr-1" /> Back
         </button>
-        <button
+        {/* <button
           onClick={handleSubmit}
           disabled={isSubmitting}
           className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors disabled:bg-gray-400"
         >
           {isSubmitting ? "Saving signature..." : "Accept & Continue"}
-        </button>
+        </button> */}
       </div>
     </div>
   );
