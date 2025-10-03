@@ -1,21 +1,8 @@
 import { Config } from "@/utils/config";
 import { useRef, useCallback } from "react";
-
-interface DigioOptions {
-  environment: "production" | "sandbox";
-  callback?: (response: any) => void;
-  logo?: string;
-  theme?: {
-    primaryColor?: string;
-    secondaryColor?: string;
-  };
-  is_redirection_approach?: boolean;
-  redirect_url?: string;
-  is_iframe?: boolean;
-  event_listener?: (event: any) => void;
-  event_filter?: {
-    events: string[];
-  };
+declare global {
+  // eslint-disable-next-line no-var
+  var Digio: any;
 }
 
 const DEFAULT_OPTIONS: DigioOptions = {
@@ -26,11 +13,6 @@ const DEFAULT_OPTIONS: DigioOptions = {
     secondaryColor: "#1d2a53",
   },
 };
-
-declare global {
-  // eslint-disable-next-line no-var
-  var Digio: any;
-}
 
 const useDigioSdk = (options?: Partial<DigioOptions>) => {
   const digioRef = useRef<any>(null);

@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import AgreementStep from "../../Register/Steps/AgreementStep";
+import { Config } from "@/utils/config";
 
 type ApiPlan = {
   code: string; // plan_id as string
@@ -48,11 +49,7 @@ const formatINR = (amount: number) =>
   }).format(amount);
 
 const planFeatures: Record<string, string[]> = {
-  core: [
-    "Core premium research access",
-    "Member webinars",
-    "Standard support",
-  ],
+  core: ["Core premium research access", "Member webinars", "Standard support"],
   core_annual: [
     "All CORE features",
     "Annual insights bundle",
@@ -285,7 +282,10 @@ const Subscription = () => {
 
   const handleSubscribe = async (
     code: string,
-    opts?: { bypassKyc?: boolean; panVerification?: PanVerificationSummary | null }
+    opts?: {
+      bypassKyc?: boolean;
+      panVerification?: PanVerificationSummary | null;
+    }
   ) => {
     if (!user) return;
     const selectedPlan = plans.find((p) => p.code === code);
@@ -318,7 +318,7 @@ const Subscription = () => {
         "Processing payment..."
       );
 
-      const cashfree = await load({ mode: "sandbox" });
+      const cashfree = await load({ mode: Config.cashfree_environment });
       const paymentSessionId = resp?.data?.order?.payment_session_id;
       if (!paymentSessionId) throw new Error("Payment session not created");
       await cashfree.checkout({
@@ -381,8 +381,11 @@ const Subscription = () => {
                     {subscription?.subscription?.name ||
                       (onFreePlan
                         ? "No Active"
-                        //@ts-ignore
-                        : String(currentPlanCode).replaceAll("_", " ").toUpperCase())}{" "}
+                        : //@ts-ignore
+                          String(currentPlanCode)
+                            //@ts-ignore
+                            .replaceAll("_", " ")
+                            .toUpperCase())}{" "}
                     Plan
                   </h3>
                   <p className="text-sm text-muted-foreground">
@@ -413,17 +416,17 @@ const Subscription = () => {
                       </p>
                       {subscription.subscription.expireDate && (
                         <p>
-                          Expires: {" "}
+                          Expires:{" "}
                           {new Date(
                             subscription.subscription.expireDate
                           ).toLocaleDateString()}
                         </p>
                       )}
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
           </CardContent>
         </Card>
 
@@ -442,7 +445,8 @@ const Subscription = () => {
             plans.map((plan) => {
               const normalizedName = plan.name.toLowerCase();
               const popular =
-                (plan.plan_code === "core_annual") || normalizedName.includes("annual");
+                plan.plan_code === "core_annual" ||
+                normalizedName.includes("annual");
               const priceLabel = formatINR(plan.amount);
               const featureKey = getFeatureKey(plan);
               const disabled =
@@ -457,9 +461,13 @@ const Subscription = () => {
                   className={`relative ${popular ? "border-red-400 shadow-md" : ""}`}
                 >
                   <CardHeader className="text-center pb-3 sm:pb-6">
-                    <CardTitle className="text-xl sm:text-2xl">{plan.name}</CardTitle>
+                    <CardTitle className="text-xl sm:text-2xl">
+                      {plan.name}
+                    </CardTitle>
                     <CardDescription className="text-sm">
-                      {popular ? "Best value for serious investors" : "Flexible membership"}
+                      {popular
+                        ? "Best value for serious investors"
+                        : "Flexible membership"}
                     </CardDescription>
                     <div className="mt-3 sm:mt-4">
                       <span className="text-2xl sm:text-3xl font-bold">
@@ -557,7 +565,9 @@ const Subscription = () => {
               >
                 <div className="flex items-start justify-between">
                   <p className="font-medium flex items-center">
-                    {kycVerification.valid ? "PAN verified" : "Verification pending"}
+                    {kycVerification.valid
+                      ? "PAN verified"
+                      : "Verification pending"}
                   </p>
                   {kycVerification.referenceId && (
                     <span className="text-xs text-muted-foreground">
@@ -567,11 +577,14 @@ const Subscription = () => {
                 </div>
                 {kycVerification.registeredName && (
                   <p className="text-gray-700 mt-1">
-                    Registered Name: <strong>{kycVerification.registeredName}</strong>
+                    Registered Name:{" "}
+                    <strong>{kycVerification.registeredName}</strong>
                   </p>
                 )}
                 {kycVerification.message && (
-                  <p className="text-gray-600 mt-1">{kycVerification.message}</p>
+                  <p className="text-gray-600 mt-1">
+                    {kycVerification.message}
+                  </p>
                 )}
               </div>
             )}

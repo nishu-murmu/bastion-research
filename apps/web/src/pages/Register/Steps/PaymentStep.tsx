@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { AppRoutes } from "@/routes/app-routes";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Config } from "@/utils/config";
 
 const PaymentStep: React.FC<PaymentStepProps> = ({
   plans,
@@ -19,7 +20,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
 }) => {
   const selectedPlanDetails = plans.find((p) => p.code === selectedPlan);
   const { user } = useAuth();
-  
+
   // Coupon state
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
@@ -29,7 +30,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   // Calculate discount amount
   const calculateDiscount = (coupon, originalAmount) => {
     if (!coupon) return 0;
-    
+
     if (coupon.discount_type === "percentage") {
       return (originalAmount * coupon.discount_value) / 100;
     } else if (coupon.discount_type === "fixed") {
@@ -57,14 +58,18 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
     setCouponError("");
 
     try {
-      const response = await axiosInstance.get(`${endpoints.coupons.base}/validate?code=${couponCode.trim()}`);
+      const response = await axiosInstance.get(
+        `${endpoints.coupons.base}/validate?code=${couponCode.trim()}`
+      );
       const coupon = response.data;
-      
+
       setAppliedCoupon(coupon);
       setCouponError("");
     } catch (error) {
       console.error("Coupon validation error:", error);
-      const errorMessage = error.response?.data?.error || "Failed to validate coupon. Please try again.";
+      const errorMessage =
+        error.response?.data?.error ||
+        "Failed to validate coupon. Please try again.";
       setCouponError(errorMessage);
     } finally {
       setIsValidatingCoupon(false);
@@ -114,7 +119,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
         localStorage.setItem("onboardingPending", "true");
       } catch {}
 
-      const cashfree = await load({ mode: "sandbox" });
+      const cashfree = await load({ mode: Config.cashfree_environment });
       await cashfree.checkout({
         paymentSessionId: payment_session_id,
         redirectTarget: "_self",
@@ -213,15 +218,21 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
             <span>Setup fee</span>
             <span>₹0</span>
           </div>
-          
+
           {/* Coupon discount */}
           {appliedCoupon && (
             <div className="flex justify-between items-center text-sm text-green-600 mb-2">
               <span>Discount ({appliedCoupon.coupon_code})</span>
-              <span>-₹{calculateDiscount(appliedCoupon, selectedPlanDetails.amount).toFixed(2)}</span>
+              <span>
+                -₹
+                {calculateDiscount(
+                  appliedCoupon,
+                  selectedPlanDetails.amount
+                ).toFixed(2)}
+              </span>
             </div>
           )}
-          
+
           <hr className="my-2" />
           <div className="flex justify-between items-center font-semibold">
             <span>Total</span>
@@ -236,7 +247,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
           <Tag size={16} className="text-gray-500 mr-2" />
           <span className="text-sm font-medium text-gray-700">Coupon Code</span>
         </div>
-        
+
         {!appliedCoupon ? (
           <div className="flex gap-2">
             <input
@@ -267,9 +278,11 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
                 {appliedCoupon.coupon_code} applied
               </span>
               <span className="text-green-600 text-sm ml-2">
-                ({appliedCoupon.discount_type === "percentage" 
-                  ? `${appliedCoupon.discount_value}% off` 
-                  : `₹${appliedCoupon.discount_value} off`})
+                (
+                {appliedCoupon.discount_type === "percentage"
+                  ? `${appliedCoupon.discount_value}% off`
+                  : `₹${appliedCoupon.discount_value} off`}
+                )
               </span>
             </div>
             <button
@@ -280,7 +293,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
             </button>
           </div>
         )}
-        
+
         {couponError && (
           <p className="text-red-500 text-sm mt-2">{couponError}</p>
         )}

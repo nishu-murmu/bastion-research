@@ -3,6 +3,7 @@ import { load } from "@cashfreepayments/cashfree-js";
 import { Button } from "@/components/ui/button";
 import axiosInstance from "@/api/axios";
 import { useAuth } from "@/contexts/AuthContext";
+import { Config } from "@/utils/config";
 
 interface OrderResponse {
   payment_link: string;
@@ -37,7 +38,7 @@ const CashfreePayment = () => {
     onSuccess: async (data: any) => {
       var initializeSDK = async function () {
         cashfree = await load({
-          mode: "sandbox",
+          mode: Config.cashfree_environment,
         });
       };
       await initializeSDK();

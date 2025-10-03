@@ -7,7 +7,6 @@ import { supabase } from "../supabase";
 // Environment/config
 const CF_APP_ID = process.env.CASHFREE_APP_ID;
 const CF_SECRET = process.env.CASHFREE_SECRET;
-console.log(process.env.CASHFREE_ENV, "environment");
 const CF_ENV = process.env.CASHFREE_ENV!.toUpperCase() as
   | "SANDBOX"
   | "PRODUCTION";
