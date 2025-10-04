@@ -22,6 +22,7 @@ import axiosInstance from "@/api/axios";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { endpoints } from "@/api/endpoints";
+import favicon from '../../../../server/public/favicon.webp';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -84,7 +85,7 @@ const Login = () => {
         try {
           localStorage.setItem("onboardingOpen", "true");
           localStorage.setItem("onboardingCurrentStep", String(5));
-        } catch {}
+        } catch { }
         toast.success("Welcome back! Let’s finish your onboarding.");
         setTimeout(() => {
           navigate("/register", { replace: true });
@@ -105,34 +106,12 @@ const Login = () => {
     mutation.mutate(data);
   };
 
-  const features = [
-    {
-      icon: <TrendingUp className="w-5 h-5" />,
-      title: "Real-time Analytics",
-      description: "Track your portfolio performance with live data",
-    },
-    {
-      icon: <Shield className="w-5 h-5" />,
-      title: "Secure Platform",
-      description: "Bank-level security for your investments",
-    },
-    {
-      icon: <BarChart3 className="w-5 h-5" />,
-      title: "Advanced Tools",
-      description: "Professional-grade research and analysis tools",
-    },
-    {
-      icon: <Target className="w-5 h-5" />,
-      title: "Personalized Insights",
-      description: "Custom recommendations based on your goals",
-    },
-  ];
+
 
   const stats = [
-    { number: "58.15%", label: "Avg Returns" },
-    { number: "10K+", label: "Active Users" },
-    { number: "99.9%", label: "Uptime" },
-    { number: "24/7", label: "Support" },
+    { number: "10k+", label: "Total Ideas" },
+    { number: "69+", label: "Active Ideas" },
+    { number: "9+", label: "Sectors" },
   ];
 
   return (
@@ -156,9 +135,9 @@ const Login = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.2 }}
                 >
-                  Welcome Back to
+                  Actionable.
                   <span className="block bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent">
-                    Your Investment Hub
+                    Accountable. Bastion.
                   </span>
                 </motion.h1>
                 <motion.p
@@ -167,8 +146,7 @@ const Login = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.4 }}
                 >
-                  Access your personalized dashboard, track your portfolio
-                  performance, and discover new investment opportunities.
+                  Log in for concise notes, price triggers, and regular follow-through.
                 </motion.p>
               </div>
 
@@ -200,8 +178,8 @@ const Login = () => {
               <div className="relative z-10 bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
                 <div className="text-center mb-8">
                   <div className="flex items-center justify-center mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-red-600 to-red-800 rounded-xl flex items-center justify-center">
-                      <span className="text-white font-bold text-xl">B</span>
+                    <div className="w-12 h-12 from-gray-600 rounded-xl flex items-center justify-center">
+                      <span className="text-white font-bold text-xl"> <img src={favicon} alt="logo"/></span>
                     </div>
                   </div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -329,48 +307,6 @@ const Login = () => {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Everything You Need to Succeed
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Access powerful tools and insights designed to help you make
-              informed investment decisions.
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="text-center group"
-              >
-                <div className="w-16 h-16 bg-gradient-to-r from-red-600 to-red-800 rounded-2xl flex items-center justify-center text-white mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-600">{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section for New Users */}
       <section className="py-20 bg-gradient-to-r from-red-600 to-red-800">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
@@ -385,21 +321,35 @@ const Login = () => {
               New to Bastion?
             </h2>
             <p className="text-xl text-red-100 max-w-2xl mx-auto">
-              Join thousands of successful investors and start your journey with
-              institutional-grade research and tools.
+              Access the research that powers confident investment decisions.
             </p>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link
-                to="/register"
-                className="inline-flex items-center px-8 py-4 bg-white text-red-600 font-semibold rounded-2xl hover:bg-gray-50 transition-colors duration-300 shadow-lg hover:shadow-xl"
-              >
-                Create Free Account
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Link>
-            </motion.div>
+
+            {/* Buttons Wrapper */}
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-6">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link
+                  to="/"
+                  className="inline-flex items-center px-8 py-4 bg-white text-red-600 font-semibold rounded-2xl hover:bg-gray-50 transition-colors duration-300 shadow-lg hover:shadow-xl"
+                >
+                  Explore Services
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Link>
+              </motion.div>
+
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link
+                  to="/register"
+                  className="inline-flex items-center px-8 py-4 bg-white text-red-600 font-semibold rounded-2xl hover:bg-gray-50 transition-colors duration-300 shadow-lg hover:shadow-xl"
+                >
+                  View Research
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Link>
+              </motion.div>
+            </div>
           </motion.div>
         </div>
       </section>
+
     </div>
   );
 };
