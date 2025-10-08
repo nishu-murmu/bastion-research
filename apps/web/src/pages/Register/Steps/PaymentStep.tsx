@@ -1,12 +1,10 @@
 import axiosInstance from "@/api/axios";
 import { endpoints } from "@/api/endpoints";
-import { ArrowLeft, Check, X, Tag } from "lucide-react";
-import { load } from "@cashfreepayments/cashfree-js";
-import { useNavigate } from "react-router-dom";
-import { AppRoutes } from "@/routes/app-routes";
-import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Config } from "@/utils/config";
+import { load } from "@cashfreepayments/cashfree-js";
+import { ArrowLeft, Check, Tag, X } from "lucide-react";
+import { useState } from "react";
 
 const PaymentStep: React.FC<PaymentStepProps> = ({
   plans,
@@ -27,6 +25,23 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   const [couponError, setCouponError] = useState("");
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
 
+  // GST configuration
+  const GST_RATE = 0.18; // 18%
+
+  const formatMoney = (value: number) => {
+    try {
+      return (
+        "₹ " +
+        value.toLocaleString("en-IN", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })
+      );
+    } catch {
+      return "₹ " + value.toFixed(2);
+    }
+  };
+
   // Calculate discount amount
   const calculateDiscount = (coupon, originalAmount) => {
     if (!coupon) return 0;
@@ -45,6 +60,17 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
     const originalAmount = selectedPlanDetails.amount;
     const discount = calculateDiscount(appliedCoupon, originalAmount);
     return Math.max(0, originalAmount - discount);
+  };
+
+  // GST amount and final payable with GST
+  const getGstAmount = () => {
+    const taxable = getFinalAmount();
+    return +(taxable * GST_RATE).toFixed(2);
+  };
+
+  const getFinalAmountWithGst = () => {
+    const taxable = getFinalAmount();
+    return +(taxable + getGstAmount()).toFixed(2);
   };
 
   // Validate and apply coupon
@@ -105,7 +131,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
           source: "register",
           return_url: location.origin + "/login",
           coupon_code: appliedCoupon?.coupon_code || null,
-          discount_amount: getFinalAmount() || 0,
+          discount_amount: getFinalAmountWithGst() || 0,
           metadata: {
             panReference: formData.panVerification?.referenceId || null,
             panStatus: formData.panVerification?.status || null,
@@ -210,33 +236,43 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
 
       {selectedPlanDetails && (
         <div className="border rounded-lg p-4 bg-gray-50">
-          <div className="flex justify-between items-center mb-2">
-            <span>{selectedPlanDetails.name}</span>
-            <span className="font-semibold">₹{selectedPlanDetails.amount}</span>
-          </div>
-          <div className="flex justify-between items-center text-sm text-gray-600 mb-2">
-            <span>Setup fee</span>
-            <span>₹0</span>
+          <h3 className="text-center text-lg font-semibold mb-3">
+            Payment Summary
+          </h3>
+          <div className="text-center text-sm text-gray-700 mb-4">
+            Your currently selected plan :
+            <span className="font-semibold"> {selectedPlanDetails.name}</span>
           </div>
 
-          {/* Coupon discount */}
+          <div className="flex justify-between items-center mb-2">
+            <span>Plan Taxable Amount</span>
+            <span className="font-semibold">
+              {formatMoney(selectedPlanDetails.amount)}
+            </span>
+          </div>
+
+          <div className="flex justify-between items-center text-sm text-gray-600 mb-2">
+            <span>GST 18.00%</span>
+            <span>{formatMoney(getGstAmount())}</span>
+          </div>
+
+          {/* Coupon discount (reflected in taxable amount) */}
           {appliedCoupon && (
-            <div className="flex justify-between items-center text-sm text-green-600 mb-2">
-              <span>Discount ({appliedCoupon.coupon_code})</span>
+            <div className="flex justify-between items-center text-xs text-green-700 mb-2">
+              <span>Includes discount ({appliedCoupon.coupon_code})</span>
               <span>
-                -₹
-                {calculateDiscount(
-                  appliedCoupon,
-                  selectedPlanDetails.amount
-                ).toFixed(2)}
+                -
+                {formatMoney(
+                  calculateDiscount(appliedCoupon, selectedPlanDetails.amount)
+                )}
               </span>
             </div>
           )}
 
           <hr className="my-2" />
           <div className="flex justify-between items-center font-semibold">
-            <span>Total</span>
-            <span>₹{getFinalAmount()}</span>
+            <span>Final Payable Amount (incl. GST 18.00%)</span>
+            <span>{formatMoney(getFinalAmountWithGst())}</span>
           </div>
         </div>
       )}
@@ -317,7 +353,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
             ? "Processing..."
             : selectedPlanDetails?.code === "free"
               ? "Complete Signup"
-              : `Pay ₹${getFinalAmount()}`}
+              : `Pay ${formatMoney(getFinalAmountWithGst())}`}
         </button>
       </div>
     </div>
