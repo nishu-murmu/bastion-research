@@ -1,6 +1,5 @@
 export const Config = {
   app_name: "Bastion Research",
-  app_url: import.meta.env.BASE_URL,
   digio_environment:
     import.meta.env.MODE === "production"
       ? "production"
