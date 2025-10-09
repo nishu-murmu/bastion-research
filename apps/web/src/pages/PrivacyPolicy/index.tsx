@@ -245,7 +245,7 @@ const BastionPrivacyPolicy = () => {
                 A subscription, once purchased, can be canceled from your
                 account settings but will not result in any refund of the
                 subscription fees. Please refer to the{" "}
-                <a href="#" className="text-red-500 hover:underline">
+                <a href="/refund-policy" className="text-red-500 hover:underline">
                   Refund Policy
                 </a>{" "}
                 for more information
