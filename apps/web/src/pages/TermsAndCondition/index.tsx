@@ -43,7 +43,7 @@ const FooterTermAndCondition = () => {
           Welcome to our website. If you continue to browse and use this website
           you are agreeing to comply with and be bound by the following terms
           and conditions of use, which together with our{" "}
-          <a href="/footer-privacy-policy" className="text-red-600 underline">
+          <a href="/privacy-policy" className="text-red-600 underline">
             privacy policy
           </a>{" "}
           govern BASTION RESEARCH’s relationship with you in relation to this
