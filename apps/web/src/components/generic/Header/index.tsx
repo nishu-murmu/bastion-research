@@ -73,7 +73,7 @@ const Header = () => {
             </div>
             {!isMobile && showSticky && (
               <Link to="/register">
-                <button className={`ml-20 px-4 py-2 rounded-xl transition-colors ${
+                <button className={`ml-19 px-4 py-2 rounded-xl transition-colors ${
                   isOverFooter
                     ? 'bg-white text-[#C00000] hover:bg-gray-100'
                     : 'bg-[#C00000] text-white hover:bg-[#a00000]'

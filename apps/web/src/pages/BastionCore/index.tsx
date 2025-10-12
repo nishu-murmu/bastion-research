@@ -1,8 +1,11 @@
 import BackgroundShapes from "@/components/generic/framer-motion";
-import Testimonial from "@/components/generic/Test";
+import Testimonial from "@/pages/Testimonials/Index";
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+
+
 
 // Brand Colors
 const COLORS = {
@@ -227,9 +230,11 @@ export default function BastionCoreProductPage() {
                 </p>
               </div>
               <div id="subscribe-button-div" className="mt-6 flex justify-end">
-                <button className="px-4 py-2 bg-[#C00000] text-white rounded-xl hover:bg-[#a00000] transition-colors">
-                  Subscribe Now
-                </button>
+                <a href="/register">
+                  <button className="px-4 py-2 bg-[#C00000] text-white rounded-xl hover:bg-[#a00000] transition-colors">
+                    Subscribe Now
+                  </button>
+                </a>
               </div>
             </div>
 
@@ -246,9 +251,11 @@ export default function BastionCoreProductPage() {
                 <p className="text-sm text-gray-200">Including GST</p>
               </div>
               <div className="mt-6 flex justify-end">
-                <button className="px-4 py-2 bg-[#C4B696] text-[#1C2852] rounded-xl hover:bg-[#b3a67d] transition-colors">
-                  Subscribe Now
-                </button>
+                <a href="/register">
+                  <button className="px-4 py-2 bg-[#C4B696] text-[#1C2852] rounded-xl hover:bg-[#b3a67d] transition-colors">
+                    Subscribe Now
+                  </button>
+                </a>
               </div>
             </div>
           </div>
@@ -260,27 +267,25 @@ export default function BastionCoreProductPage() {
             {/* Grid: 60/40 split on md+ */}
             <div className="grid grid-cols-1 md:grid-cols-5">
               {/* Left: 60% (3/5 columns) */}
-              <div className="md:col-span-3 bg-white">
+              <div className="md:col-span-2 bg-white">
                 <div className="divide-y divide-[#E6E6E6]">
                   {items.map((it, idx) => (
                     <div key={it.title}>
                       <button
                         onClick={() => setActive(idx)} // click works for mobile + desktop
                         onMouseEnter={() => setActive(idx)} // hover works for desktop
-                        className={`group w-full text-left p-5 focus:outline-none transition-colors ${
-                          active === idx
+                        className={`group w-full text-left p-5 focus:outline-none transition-colors ${active === idx
                             ? "bg-[#E6E6E6]/40"
                             : "bg-white hover:bg-[#E6E6E6]/30"
-                        }`}
+                          }`}
                         aria-current={active === idx}
                       >
                         <div className="flex items-center gap-3">
                           <div
-                            className={` h-2.5 w-2.5 rounded-full transition-colors ${
-                              active === idx
+                            className={` h-2.5 w-2.5 rounded-full transition-colors ${active === idx
                                 ? "bg-[#C00000]"
                                 : "bg-[#C4B696] group-hover:bg-[#C00000]"
-                            }`}
+                              }`}
                           />
                           <div>
                             <h4 className="text-base md:text-lg font-semibold">
@@ -290,11 +295,10 @@ export default function BastionCoreProductPage() {
                         </div>
                         <div className="flex items-start gap-3">
                           <div
-                            className={`mt-1  opacity-0 h-2.5 w-2.5 rounded-full transition-colors ${
-                              active === idx
+                            className={`mt-1  opacity-0 h-2.5 w-2.5 rounded-full transition-colors ${active === idx
                                 ? "bg-[#C00000]"
                                 : "bg-[#C4B696] group-hover:bg-[#C00000]"
-                            }`}
+                              }`}
                           />
                           <div>
                             <p className="mt-1 text-sm text-slate-600">
@@ -306,9 +310,8 @@ export default function BastionCoreProductPage() {
 
                       {/* Mobile collapsible image */}
                       <div
-                        className={`md:hidden overflow-hidden transition-all duration-300 ${
-                          active === idx ? "max-h-[700px] mt-2" : "max-h-0"
-                        }`}
+                        className={`md:hidden overflow-hidden transition-all duration-300 ${active === idx ? "max-h-[700px] mt-2" : "max-h-0"
+                          }`}
                       >
                         <div className="relative bg-[#E6E6E6]">
                           <img
@@ -330,7 +333,7 @@ export default function BastionCoreProductPage() {
               </div>
 
               {/* Right: 40% (2/5 columns) - Desktop image area */}
-              <div className="hidden md:block md:col-span-2 relative bg-[#E6E6E6] aspect-[16/10] md:aspect-auto">
+              <div className="hidden md:block md:col-span-3 relative bg-[#E6E6E6] aspect-[16/10] md:aspect-auto">
                 <img
                   key={items[active].img}
                   src={items[active].img}
@@ -481,15 +484,13 @@ export default function BastionCoreProductPage() {
                 >
                   {faq.q}
                   <ChevronDown
-                    className={`w-6 h-6 transform transition-transform duration-500 ${
-                      openIndex === index ? "rotate-180" : "rotate-0"
-                    }`}
+                    className={`w-6 h-6 transform transition-transform duration-500 ${openIndex === index ? "rotate-180" : "rotate-0"
+                      }`}
                   />
                 </button>
                 <div
-                  className={`transition-[max-height] duration-300 ease-in-out overflow-hidden px-6 ${
-                    openIndex === index ? "max-h-96" : "max-h-0"
-                  }`}
+                  className={`transition-[max-height] duration-300 ease-in-out overflow-hidden px-6 ${openIndex === index ? "max-h-96" : "max-h-0"
+                    }`}
                 >
                   <div className="overflow-auto no-scrollbar max-h-96 pb-4">
                     <p className="text-gray-700 leading-relaxed">{faq.a}</p>
