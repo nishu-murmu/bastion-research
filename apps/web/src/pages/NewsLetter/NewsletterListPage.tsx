@@ -132,11 +132,6 @@ const NewsletterArchive = () => {
         count: categoryCounts["learning-of-the-week"] || 0,
       },
       {
-        id: "scratch-pad",
-        label: "Scratch Pad",
-        count: categoryCounts["scratch-pad"] || 0,
-      },
-      {
         id: "topical-update",
         label: "Topical Update",
         count: categoryCounts["topical-update"] || 0,
@@ -228,7 +223,7 @@ const NewsletterArchive = () => {
                 return (
                   <div
                     key={newsletter.id}
-                    className="group rounded-2xl shadow-sm overflow-hidden bg-[#F9FAFB] flex flex-col border border-gray-200 transform transition-all hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02]"
+                    className="group rounded-2xl shadow-sm overflow-hidden bg-[#F9FAFB] flex flex-col border border-gray-200 transform transition-all hover:shadow-lg hover:-translate-y-1"
                   >
                     {/* Image */}
                     <div className="relative aspect-video overflow-hidden">
@@ -236,7 +231,7 @@ const NewsletterArchive = () => {
                         <img
                           src={newsletter.headline_image_url}
                           alt={newsletter.title}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          className="w-full h-full object-cover transition-transform duration-300"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-gray-100">
