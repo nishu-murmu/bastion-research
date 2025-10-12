@@ -2,7 +2,7 @@ import BackgroundShapes from "@/components/generic/framer-motion";
 import Testimonial from "@/components/generic/Test";
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 // Brand Colors
 const COLORS = {
@@ -13,68 +13,6 @@ const COLORS = {
   white: "#ffffff",
   black: "#000000",
 };
-
-function TypingLoop({ phrases, typingSpeed = 30, pauseTime = 2000 }) {
-  const [text, setText] = React.useState("");
-  const [index, setIndex] = React.useState(0);
-  const [charIndex, setCharIndex] = React.useState(0);
-  const [deleting, setDeleting] = React.useState(false);
-
-  React.useEffect(() => {
-    let timer;
-
-    if (!deleting && charIndex < phrases[index].length) {
-      // typing forward
-      timer = setTimeout(() => {
-        setText((prev) => prev + phrases[index][charIndex]);
-        setCharIndex((c) => c + 1);
-      }, typingSpeed);
-    } else if (!deleting && charIndex === phrases[index].length) {
-      // pause before deleting
-      timer = setTimeout(() => setDeleting(true), pauseTime);
-    } else if (deleting && charIndex > 0) {
-      // deleting backward
-      timer = setTimeout(() => {
-        setText((prev) => prev.slice(0, -1));
-        setCharIndex((c) => c - 1);
-      }, typingSpeed / 2);
-    } else if (deleting && charIndex === 0) {
-      // move to next phrase
-      setDeleting(false);
-      setIndex((i) => (i + 1) % phrases.length);
-    }
-
-    return () => clearTimeout(timer);
-  }, [charIndex, deleting, phrases, index, typingSpeed, pauseTime]);
-
-  // Function to highlight first letter of each word
-  const renderHighlightedText = (txt) => {
-    return txt.split(/(\s+)/).map((part, i) => {
-      if (part.trim().length === 0) {
-        // It's just whitespace, render as-is
-        return <span key={i}>{part}</span>;
-      }
-
-      // Word case → first letter red
-      return (
-        <span key={i}>
-          <span className="text-red-600">{part[0]}</span>
-          {part.slice(1)}
-        </span>
-      );
-    });
-  };
-
-  return (
-    <div className="font-semibold text-2xl md:text-3xl lg:text-4xl tracking-tight text-center">
-      {text.length > 0 && renderHighlightedText(text)}
-      <span
-        className="inline-block w-[2px] h-[1.2em] align-[-0.15em] ml-1 animate-pulse"
-        style={{ background: "red" }}
-      />
-    </div>
-  );
-}
 
 // Flip Card for SMART boxes
 function FlipCard({ front, back, color = COLORS.blue }) {
@@ -118,6 +56,7 @@ function FlipCard({ front, back, color = COLORS.blue }) {
 
 export default function BastionCoreProductPage() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+
   // 👇 Move items array here
   const items = [
     {
@@ -159,6 +98,8 @@ export default function BastionCoreProductPage() {
 
   // 👇 State for which item is active
   const [active, setActive] = useState(0);
+
+
 
   const toggleFAQ = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -229,37 +170,35 @@ export default function BastionCoreProductPage() {
     <div>
       <BackgroundShapes />
       <div className="min-h-screen w-full" style={{ background: COLORS.gray }}>
+        {/* Section 1: Hero / Intro with two cards */}
         <section className="mx-auto max-w-7xl px-4 pt-10 md:pt-14">
-          <div
-            className="rounded-3xl p-6 md:p-10 shadow-lg flex flex-col md:flex-row items-center justify-between gap-6"
-            style={{ background: COLORS.white }}
-          >
-
-            {/* section:-- 1 */}
-            {/* Left Text: Typing Loop */}
-            <div className="md:flex-1 text-center md:text-left">
-              <TypingLoop
-                phrases={[
-                  "Research You Can Act With Conviction",
-                  // "Detailed Insights For Smarter Decisions",
-                  // "Invest With Clarity And Confidence",
-                ]}
-                typingSpeed={40}
-                pauseTime={2000}
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left Card: Text */}
+            <div className="flex flex-col justify-center items-center md:items-start">
+              <h1
+                className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-center md:text-left"
+                style={{
+                  background: "linear-gradient(90deg, #1C2852, #C00000)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  textShadow: "2px 2px 8px rgba(0,0,0,0.2)",
+                }}
+              >
+                Research You Can Act With Conviction
+              </h1>
             </div>
 
-            {/* Right Buttons:*/}
-            <div className="flex flex-col md:flex-row gap-3 justify-center md:justify-start mt-4 md:mt-0">
+            {/* Right Card: Buttons */}
+            <div className="p-8 flex flex-col gap-4 justify-center items-center md:items-start">
               <a
                 href="/register"
-                className="px-4 py-2 bg-[#C00000] text-white rounded-xl hover:bg-[#a00000] transition-colors whitespace-nowrap text-center"
+                className="w-full md:w-auto px-6 py-3 bg-[#C00000] text-white rounded-xl hover:bg-[#a00000] transition-colors text-center font-semibold"
               >
-                Subscribe to Trial Plan at Rs. 5,000 /-
+                Subscribe to Quarterly Plan at Rs. 5,000 /-
               </a>
               <a
                 href="/register"
-                className="px-4 py-2 border border-[#C00000] text-[#C00000] rounded-xl hover:bg-[#C00000] hover:text-white transition-colors whitespace-nowrap text-center"
+                className="w-full md:w-auto px-6 py-3 border border-[#C00000] text-[#C00000] rounded-xl hover:bg-[#C00000] hover:text-white transition-colors text-center font-semibold"
               >
                 View Research
               </a>
@@ -287,7 +226,7 @@ export default function BastionCoreProductPage() {
                   * Valid Only Once
                 </p>
               </div>
-              <div className="mt-6 flex justify-end">
+              <div id="subscribe-button-div" className="mt-6 flex justify-end">
                 <button className="px-4 py-2 bg-[#C00000] text-white rounded-xl hover:bg-[#a00000] transition-colors">
                   Subscribe Now
                 </button>
@@ -408,7 +347,7 @@ export default function BastionCoreProductPage() {
             </div>
           </div>
         </section>
-                   {/* Section 4: Testimonials */}
+        {/* Section 4: Testimonials */}
         <section
           id="testimonials"
           className="mx-auto max-w-7xl px-4 py-12 md:py-16"
@@ -568,6 +507,8 @@ export default function BastionCoreProductPage() {
           © {new Date().getFullYear()} Bastion Research. All rights reserved.
         </footer>
       </div>
+
+
     </div>
   );
 }
