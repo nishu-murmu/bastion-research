@@ -89,6 +89,7 @@ export const endpoints = {
     newsletters: {
       base: "/content/newsletters",
       byId: (id: string) => `/content/newsletters/${id}`,
+      subscribe: "/content/newsletters/subscribe",
       admin: {
         base: "/api/admin/content/newsletters",
         byId: (id: string) => `/api/admin/content/newsletters/${id}`,

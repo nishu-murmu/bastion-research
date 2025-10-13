@@ -1,4 +1,5 @@
 import Parser from "rss-parser";
+import { MailchimpNewsletter } from "@repo/types";
 
 type RawMailchimpItem = Parser.Item & {
   isoDate?: string;
@@ -7,23 +8,6 @@ type RawMailchimpItem = Parser.Item & {
   author?: string;
   creator?: string;
 };
-
-export interface MailchimpNewsletter {
-  id: string;
-  title: string;
-  sub_title?: string;
-  headline_image_url?: string;
-  contents?: string;
-  html_content?: string;
-  footer_content?: string;
-  created_at: string;
-  link?: string;
-  guid?: string;
-  author?: string;
-  categories?: string[];
-  plain_text?: string;
-  source?: "mailchimp";
-}
 
 const MAILCHIMP_RSS_URL = process.env.MAILCHIMP_RSS_URL;
 const CACHE_TTL_MS = (() => {
@@ -55,7 +39,9 @@ export async function fetchMailchimpNewsletters(options?: {
   }
 
   const shouldUseCache =
-    !options?.forceRefresh && cache && Date.now() - cache.fetchedAt < CACHE_TTL_MS;
+    !options?.forceRefresh &&
+    cache &&
+    Date.now() - cache.fetchedAt < CACHE_TTL_MS;
 
   if (shouldUseCache && cache) {
     return cache.items;
@@ -80,7 +66,9 @@ export async function getMailchimpNewsletterById(id: string) {
 
 function mapMailchimpItem(item: RawMailchimpItem): MailchimpNewsletter {
   const guidSource =
-    item.guid || item.link || `${item.title ?? "unknown"}-${item.pubDate ?? Date.now()}`;
+    item.guid ||
+    item.link ||
+    `${item.title ?? "unknown"}-${item.pubDate ?? Date.now()}`;
   const id = encodeIdentifier(guidSource);
 
   const rawHtml =
@@ -126,7 +114,10 @@ function extractFirstImage(html: string): string | undefined {
   return match ? match[1] : undefined;
 }
 
-function buildSubtitle(item: RawMailchimpItem, html: string): string | undefined {
+function buildSubtitle(
+  item: RawMailchimpItem,
+  html: string
+): string | undefined {
   if (item.contentSnippet) {
     return truncate(item.contentSnippet.trim(), 180);
   }

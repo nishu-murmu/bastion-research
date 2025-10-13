@@ -25,7 +25,7 @@ const Applications = () => {
 
   const [form, setForm] = useState({
     job_id: "",
-    job_title: '',
+    job_title: "",
     applicant_name: "",
     email: "",
     phone: "",
@@ -49,7 +49,7 @@ const Applications = () => {
       queryClient.invalidateQueries({ queryKey: ["applications"] });
       setForm({
         job_id: "",
-        job_title: '',
+        job_title: "",
         applicant_name: "",
         email: "",
         phone: "",
@@ -126,7 +126,7 @@ const Applications = () => {
     { headerName: "Applicant Name", field: "applicant_name" },
     { headerName: "Email", field: "email" },
     { headerName: "Phone", field: "phone" },
-    { headerName: "Comments", field: "comments" },
+    { headerName: "Comments", field: "comments", editable: true },
     { headerName: "Date Applied", field: "date_applied" },
     { headerName: "Status", field: "status" },
     {
@@ -222,6 +222,19 @@ const Applications = () => {
           rowData={rowData}
           columnDefs={columnDefs}
           defaultColDef={{ sortable: true, filter: true, resizable: true }}
+          singleClickEdit={true}
+          onCellValueChanged={(e) => {
+            if (e.colDef.field === "comments") {
+              const row: any = e.data;
+              const newVal = (e.newValue ?? "").toString();
+              if (newVal !== (e.oldValue ?? "")) {
+                updateMutation.mutate({
+                  id: row.application_id,
+                  body: { comments: newVal },
+                });
+              }
+            }
+          }}
           pagination={true}
           paginationPageSize={10}
           paginationPageSizeSelector={[10, 25, 50, 100]}

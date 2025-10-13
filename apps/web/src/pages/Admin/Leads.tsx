@@ -30,12 +30,14 @@ const LeadsPage = () => {
   const updateMutation = useMutation({
     mutationFn: (payload: { id: number; body: Partial<Lead> }) =>
       axiosInstance.put(endpoints.leads.byId(payload.id), payload.body),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [queryKeys.leads] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [queryKeys.leads] }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => axiosInstance.delete(endpoints.leads.byId(id)),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [queryKeys.leads] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [queryKeys.leads] }),
   });
 
   const [editOpen, setEditOpen] = useState(false);
@@ -68,12 +70,19 @@ const LeadsPage = () => {
       valueFormatter: (p) => (p.value ? String(p.value).slice(0, 120) : ""),
     },
     { headerName: "Status", field: "status", minWidth: 120 },
-    { headerName: "Comments", field: "comments", flex: 1.2, minWidth: 180 },
+    {
+      headerName: "Comments",
+      field: "comments",
+      flex: 1.2,
+      minWidth: 180,
+      editable: true,
+    },
     {
       headerName: "Created",
       field: "created_at",
       minWidth: 140,
-      valueFormatter: (p) => (p.value ? new Date(p.value).toLocaleString() : ""),
+      valueFormatter: (p) =>
+        p.value ? new Date(p.value).toLocaleString() : "",
     },
   ];
 
@@ -81,7 +90,9 @@ const LeadsPage = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Leads</h1>
-        <p className="text-muted-foreground">Inbound leads from the Contact form</p>
+        <p className="text-muted-foreground">
+          Inbound leads from the Contact form
+        </p>
       </div>
       <DataTable<Lead>
         data={data || []}
@@ -90,6 +101,19 @@ const LeadsPage = () => {
         error={(error as any)?.message}
         onEdit={openEdit}
         onDelete={deleteLead}
+        singleClickEdit
+        onCellValueChanged={(e) => {
+          const row = e.data as Lead;
+          if (e.colDef.field === "comments" && row?.lead_id != null) {
+            const newVal = (e.newValue ?? "").toString();
+            if (newVal !== (e.oldValue ?? "")) {
+              updateMutation.mutate({
+                id: row.lead_id,
+                body: { comments: newVal },
+              });
+            }
+          }
+        }}
         searchPlaceholder="Search leads by name, email, phone, category..."
         title="Leads"
         description={`${data?.length || 0} total leads`}
@@ -115,4 +139,3 @@ const LeadsPage = () => {
 };
 
 export default LeadsPage;
-
