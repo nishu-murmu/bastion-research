@@ -30,6 +30,7 @@ const Applications = () => {
     email: "",
     phone: "",
     cover_letter: "",
+    comments: "",
     status: "Pending",
   });
 
@@ -41,6 +42,7 @@ const Applications = () => {
         email: form.email,
         phone: form.phone,
         cover_letter: form.cover_letter,
+        comments: form.comments,
         status: form.status,
       }),
     onSuccess: () => {
@@ -52,6 +54,7 @@ const Applications = () => {
         email: "",
         phone: "",
         cover_letter: "",
+        comments: "",
         status: "Pending",
       });
     },
@@ -87,6 +90,7 @@ const Applications = () => {
       email: values.email,
       phone: values.phone,
       cover_letter: values.cover_letter,
+      comments: values.comments,
       status: values.status,
     };
     updateMutation.mutate({ id: editRow.application_id, body });
@@ -122,6 +126,7 @@ const Applications = () => {
     { headerName: "Applicant Name", field: "applicant_name" },
     { headerName: "Email", field: "email" },
     { headerName: "Phone", field: "phone" },
+    { headerName: "Comments", field: "comments" },
     { headerName: "Date Applied", field: "date_applied" },
     { headerName: "Status", field: "status" },
     {
@@ -186,6 +191,14 @@ const Applications = () => {
               placeholder="Optional"
             />
           </div>
+          <div className="min-w-[240px]">
+            <label className="block text-sm mb-1">Comments</label>
+            <Input
+              value={form.comments}
+              onChange={(e) => setForm({ ...form, comments: e.target.value })}
+              placeholder="Internal note"
+            />
+          </div>
           <div>
             <label className="block text-sm mb-1">Status</label>
             <Input
@@ -224,6 +237,7 @@ const Applications = () => {
           { name: "email", label: "Email", type: "email" },
           { name: "phone", label: "Phone", type: "tel" },
           { name: "cover_letter", label: "Cover Letter" },
+          { name: "comments", label: "Comments" },
           { name: "status", label: "Status" },
         ]}
         initialValues={editRow}

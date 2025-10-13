@@ -21,6 +21,10 @@ export const endpoints = {
     base: "/api/applications",
     byId: (id: string | number) => `/api/applications/${id}`,
   },
+  leads: {
+    base: "/api/leads",
+    byId: (id: string | number) => `/api/leads/${id}`,
+  },
   membershipPlans: {
     base: "/api/membership-plans",
     byId: (id: string | number) => `/api/membership-plans/${id}`,
