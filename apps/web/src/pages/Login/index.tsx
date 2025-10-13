@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { endpoints } from "@/api/endpoints";
 import favicon from "../../../../server/public/favicon.webp";
+import { AppRoutes } from "@/routes/app-routes";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -51,12 +52,12 @@ const Login = () => {
         } catch {}
         toast.success("Welcome back! Let’s finish your onboarding.");
         setTimeout(() => {
-          navigate("/register", { replace: true });
+          navigate(AppRoutes.register(), { replace: true });
         }, 100);
       } else {
         toast.success("Login successful! Redirecting to dashboard...");
         setTimeout(() => {
-          navigate("/user/app/dashboard", { replace: true });
+          navigate(AppRoutes.dashboard(), { replace: true });
         }, 100);
       }
     },
@@ -67,7 +68,7 @@ const Login = () => {
 
   const sendOtpMutation = useMutation({
     mutationFn: (email: string) =>
-      axiosInstance.post(endpoints.otp.send, { email }),
+      axiosInstance.post(endpoints.otp.sendEmail, { email }),
     onSuccess: () => {
       toast.success("OTP sent to your email!");
       setOtpSent(true);
@@ -103,7 +104,7 @@ const Login = () => {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      navigate("/user/app/dashboard", { replace: true });
+      navigate(AppRoutes.dashboard(), { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate]);
 
@@ -280,19 +281,9 @@ const Login = () => {
                     </>
                   )}
 
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        className="rounded border-gray-300 text-red-600 focus:ring-red-500"
-                      />
-                      <span className="ml-2 text-sm text-gray-600">
-                        {" "}
-                        Remember me{" "}
-                      </span>
-                    </label>
+                  <div className="flex items-end justify-end">
                     <Link
-                      to="/forgot-password"
+                      to={AppRoutes.forgotPassword()}
                       className="text-sm text-red-600 hover:underline font-medium"
                     >
                       Forgot password?
@@ -300,19 +291,21 @@ const Login = () => {
                   </div>
 
                   {/* Toggle Login Method */}
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={useOtp}
-                      onChange={(e) => {
-                        setUseOtp(e.target.checked);
-                        setOtpSent(false);
-                      }}
-                      className="rounded border-gray-300 text-red-600 focus:ring-red-500"
-                    />
-                    <span className="text-sm text-gray-700">
-                      Login with Email OTP
-                    </span>
+                  <div className="flex items-center ">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={useOtp}
+                        onChange={(e) => {
+                          setUseOtp(e.target.checked);
+                          setOtpSent(false);
+                        }}
+                        className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                      />
+                      <span className="text-sm text-gray-700">
+                        Login with Email OTP
+                      </span>
+                    </label>
                   </div>
 
                   {/* Submit */}
@@ -335,7 +328,7 @@ const Login = () => {
                     Don't have an account?{" "}
                   </span>{" "}
                   <Link
-                    to="/register"
+                    to={AppRoutes.register()}
                     className="text-sm text-red-600 hover:underline font-medium"
                   >
                     {" "}
@@ -385,7 +378,7 @@ const Login = () => {
               >
                 {" "}
                 <Link
-                  to="/"
+                  to={AppRoutes.home()}
                   className="inline-flex items-center px-8 py-4 bg-white text-red-600 font-semibold rounded-2xl hover:bg-gray-50 transition-colors duration-300 shadow-lg hover:shadow-xl"
                 >
                   {" "}
@@ -398,7 +391,7 @@ const Login = () => {
               >
                 {" "}
                 <Link
-                  to="/register"
+                  to={AppRoutes.register()}
                   className="inline-flex items-center px-8 py-4 bg-white text-red-600 font-semibold rounded-2xl hover:bg-gray-50 transition-colors duration-300 shadow-lg hover:shadow-xl"
                 >
                   {" "}

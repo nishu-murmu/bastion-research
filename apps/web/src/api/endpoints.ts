@@ -21,6 +21,10 @@ export const endpoints = {
     base: "/api/applications",
     byId: (id: string | number) => `/api/applications/${id}`,
   },
+  leads: {
+    base: "/api/leads",
+    byId: (id: string | number) => `/api/leads/${id}`,
+  },
   membershipPlans: {
     base: "/api/membership-plans",
     byId: (id: string | number) => `/api/membership-plans/${id}`,
@@ -39,6 +43,7 @@ export const endpoints = {
   },
   otp: {
     send: "/api/otp/send",
+    sendEmail: "/api/otp/send-email",
     verify: "/api/otp/verify",
   },
   cashfree: {
@@ -84,6 +89,7 @@ export const endpoints = {
     newsletters: {
       base: "/content/newsletters",
       byId: (id: string) => `/content/newsletters/${id}`,
+      subscribe: "/content/newsletters/subscribe",
       admin: {
         base: "/api/admin/content/newsletters",
         byId: (id: string) => `/api/admin/content/newsletters/${id}`,

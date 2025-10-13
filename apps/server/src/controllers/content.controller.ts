@@ -1,4 +1,6 @@
 import { Request, Response } from "express";
+import mailchimp from "@mailchimp/mailchimp_marketing";
+
 import { supabase } from "../supabase";
 import {
   fetchMailchimpNewsletters,
@@ -19,8 +21,7 @@ export async function createResearch(req: Request, res: Response) {
       research_material_url,
     } = req.body;
 
-    if (!company)
-      return res.status(400).json({ error: "company is required" });
+    if (!company) return res.status(400).json({ error: "company is required" });
 
     const { data, error } = await supabase
       .from("research")
@@ -32,8 +33,7 @@ export async function createResearch(req: Request, res: Response) {
         comments: comments ?? null,
         percent_return_since_recommendation:
           percent_return_since_recommendation ?? null,
-        percent_irr_potential_from_cmp:
-          percent_irr_potential_from_cmp ?? null,
+        percent_irr_potential_from_cmp: percent_irr_potential_from_cmp ?? null,
         research_material_url: research_material_url ?? null,
       })
       .select("*")
@@ -95,8 +95,7 @@ export async function updateResearch(req: Request, res: Response) {
       research_material_url,
     } = req.body;
 
-    if (!company)
-      return res.status(400).json({ error: "company is required" });
+    if (!company) return res.status(400).json({ error: "company is required" });
 
     const { data, error } = await supabase
       .from("research")
@@ -108,8 +107,7 @@ export async function updateResearch(req: Request, res: Response) {
         comments: comments ?? null,
         percent_return_since_recommendation:
           percent_return_since_recommendation ?? null,
-        percent_irr_potential_from_cmp:
-          percent_irr_potential_from_cmp ?? null,
+        percent_irr_potential_from_cmp: percent_irr_potential_from_cmp ?? null,
         research_material_url: research_material_url ?? null,
       })
       .eq("id", id)
@@ -139,8 +137,14 @@ export async function deleteResearch(req: Request, res: Response) {
 // Newsletters
 export async function createNewsletter(req: Request, res: Response) {
   try {
-    const { title, sub_title, headline_image_url, contents, footer_content, category } =
-      req.body;
+    const {
+      title,
+      sub_title,
+      headline_image_url,
+      contents,
+      footer_content,
+      category,
+    } = req.body;
     if (!title) return res.status(400).json({ error: "title is required" });
 
     const { data, error } = await supabase
@@ -208,7 +212,12 @@ export async function createWebinar(req: Request, res: Response) {
 
     const { data, error } = await supabase
       .from("webinars")
-      .insert({ title, video_url: video_url ?? null, is_premium, contents: contents ?? null })
+      .insert({
+        title,
+        video_url: video_url ?? null,
+        is_premium,
+        contents: contents ?? null,
+      })
       .select("*")
       .single();
     if (error) return res.status(500).json({ error: error.message });
@@ -291,8 +300,14 @@ export async function getNewsletter(req: Request, res: Response) {
 export async function updateNewsletter(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const { title, sub_title, headline_image_url, contents, footer_content, category } =
-      req.body;
+    const {
+      title,
+      sub_title,
+      headline_image_url,
+      contents,
+      footer_content,
+      category,
+    } = req.body;
 
     if (!id) return res.status(400).json({ error: "ID is required" });
     if (!title) return res.status(400).json({ error: "title is required" });
@@ -557,8 +572,56 @@ export async function deleteTestimonial(req: Request, res: Response) {
     const { error } = await supabase.from("testimonials").delete().eq("id", id);
 
     if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json({ message: "Testimonial deleted successfully" });
+    return res
+      .status(200)
+      .json({ message: "Testimonial deleted successfully" });
   } catch (e: any) {
     return res.status(500).json({ error: e.message });
+  }
+}
+
+export async function subscribeToNewsLetter(req: Request, res: Response) {
+  try {
+    const { email, latitude, longitude, timestamp } = req.body;
+
+    // Basic validation
+    if (!email || !email.includes("@")) {
+      return res.status(400).json({ message: "Valid email required" });
+    }
+
+    mailchimp.setConfig({
+      apiKey: process.env.MAILCHIMP_API_KEY,
+      server: process.env.MAILCHIMP_SERVER_PREFIX,
+    });
+
+    const response = await mailchimp.lists.addListMember(
+      process.env.MAILCHIMP_AUDIENCE_ID!,
+      {
+        email_address: email,
+        status: "subscribed",
+        location: {
+          latitude,
+          longitude,
+        },
+        timestamp_signup: timestamp,
+      },
+      {
+        skipMergeValidation: true,
+      }
+    );
+    // // If already subscribed, Mailchimp returns 200 with "member exists"
+    console.log(response, "response");
+    res.json({ message: "Success! Already subscribed or now added." });
+    // if (response.status === 200) {
+    // }
+  } catch (error: any) {
+    console.error("Mailchimp error:", error);
+    let message = "Subscription failed";
+    if (error.response?.status === 400) {
+      message = "Email already subscribed or invalid.";
+    } else if (error.response?.status === 401) {
+      message = "API key invalid.";
+    }
+    res.status(error.response?.status || 500).json({ message });
   }
 }
