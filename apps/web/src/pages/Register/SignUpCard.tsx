@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import Logo from "../../../public/media/favicon.webp";
 
 interface SignUpCardProps {
   onSignUpClick: () => void;
@@ -27,8 +28,8 @@ export function SignUpCard({ onSignUpClick }: SignUpCardProps) {
         
         <CardHeader className="relative z-10 text-center pb-4">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-red-600 to-red-800 rounded-2xl flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-md">
+              <img src={Logo} alt="logo" />
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900 mb-2">
