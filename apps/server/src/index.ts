@@ -19,6 +19,7 @@ import otpRoutes from "./routes/otp.routes";
 import imagesRoutes from "./routes/images.routes";
 import filesRoutes from "./routes/files.routes";
 import digioRoutes from "./routes/digio.routes";
+import mailChimpRoutes from "./routes/mailchimp.routes";
 
 dotenv.config();
 
@@ -60,6 +61,7 @@ app.use("/api", applicationRoutes);
 app.use("/api", membershipRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/content", contentRoutes);
+app.use("/mailchimp", mailChimpRoutes);
 app.use("/api", contactRoutes);
 app.use("/api", leadsRoutes);
 app.use("/api/images", imagesRoutes);

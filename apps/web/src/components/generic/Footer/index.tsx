@@ -55,7 +55,7 @@ const Footer = () => {
     navigator.geolocation.getCurrentPosition(async ({ coords, timestamp }) => {
       try {
         const response = await axiosInstance.post(
-          endpoints.content.newsletters.subscribe,
+          endpoints.content.mailchimp.subscribe,
           {
             email,
             coords: {

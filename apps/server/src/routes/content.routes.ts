@@ -27,7 +27,6 @@ import {
   getTestimonial,
   updateTestimonial,
   deleteTestimonial,
-  subscribeToNewsLetter,
 } from "../controllers/content.controller";
 
 const router = Router();
@@ -45,7 +44,6 @@ router.get("/mailchimp/newsletters/:id", getMailchimpNewsletter);
 router.get("/webinars/:id", getWebinar);
 router.get("/podcasts/:id", getPodcast);
 router.get("/testimonials/:id", getTestimonial);
-router.post("/newsletters/subscribe", subscribeToNewsLetter);
 
 // Admin routes (auth required - will be protected in admin.routes.ts)
 router.post("/research", createResearch);
