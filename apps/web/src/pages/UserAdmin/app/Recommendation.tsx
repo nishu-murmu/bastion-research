@@ -109,7 +109,7 @@ const Recommendation = () => {
         return b.upside - a.upside;
       case "Return Wise":
         return (b.target1 - b.entryPrice) / b.entryPrice -
-               (a.target1 - a.entryPrice) / a.entryPrice;
+          (a.target1 - a.entryPrice) / a.entryPrice;
       default:
         return 0;
     }
@@ -123,9 +123,9 @@ const Recommendation = () => {
     const barPercentage =
       stock.cmp >= stock.entryPrice
         ? Math.min(
-            ((stock.cmp - stock.entryPrice) / (stock.target1 - stock.entryPrice)) * 100,
-            100
-          )
+          ((stock.cmp - stock.entryPrice) / (stock.target1 - stock.entryPrice)) * 100,
+          100
+        )
         : Math.min(((stock.entryPrice - stock.cmp) / stock.entryPrice) * 100, 100);
 
     const barColor = stock.cmp >= stock.entryPrice ? COLORS.green : COLORS.red;
@@ -151,7 +151,7 @@ const Recommendation = () => {
         </div>
 
         {/* Pill badges */}
-        <div className="flex gap-2 p-4 flex-wrap">
+        <div className="flex gap-2 p-4 flex-wrap mb-2">
           <span
             className="px-3 py-1 rounded-full text-white text-s font-semibold"
             style={{ backgroundColor: getBandColor(stock.band) }}
@@ -165,38 +165,64 @@ const Recommendation = () => {
             Expected Upside: {stock.upside}%
           </span>
         </div>
-
         {/* Price Range Bar */}
         <div className="mb-3 relative px-4">
-          <div className="text-xs text-gray-500 mb-1">Price Range</div>
-          <div className="relative w-full h-4 bg-gray-200 rounded-full">
-            <div
-              className="h-4 rounded-full transition-all duration-500"
-              style={{
-                width: `${cmpPosition}%`,
-                backgroundColor: barColor,
-                position: stock.cmp >= stock.entryPrice ? "relative" : "absolute",
-                right: stock.cmp < stock.entryPrice ? 0 : "auto",
-              }}
-            ></div>
+          <div className="relative w-full h-4 bg-gray-200 rounded-full flex items-center">
+            {/* Red bar when CMP < Entry Price */}
+            {stock.cmp < stock.entryPrice && (
+              <div
+                className="h-4 rounded-full transition-all duration-500 absolute"
+                style={{
+                  width: `${((stock.entryPrice - stock.cmp) / stock.entryPrice) * 100}%`,
+                  backgroundColor: COLORS.red,
+                  right: `50%`, // start from center (Entry Price)
+                  transform: "translateX(50%)", // align bar correctly
+                }}
+              ></div>
+            )}
 
+            {/* Green bar when CMP >= Entry Price */}
+            {stock.cmp >= stock.entryPrice && (
+              <div
+                className="h-4 rounded-full transition-all duration-500 absolute"
+                style={{
+                  width: `${Math.min(
+                    ((stock.cmp - stock.entryPrice) / (stock.target1 - stock.entryPrice)) * 100,
+                    100
+                  )}%`,
+                  backgroundColor: COLORS.green,
+                  left: `50%`, // Entry Price center
+                  transform: "translateX(-50%)",
+                }}
+              ></div>
+            )}
+
+            {/* CMP Label */}
             <div
-              className={`absolute -top-5 text-xs font-semibold ${
-                stock.cmp >= stock.entryPrice ? "text-green-700" : "text-red-700"
-              }`}
+              className={`absolute -top-5 text-xs font-semibold ${stock.cmp >= stock.entryPrice ? "text-green-700" : "text-red-700"
+                }`}
               style={{
-                left: stock.cmp >= stock.entryPrice ? `${cmpPosition}%` : "auto",
-                right: stock.cmp < stock.entryPrice ? `${cmpPosition}%` : "auto",
+                left:
+                  stock.cmp >= stock.entryPrice
+                    ? `${((stock.cmp - stock.entryPrice) / (stock.target1 - stock.entryPrice)) * 100}%`
+                    : `calc(50% - ${((stock.entryPrice - stock.cmp) / stock.entryPrice) * 50}%)`,
                 transform: "translateX(-50%)",
               }}
             >
               CMP: ₹{stock.cmp}
             </div>
 
-            <div className="absolute top-5 left-0 text-xs text-gray-500">₹{stock.entryPrice}</div>
+            {/* Entry Price */}
+            <div className="absolute top-5 left-1/2 text-xs text-gray-500" style={{ transform: "translateX(-50%)" }}>
+              ₹{stock.entryPrice}
+            </div>
+
+            {/* Target Price */}
             <div className="absolute top-5 right-0 text-xs text-gray-500">₹{stock.target1}</div>
           </div>
         </div>
+
+
 
         <div className="p-4">
           <div className="grid grid-cols-3 text-sm font-medium text-gray-700 mb-3">
