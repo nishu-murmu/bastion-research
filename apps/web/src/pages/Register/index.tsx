@@ -1,11 +1,12 @@
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { SignUpCard } from "./SignUpCard";
 import SignUpForm from "./SignupForm";
 
 export default function Register() {
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
 
+<<<<<<< HEAD
   useEffect(() => {
     try {
       const wasOpen = localStorage.getItem("onboardingOpen");
@@ -19,6 +20,8 @@ export default function Register() {
     } catch { }
   }, []);
 
+=======
+>>>>>>> 8ce2646296809ffc4ccc108e0c3c07b9d89ac510
   const stats = [
     { number: "10k+", label: "Total Ideas" },
     { number: "69+", label: "Active Ideas" },
@@ -86,16 +89,15 @@ export default function Register() {
             >
               <SignUpCard
                 onSignUpClick={() => {
+<<<<<<< HEAD
                   try {
                     localStorage.setItem("onboardingOpen", "true");
                   } catch { }
+=======
+>>>>>>> 8ce2646296809ffc4ccc108e0c3c07b9d89ac510
                   setIsSignUpOpen(true);
                 }}
               />
-
-              {/* Background decoration */}
-              <div className="absolute -top-4 -right-4 w-72 h-72 bg-gradient-to-r from-red-200 to-red-300 rounded-full opacity-20 blur-3xl"></div>
-              <div className="absolute -bottom-4 -left-4 w-64 h-64 bg-gradient-to-r from-blue-200 to-blue-300 rounded-full opacity-20 blur-3xl"></div>
             </motion.div>
           </div>
         </div>
@@ -105,9 +107,12 @@ export default function Register() {
         <SignUpForm
           isOpen={isSignUpOpen}
           onClose={() => {
+<<<<<<< HEAD
             try {
               localStorage.setItem("onboardingOpen", "false");
             } catch { }
+=======
+>>>>>>> 8ce2646296809ffc4ccc108e0c3c07b9d89ac510
             setIsSignUpOpen(false);
           }}
         />
