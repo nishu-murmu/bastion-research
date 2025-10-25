@@ -3,8 +3,7 @@ import { Search, Filter, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import axiosInstance from "@/api/axios";
-import { endpoints } from "@/api/endpoints";
+import { fetchRecommendationsFromSheet, getSheetUrl } from "@/lib/recommendations";
 
 const COLORS = {
   red: "#C00000",
@@ -33,46 +32,48 @@ interface StockData {
   lastUpdated: string;
 }
 
-// Dummy Data
-const generateDummyStocks = (): StockData[] => {
-  const sectors = ["IT", "Finance", "Chemicals", "Healthcare", "Energy"];
-  const bands: StockData["band"][] = ["BUY", "HOLD", "EXITED"];
-  const stocks: StockData[] = [];
+// Load real data from Google Sheet
+const useSheetStocks = () => {
+  const [stocks, setStocks] = useState<StockData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  for (let i = 1; i <= 30; i++) {
-    const band = bands[Math.floor(Math.random() * bands.length)];
-    const sector = sectors[Math.floor(Math.random() * sectors.length)];
-    const cmp = Math.floor(Math.random() * 500) + 50;
-    const entryPrice = Math.floor(Math.random() * 100) + (cmp - 60);
-    const target1 = cmp + Math.floor(Math.random() * 200);
-    stocks.push({
-      id: i.toString(),
-      name: `Stock Company ${i}`,
-      code: `STK${i}`,
-      marketCap: `₹${Math.floor(Math.random() * 5000 + 100)} Cr.`,
-      upside: Math.floor(Math.random() * 100),
-      cmp,
-      entryPrice,
-      target1,
-      sector,
-      band,
-      lastUpdated: new Date(
-        2025,
-        Math.floor(Math.random() * 12),
-        Math.floor(Math.random() * 28) + 1
-      ).toISOString().split("T")[0],
-    });
-  }
-  return stocks;
+  useEffect(() => {
+    (async () => {
+      try {
+        const url = getSheetUrl();
+        const recs = await fetchRecommendationsFromSheet(url);
+        const transformed: StockData[] = recs.map((r, idx) => ({
+          id: `${idx}-${r.nseSymbol || r.companyName}`,
+          name: r.companyName,
+          code: r.nseSymbol || "",
+          marketCap: r.latestMcapCr ? `₹${r.latestMcapCr} Cr.` : "₹0 Cr.",
+          upside: Math.round(r.upsidePotential || 0),
+          cmp: Math.round(r.cmpOrExitPrice || 0),
+          entryPrice: Math.round(r.priceAtRecommendation || 0),
+          target1: Math.round(r.targetPrice || 0),
+          sector: "",
+          band: (r.action?.toUpperCase() as any) || "BUY",
+          lastUpdated: (r.dateRecommended || "").toString(),
+        }));
+        setStocks(transformed);
+      } catch (e: any) {
+        setError(e?.message || 'Failed to load recommendations');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  return { stocks, loading, error };
 };
-
-const mockStockData = generateDummyStocks();
 
 const Recommendation = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("MCAP Wise");
   const [filterBy, setFilterBy] = useState("All");
   const [visibleCount, setVisibleCount] = useState(9);
+  const { stocks: sheetStocks, loading, error } = useSheetStocks();
 
   const getBandColor = (band: string) => {
     switch (band) {
@@ -87,7 +88,7 @@ const Recommendation = () => {
     }
   };
 
-  const filteredStocks = mockStockData.filter((stock) => {
+  const filteredStocks = sheetStocks.filter((stock) => {
     const matchesFilter = filterBy === "All" || stock.band === filterBy;
     const matchesSearch =
       stock.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -340,7 +341,9 @@ const Recommendation = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {visibleStocks.map((stock) => (
+          {loading && <div className="text-gray-500">Loading recommendations…</div>}
+          {error && <div className="text-red-600">{error}</div>}
+          {!loading && !error && visibleStocks.map((stock) => (
             <StockCard key={stock.id} stock={stock} />
           ))}
         </div>

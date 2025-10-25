@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { computeMetrics, fetchRecommendationsFromSheet, getSheetUrl } from "@/lib/recommendations";
+import { TrendingDown, TrendingUp } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 // Reusable Horizontal Bar Component
@@ -41,16 +42,77 @@ const StatCard = ({ label, value, subLabel, color, isUp = true }) => (
 );
 
 const ChartDashboard = () => {
-  const liveRecommendations = [
-    { label: "High > 15%", value: 15, percentage: 34.1, color: "bg-gradient-to-l from-green-500 to-green-400" },
-    { label: "Medium (-15% to 15%)", value: 18, percentage: 40.9, color: "bg-gradient-to-l from-yellow-400 to-yellow-300" },
-    { label: "Low <-15%", value: 11, percentage: 25.0, color: "bg-gradient-to-l from-red-500 to-red-400" },
-  ];
-
-  const exits = [
-    { label: "Profit Exits", value: 36, percentage: 100, color: "bg-gradient-to-l from-green-500 to-green-400" },
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [liveStats, setLiveStats] = useState([
+    { label: "High > 15%", value: 0, percentage: 0, color: "bg-gradient-to-l from-green-500 to-green-400" },
+    { label: "Medium (-15% to 15%)", value: 0, percentage: 0, color: "bg-gradient-to-l from-yellow-400 to-yellow-300" },
+    { label: "Low <-15%", value: 0, percentage: 0, color: "bg-gradient-to-l from-red-500 to-red-400" },
+  ]);
+  const [exitsStats, setExitsStats] = useState([
+    { label: "Profit Exits", value: 0, percentage: 0, color: "bg-gradient-to-l from-green-500 to-green-400" },
     { label: "Loss Exits", value: 0, percentage: 0, color: "bg-gradient-to-l from-red-500 to-red-400" },
-  ];
+  ]);
+
+  const [totals, setTotals] = useState({
+    liveCount: 0,
+    exitCount: 0,
+    avgLiveReturn: 0,
+    avgExitReturn: 0,
+    successRate: 0,
+    topGainerText: "",
+    topLoserText: "",
+    topGainerSub: "",
+    topLoserSub: "",
+    bestExitText: "",
+    bestExitSub: "",
+    worstExitText: "",
+    worstExitSub: "",
+  });
+
+  useEffect(() => {
+    (async () => {
+      try {
+        console.log('called now')
+        const url = getSheetUrl();
+        console.log(url, 'url')
+        const recs = await fetchRecommendationsFromSheet(url);
+        console.log(recs, 'recs')
+        const m = computeMetrics(recs);
+        const liveCount = m.liveCount || 0;
+        const liveStatsLocal = [
+          { label: "High > 15%", value: m.highCount, percentage: liveCount ? Math.round((m.highCount / liveCount) * 1000) / 10 : 0, color: "bg-gradient-to-l from-green-500 to-green-400" },
+          { label: "Medium (-15% to 15%)", value: m.mediumCount, percentage: liveCount ? Math.round((m.mediumCount / liveCount) * 1000) / 10 : 0, color: "bg-gradient-to-l from-yellow-400 to-yellow-300" },
+          { label: "Low <-15%", value: m.lowCount, percentage: liveCount ? Math.round((m.lowCount / liveCount) * 1000) / 10 : 0, color: "bg-gradient-to-l from-red-500 to-red-400" },
+        ];
+        const exitsStatsLocal = [
+          { label: "Profit Exits", value: m.profitExits, percentage: m.exitCount ? Math.round((m.profitExits / m.exitCount) * 1000) / 10 : 0, color: "bg-gradient-to-l from-green-500 to-green-400" },
+          { label: "Loss Exits", value: m.lossExits, percentage: m.exitCount ? Math.round((m.lossExits / m.exitCount) * 1000) / 10 : 0, color: "bg-gradient-to-l from-red-500 to-red-400" },
+        ];
+        setLiveStats(liveStatsLocal);
+        setExitsStats(exitsStatsLocal);
+        setTotals({
+          liveCount: m.liveCount,
+          exitCount: m.exitCount,
+          avgLiveReturn: m.avgLiveReturn,
+          avgExitReturn: m.avgExitReturn,
+          successRate: m.successRate,
+          topGainerText: m.topGainer ? `+${m.topGainer.percentReturn.toFixed(2)}%` : "",
+          topLoserText: m.topLoser ? `${m.topLoser.percentReturn.toFixed(2)}%` : "",
+          topGainerSub: m.topGainer ? `${m.topGainer.holdingPeriod ? `in ${m.topGainer.holdingPeriod} | ` : ''}${m.topGainer.companyName} | Active` : "",
+          topLoserSub: m.topLoser ? `${m.topLoser.holdingPeriod ? `in ${m.topLoser.holdingPeriod} | ` : ''}${m.topLoser.companyName} | Active` : "",
+          bestExitText: m.bestExit ? `+${m.bestExit.percentReturn.toFixed(2)}%` : "",
+          bestExitSub: m.bestExit ? `${m.bestExit.holdingPeriod ? `in ${m.bestExit.holdingPeriod} | ` : ''}${m.bestExit.companyName} | Inactive` : "",
+          worstExitText: m.worstExit ? `${m.worstExit.percentReturn.toFixed(2)}%` : "",
+          worstExitSub: m.worstExit ? `${m.worstExit.holdingPeriod ? `in ${m.worstExit.holdingPeriod} | ` : ''}${m.worstExit.companyName} | Inactive` : "",
+        });
+      } catch (e: any) {
+        setError(e?.message || 'Failed to load recommendations');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   return (
     <div className="mb-8 rounded-xl bg-gradient-to-br from-[#13013d] to-[#010313] p-8">
@@ -67,7 +129,7 @@ const ChartDashboard = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
-              <h2 className="text-lg sm:text-xl font-semibold text-white">44 Live Recommendations</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-white">{totals.liveCount} Live Recommendations</h2>
             </div>
             <Link to="/user/app/recommendation" className="text-xs sm:text-sm text-blue-300 font-medium hover:underline">
               3 New
@@ -79,13 +141,13 @@ const ChartDashboard = () => {
               <TrendingUp size={18} className="text-white" />
               <span className="text-xs sm:text-sm text-white font-medium">Average Live Returns</span>
             </div>
-            <span className="text-3xl font-bold text-white">10.5%</span>
+            <span className="text-3xl font-bold text-white">{isNaN(totals.avgLiveReturn) ? '0.0' : totals.avgLiveReturn.toFixed(1)}%</span>
           </div>
 
           {/* Horizontal Bars */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
-              {liveRecommendations.map((item, idx) => (
+              {liveStats.map((item, idx) => (
                 <HorizontalBar key={idx} {...item} />
               ))}
             </div>
@@ -94,7 +156,7 @@ const ChartDashboard = () => {
               <div>
                 <p className="text-xs text-white mb-3">Performance Breakdown</p>
                 <div className="space-y-3">
-                  {liveRecommendations.map((item, idx) => (
+                  {liveStats.map((item, idx) => (
                     <div className="flex justify-between items-center" key={idx}>
                       <span className="text-xs text-gray-400">{item.label}</span>
                       <span className={`text-sm font-bold text-gray-400 ${item.color.split(" ")[0]}`}>{item.percentage}%</span>
@@ -104,14 +166,14 @@ const ChartDashboard = () => {
               </div>
               <div className="mt-4 pt-3 border-t border-white/10">
                 <p className="text-xs text-gray-400">Total Holdings</p>
-                <p className="text-2xl font-bold text-white">44</p>
+                <p className="text-2xl font-bold text-white">{totals.liveCount}</p>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <StatCard label="Top Gainer" value="+208.99%" subLabel="in 2yr, 4mo | Lagnam Spintex | Active" color="text-green-400" />
-            <StatCard label="Top Loser" value="-46.11%" subLabel="in 9 months | Legent 2 | Active" color="text-red-400" isUp={false} />
+            <StatCard label="Top Gainer" value={totals.topGainerText || '+0.00%'} subLabel={totals.topGainerSub} color="text-green-400" />
+            <StatCard label="Top Loser" value={totals.topLoserText || '0.00%'} subLabel={totals.topLoserSub} color="text-red-400" isUp={false} />
           </div>
         </div>
 
@@ -120,7 +182,7 @@ const ChartDashboard = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
-              <h2 className="text-lg sm:text-xl font-semibold text-white">36 Exits (past)</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-white">{totals.exitCount} Exits (past)</h2>
             </div>
             <Link to="/user/app/recommendation" className="text-xs sm:text-sm text-blue-300 font-medium hover:underline">
               3 New
@@ -132,12 +194,12 @@ const ChartDashboard = () => {
               <TrendingUp size={18} className="text-white" />
               <span className="text-xs sm:text-sm text-white font-medium">Average Exit Returns</span>
             </div>
-            <span className="text-3xl font-bold text-white">62.37%</span>
+            <span className="text-3xl font-bold text-white">{isNaN(totals.avgExitReturn) ? '0.0' : totals.avgExitReturn.toFixed(2)}%</span>
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
-              {exits.map((item, idx) => (
+              {exitsStats.map((item, idx) => (
                 <HorizontalBar key={idx} {...item} />
               ))}
             </div>
@@ -148,28 +210,28 @@ const ChartDashboard = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-gray-300">Success Rate</span>
-                    <span className="text-sm font-bold text-green-400">100%</span>
+                    <span className="text-sm font-bold text-green-400">{isNaN(totals.successRate) ? '0%' : `${totals.successRate.toFixed(0)}%`}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-gray-300">Avg Gain</span>
-                    <span className="text-sm font-bold text-green-400">+62.37%</span>
+                    <span className="text-sm font-bold text-green-400">{isNaN(totals.avgExitReturn) ? '+0.00%' : `+${totals.avgExitReturn.toFixed(2)}%`}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-gray-300">Losses</span>
-                    <span className="text-sm font-bold text-red-400">0</span>
+                    <span className="text-sm font-bold text-red-400">{exitsStats[1]?.value ?? 0}</span>
                   </div>
                 </div>
               </div>
               <div className="mt-4 pt-3 border-t border-white/10">
                 <p className="text-xs text-gray-400">Total Exits</p>
-                <p className="text-2xl font-bold text-white">36</p>
+                <p className="text-2xl font-bold text-white">{totals.exitCount}</p>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <StatCard label="Best Exit" value="+269.17%" subLabel="in 1yr, 6mo | Gravita India Ltd. | Inactive" color="text-green-400" />
-            <StatCard label="Worst Exit" value="+0.67%" subLabel="in 1yr, 8mo | Monte Carlo Fashions | Inactive" color="text-red-400" isUp={false} />
+            <StatCard label="Best Exit" value={totals.bestExitText || '+0.00%'} subLabel={totals.bestExitSub} color="text-green-400" />
+            <StatCard label="Worst Exit" value={totals.worstExitText || '0.00%'} subLabel={totals.worstExitSub} color="text-red-400" isUp={false} />
           </div>
         </div>
       </div>
