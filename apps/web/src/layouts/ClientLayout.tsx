@@ -15,9 +15,9 @@ const ClientLayout = () => {
     return <Navigate to={AppRoutes.home()} replace />;
   }
 
-  if (isAdmin) {
-    return <Navigate to={AppRoutes.adminDashboard()} replace />;
-  }
+  // if (isAdmin) {
+  //   return <Navigate to={AppRoutes.adminDashboard()} replace />;
+  // }
 
   return (
     <div className="flex flex-col min-h-screen">
