@@ -138,7 +138,7 @@ export const getAnalyticsSummary = async (req: Request, res: Response) => {
     const { data: subsRows, error: subsError } = await supabase
       .from("subscriptions")
       .select(
-        `user_id, start_date, expire_next_renewal, amount, membership_id, plan_code`
+        `user_id, start_date, expire_next_renewal, amount, membership_id`
       )
       .order("start_date", { ascending: false });
     if (subsError) {
@@ -257,6 +257,7 @@ export const getAnalyticsSummary = async (req: Request, res: Response) => {
       .map((s) => ({
         userId: s.user_id,
         membershipId: s.membership_id,
+        //@ts-ignore
         planCode: s.plan_code || null,
         expiresAt: s.expire_next_renewal,
       }));
@@ -295,8 +296,7 @@ export const getAnalyticsSummary = async (req: Request, res: Response) => {
     > = {};
     for (const s of subsRows || []) {
       const plan = s.membership_id ? planById[String(s.membership_id)] : null;
-      const key =
-        plan?.plan_name || s.plan_code || String(s.membership_id || "Unknown");
+      const key = plan?.plan_name || String(s.membership_id || "Unknown");
       revenueByProductMap[key] ||= { product: key, revenue: 0 };
       revenueByProductMap[key].revenue += Number(s.amount) || 0;
     }

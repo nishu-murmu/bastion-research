@@ -227,7 +227,7 @@ const MemberManagementDashboard = () => {
 
       {/* Data Table */}
       <DataTable
-        data={(rowData || []).filter((r: any) => ["admin", "employee"].includes(String(r.role)))}
+        data={rowData || []}
         columns={columns}
         loading={loading}
         error={error?.message}
@@ -237,7 +237,7 @@ const MemberManagementDashboard = () => {
         bulkActions={bulkActions}
         searchPlaceholder="Search members by name, email, or username..."
         title="Members"
-        description={`${(rowData || []).filter((r: any) => ["admin","employee"].includes(String(r.role))).length} total members`}
+        description={`${rowData?.length || 0} total users`}
       />
     </div>
   );

@@ -73,6 +73,9 @@ export const handlePaymentSuccess = async (payload: any) => {
     })
     .eq("id", customer_details?.customer_id);
 
+  // Create a transaction id we can reuse across tables
+  const transactionId = crypto.randomUUID();
+
   const insertPaymentHistoryPromise = supabase
     .from("payment_history")
     .insert({
@@ -80,7 +83,7 @@ export const handlePaymentSuccess = async (payload: any) => {
       plan_id: currentPlan?.plan_id,
       user_id: customer_details?.customer_id,
       payer_email: customer_details?.customer_email,
-      transaction_id: crypto.randomUUID(),
+      transaction_id: transactionId,
       created_at: payment?.payment_time,
     })
     .maybeSingle();
@@ -90,21 +93,23 @@ export const handlePaymentSuccess = async (payload: any) => {
     insertPaymentHistoryPromise,
   ]);
 
+  // Prepare dates as YYYY-MM-DD strings for date columns
+  const startDate = payment?.payment_time
+    ? new Date(payment.payment_time)
+    : new Date();
+  const expireDate = currentPlan?.duration_months
+    ? new Date(
+        startDate.getTime() + currentPlan.duration_months * 30 * 24 * 60 * 60 * 1000
+      )
+    : null;
+
   await supabase.from("subscriptions").upsert({
     membership_id: currentPlan?.plan_id,
-    name: currentPlan?.plan_name,
-    start_date: payment?.payment_time,
-    expire_next_renewal: currentPlan?.duration_months
-      ? new Date(
-          new Date(payment?.payment_time).getTime() +
-            currentPlan.duration_months * 30 * 24 * 60 * 60 * 1000
-        ).toISOString()
-      : null,
+    start_date: startDate.toISOString().slice(0, 10),
+    expire_next_renewal: expireDate ? expireDate.toISOString().slice(0, 10) : null,
     amount: payment?.payment_amount,
-    // @ts-ignore
-    transaction_id: paymentHistoryResult?.transaction_id,
+    transaction_id: transactionId,
     user_id: customer_details?.customer_id,
-    plan_code: currentPlan?.plan_code || null,
   });
 };
 

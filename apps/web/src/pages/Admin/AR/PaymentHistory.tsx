@@ -1,53 +1,11 @@
-import React, { useState, useMemo } from "react";
-import { Eye, FileText, Trash2, Plus } from "lucide-react";
-import { confirmDelete } from "@/utils/confirm";
-import { AgGridReact } from "ag-grid-react";
-import { ColDef } from "ag-grid-community";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "@/api/axios";
 import { endpoints } from "@/api/endpoints";
-
-const mockData = [
-  {
-    transaction_id: "pay_MKJVgrVkAGQ",
-    invoice_id: "BB-266",
-    user_id: "shreyadhiruobhavyalit@gmail.com",
-    user_email: "shreyadhiruobhavyalit@gmail.com",
-    membership: "Annual Plan",
-    payment_gateway: "Manual",
-    payment_type: "One Time",
-    payer_email: "Paid by admin",
-    transaction_status: "Success",
-    payment_date: "2025-08-27",
-    amount: "₹750.30",
-  },
-  {
-    transaction_id: "pay_MKJVgrVkBGR",
-    invoice_id: "BB-265",
-    user_id: "sudheekart234@gmail.com",
-    user_email: "sudheekart234@gmail.com",
-    membership: "Annual Plan",
-    payment_gateway: "Razorpay",
-    payment_type: "One Time",
-    payer_email: "sudheekart234@gmail.com",
-    transaction_status: "Success",
-    payment_date: "2025-08-17",
-    amount: "₹750.30",
-  },
-  {
-    transaction_id: "Manual_001",
-    invoice_id: "BB-264",
-    user_id: "apashallahsharmeth888@gmail.com",
-    user_email: "apashallahsharmeth888@gmail.com",
-    membership: "Bastion Research Core",
-    payment_gateway: "Razorpay",
-    payment_type: "Subscription (Automatic)",
-    payer_email: "apashallahsharmeth888@gmail.com",
-    transaction_status: "Failed",
-    payment_date: "2025-08-13",
-    amount: "₹4,000.00",
-  },
-];
+import { confirmDelete } from "@/utils/confirm";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ColDef } from "ag-grid-community";
+import { AgGridReact } from "ag-grid-react";
+import { Eye, FileText, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
 
 const StatusBadge = ({ value }: { value: string }) => {
   const getStatusColor = (s: string) => {
@@ -127,13 +85,6 @@ const PaymentHistory = () => {
       queryClient.invalidateQueries({ queryKey: ["payment-history"] }),
   });
 
-  const createMutation = useMutation({
-    mutationFn: (body: any) =>
-      axiosInstance.post(endpoints.paymentHistory.base, body),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["payment-history"] }),
-  });
-
   const filteredData = useMemo(() => {
     const rows = data || [];
     return rows.filter((item: any) => {
@@ -197,36 +148,6 @@ const PaymentHistory = () => {
               Showing {filteredData.length} transactions
             </p>
           </div>
-          <button
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
-            onClick={() => {
-              const transaction_id = prompt("Transaction ID") || "";
-              const invoice_id = prompt("Invoice ID") || "";
-              const user_id = prompt("User ID (UUID)") || "";
-              const plan_id = Number(prompt("Plan ID") || "");
-              const payment_gateway = prompt("Gateway") || "";
-              const payment_type = prompt("Type") || "";
-              const payer_email = prompt("Payer Email") || "";
-              const transaction_status = prompt("Status") || "Completed";
-              const payment_date = prompt("Payment Date (YYYY-MM-DD)") || "";
-              const amount = Number(prompt("Amount") || "0");
-              createMutation.mutate({
-                transaction_id,
-                invoice_id,
-                user_id,
-                plan_id,
-                payment_gateway,
-                payment_type,
-                payer_email,
-                transaction_status,
-                payment_date,
-                amount,
-              });
-            }}
-          >
-            <Plus size={16} />
-            <span>Add Manual Payment</span>
-          </button>
         </div>
         <div className="p-4">
           <input
