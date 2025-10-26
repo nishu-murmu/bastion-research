@@ -1,6 +1,7 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { AppRoutes } from "@/routes/app-routes";
+import { PersonIcon } from "@radix-ui/react-icons";
 import {
   BarChart3,
   ChevronDown,
@@ -8,20 +9,17 @@ import {
   ChevronRight,
   CreditCard,
   Crown,
-  FileText,
   Home,
   LayoutDashboard,
   LogOut,
   Menu,
   Newspaper,
-  Percent,
   Play,
   Settings,
   Shield,
-  Target,
   TrendingUp,
   User,
-  X,
+  X
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -36,37 +34,42 @@ const BrandColors = {
 };
 
 const navItems = [
-  { name: "Dashboard", icon: LayoutDashboard, path: "/user/app/dashboard" },
+  { name: "Dashboard", icon: LayoutDashboard, path: AppRoutes.dashboard() },
   {
     name: "Recommendation",
     icon: TrendingUp,
     path: "/user/app/recommendation",
   },
-  { name: "Research Hub", icon: FileText, path: "/user/app/research-hub" },
+  // { name: "Research Hub", icon: FileText, path: "/user/app/research-hub" },
   { name: "Premium Webinars", icon: Play, path: "/user/app/premium-webinars" },
-  { name: "Scratch Pad Newsletter", icon: Newspaper, path: "/user/app/scratch-pad-newsletter" },
+  { name: "Scratch Pad Newsletter", icon: Newspaper, path: AppRoutes.newsletter() },
   {
     name: "My Account",
     icon: User,
-    path: "/user/app/account",
+    path: AppRoutes.editProfile(), // assuming the base path is for editing
     subItems: [
       {
         name: "Edit Profile",
-        path: "/user/app/account/edit-profile",
+        path: AppRoutes.editProfile(),
         icon: Settings,
       },
       {
         name: "Show Subscription",
-        path: "/user/app/account/subscription",
+        path: AppRoutes.subscription(),
         icon: CreditCard,
       },
       {
         name: "Transaction History",
-        path: "/user/app/account/transactions",
+        path: AppRoutes.transactionHistory(),
         icon: BarChart3,
       },
     ],
   },
+  {
+    name: "Admin Panel",
+    icon: PersonIcon,
+    path: AppRoutes.adminDashboard()
+  }
 ];
 
 export default function Sidebar() {

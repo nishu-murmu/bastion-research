@@ -35,7 +35,6 @@ export default function PremiumWebinarsPage() {
 
   const { start, stop } = useLoader();
 
-  // Only premium webinars for this page
   const filteredWebinars = rowData.filter((webinar) => webinar.is_premium);
 
   const totalPages = Math.ceil(filteredWebinars.length / ITEMS_PER_PAGE);
@@ -63,18 +62,18 @@ export default function PremiumWebinarsPage() {
   }, [loading]);
 
   // Access guard: only allow users with premium subscription
-  const { user, subscription, isLoading, isSubscriptionLoading } = useAuth();
+  const { user, subscription, isLoading, isSubscriptionLoading, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     // Wait for auth and subscription to load before checking
     if (!isLoading && !isSubscriptionLoading) {
       // If not logged in or not premium, redirect to subscription/upgrade page
-      if (!user || !subscription || !subscription.is_premium) {
+      if (!user || !subscription || !subscription.is_premium && !isAdmin) {
         toast.error(
           "Premium access required. Redirecting to subscription page."
         );
-        navigate(AppRoutes.subscription());
+        navigate(AppRoutes.bastionCore());
       }
     }
   }, [user, subscription, isLoading, isSubscriptionLoading]);

@@ -6,13 +6,18 @@ import { AppRoutes, AuthRoutes } from "@/routes/app-routes";
 import { data, Navigate, Outlet, useLocation } from "react-router-dom";
 
 const ClientLayout = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const location = useLocation();
-  const isActive = user?.status === "active"
+  const isActive = user?.status === "active";
+  console.log({ user, isAdmin });
 
   if (user && isActive && AuthRoutes.includes(location.pathname)) {
     return <Navigate to={AppRoutes.home()} replace />;
   }
+
+  // if (isAdmin) {
+  //   return <Navigate to={AppRoutes.adminDashboard()} replace />;
+  // }
 
   return (
     <div className="flex flex-col min-h-screen">
