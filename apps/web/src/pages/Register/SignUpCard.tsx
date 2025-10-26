@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Logo from "../../../public/media/favicon.webp";
 
-
 interface SignUpCardProps {
   onSignUpClick: () => void;
 }

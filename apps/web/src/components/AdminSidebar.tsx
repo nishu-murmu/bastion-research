@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { NavLink } from "react-router-dom";
 import {
   ChevronLeft,
@@ -137,17 +137,29 @@ const AdminSidebar = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [hoveredTooltip, setHoveredTooltip] = useState<string | null>(null);
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [popupPos, setPopupPos] = useState<{ top: number; left: number }>({
+    top: 0,
+    left: 0,
+  });
 
-  const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
-  };
+  const sidebarRef = useRef<HTMLDivElement | null>(null);
 
-  const toggleMobileMenu = () => {
-    setIsMobileOpen(!isMobileOpen);
-  };
-
-  const toggleSection = (name: string) => {
+  const toggleSidebar = () => setIsCollapsed(!isCollapsed);
+  const toggleMobileMenu = () => setIsMobileOpen(!isMobileOpen);
+  const toggleSection = (name: string) =>
     setOpenSections((prev) => ({ ...prev, [name]: !prev[name] }));
+
+  const handleMouseEnter = (name: string, event: React.MouseEvent) => {
+    if (isCollapsed) {
+      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      setPopupPos({ top: rect.top, left: rect.right + 8 });
+      setHoveredItem(name);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (isCollapsed) setHoveredItem(null);
   };
 
   // Tooltip component for sidebar
@@ -158,7 +170,7 @@ const AdminSidebar = () => {
   }: {
     children: React.ReactNode;
     tooltipId: string;
-  }) => (
+  }) =>
     hoveredTooltip === tooltipId ? (
       <div
         className="
@@ -175,13 +187,14 @@ const AdminSidebar = () => {
       >
         {children}
       </div>
-    ) : null
-  );
+    ) : null;
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full">
+    <div ref={sidebarRef} className="flex flex-col h-full">
       <div
-        className={`flex items-center justify-between p-4 ${isCollapsed ? "justify-center" : ""}`}
+        className={`flex items-center justify-between p-4 ${
+          isCollapsed ? "justify-center" : ""
+        }`}
       >
         {!isCollapsed && <h1 className="text-2xl font-bold">Admin</h1>}
         <button
@@ -189,28 +202,28 @@ const AdminSidebar = () => {
           className="hidden lg:block p-2 rounded-full hover:bg-gray-700"
         >
           <ChevronLeft
-            className={`transition-transform duration-300 ${isCollapsed ? "rotate-180" : ""}`}
+            className={`transition-transform duration-300 ${
+              isCollapsed ? "rotate-180" : ""
+            }`}
           />
         </button>
       </div>
 
-      <nav className="flex-1 mt-8 space-y-2 px-2 pb-10 overflow-y-auto relative">
+      <nav className="flex-1 mt-8 space-y-2 px-2 pb-10 overflow-y-auto">
         {navItems.map((item) => (
-          <div key={item.name} className="relative">
+          <div
+            key={item.name}
+            onMouseEnter={(e) => handleMouseEnter(item.name, e)}
+            onMouseLeave={handleMouseLeave}
+          >
             {item.subItems ? (
               <>
                 <button
-                  onClick={() => toggleSection(item.name)}
-                  className={`flex items-center w-full 
-                    ${isCollapsed ? "justify-center" : "justify-between"} 
-                    p-2 rounded-lg transition-colors hover:bg-gray-700 relative`
-                  }
-                  onMouseEnter={() => setHoveredTooltip(item.name)}
-                  onMouseLeave={() => setHoveredTooltip(null)}
-                  title={!isCollapsed ? "" : item.name}
-                  type="button"
-                  tabIndex={0}
-                  aria-label={item.name}
+                  onClick={() => !isCollapsed && toggleSection(item.name)}
+                  className={`flex items-center w-full ${
+                    isCollapsed ? "justify-center" : "justify-between"
+                  } p-2 rounded-lg transition-colors hover:bg-gray-700`}
+                  title={isCollapsed ? item.name : ""}
                 >
                   <div className="flex items-center">
                     <item.icon className="h-6 w-6" />
@@ -229,7 +242,8 @@ const AdminSidebar = () => {
                     <SidebarTooltip tooltipId={item.name}>{item.name}</SidebarTooltip>
                   )}
                 </button>
-                {openSections[item.name] && !isCollapsed && (
+
+                {!isCollapsed && openSections[item.name] && (
                   <div className="pl-8 mt-2 space-y-2">
                     {item.subItems.map((subItem) => (
                       <NavLink
@@ -249,17 +263,15 @@ const AdminSidebar = () => {
                 )}
               </>
             ) : (
-              <div
-                className="relative"
-                onMouseEnter={() => setHoveredTooltip(item.name)}
-                onMouseLeave={() => setHoveredTooltip(null)}
+              <div /* This div replaces the misplaced NavLink parent */
+                className={`relative`}
               >
                 <NavLink
                   to={item.path!}
                   className={({ isActive }) =>
-                    `flex items-center p-2 rounded-lg transition-colors
-                    ${isCollapsed ? "justify-center" : ""}
-                    ${isActive ? "bg-gray-700" : "hover:bg-gray-700"}`
+                    `flex items-center p-2 rounded-lg transition-colors ${
+                      isCollapsed ? "justify-center" : ""
+                    } ${isActive ? "bg-gray-700" : "hover:bg-gray-700"}`
                   }
                   title={isCollapsed ? item.name : ""}
                   aria-label={item.name}
@@ -276,12 +288,44 @@ const AdminSidebar = () => {
           </div>
         ))}
       </nav>
+
+      {/* Fixed popup submenu */}
+      {isCollapsed &&
+        hoveredItem &&
+        navItems.find((item) => item.name === hoveredItem)?.subItems && (
+          <div
+            className="fixed bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50 w-56 py-2"
+            style={{
+              top: popupPos.top,
+              left: popupPos.left + 10,
+            }}
+            onMouseLeave={handleMouseLeave}
+            onMouseEnter={() => setHoveredItem(hoveredItem)}
+          >
+            {navItems
+              .find((item) => item.name === hoveredItem)
+              ?.subItems?.map((subItem) => (
+                <NavLink
+                  key={subItem.name}
+                  to={subItem.path}
+                  className={({ isActive }) =>
+                    `flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${
+                      isActive ? "bg-gray-700" : "hover:bg-gray-700"
+                    }`
+                  }
+                >
+                  <subItem.icon className="h-4 w-4 mr-3" />
+                  {subItem.name}
+                </NavLink>
+              ))}
+          </div>
+        )}
     </div>
   );
 
   return (
     <>
-      {/* Mobile menu button */}
+      {/* Mobile toggle */}
       <button
         onClick={toggleMobileMenu}
         className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-gray-800 text-white rounded-md"
@@ -297,6 +341,7 @@ const AdminSidebar = () => {
       >
         <SidebarContent />
       </div>
+
       {isMobileOpen && (
         <div
           className="fixed inset-0 bg-black opacity-50 z-30 lg:hidden"
@@ -304,6 +349,7 @@ const AdminSidebar = () => {
         ></div>
       )}
 
+      {/* Desktop sidebar */}
       <aside
         className={`hidden lg:flex flex-col bg-gray-800 text-white transition-all duration-300
                    ${isCollapsed ? "w-20" : "w-64"}`}
