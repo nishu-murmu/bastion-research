@@ -62,7 +62,7 @@ const useSheetStocks = () => {
           id: `${idx}-${r.nseSymbol || r.companyName}`,
           name: r.companyName,
           code: r.nseSymbol || "",
-          marketCap: r.latestMcapCr ? `₹${r.latestMcapCr} Cr.` : "₹0 Cr.",
+          marketCap: r.latestMcapCr ? `₹ ${Math.round(parseFloat(String(r.latestMcapCr))).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr.` : "₹ 0.00 Cr.",
           upside: Math.round(r.upsidePotential || 0),
           cmp: Math.round(r.cmpOrExitPrice || 0),
           entryPrice: Math.round(r.priceAtRecommendation || 0),
