@@ -21,40 +21,31 @@ export interface RecommendationRecord {
   latestMcapCr: number;
 }
 
-const SHEET_URL_DEFAULT =
-  import.meta.env.VITE_RECO_SHEET_URL ||
-  "https://docs.google.com/spreadsheets/d/1ECA3hzUmyooulaWxArjM7iGzF9y-h45ogJ8yLdlEo3A/edit?gid=0#gid=0";
+import {
+  getAdminRecommendationsSheetUrl,
+  getLiveRecommendationsSheetUrl,
+} from "@/api/recommendations-apis";
 
-const LIVE_SHEET_URL_DEFAULT =
-  import.meta.env.VITE_LIVE_RECO_SHEET_URL ||
-  "https://docs.google.com/spreadsheets/d/1ECA3hzUmyooulaWxArjM7iGzF9y-h45ogJ8yLdlEo3A/edit?gid=1899227714#gid=1899227714";
-
-let cachedSettings: any = null;
-
+/**
+ * Gets the Google Sheet URL for recommendations or live recommendations.
+ * Always fetches values via recommendations-apis, not from environment.
+ */
 export const getSheetUrl = async (
   type: "recommendations" | "live" = "recommendations"
 ): Promise<string> => {
   try {
-    // Try to fetch settings from API if not cached
-    if (!cachedSettings) {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/settings`
-      );
-      if (response.ok) {
-        cachedSettings = await response.json();
-      }
-    }
-
     if (type === "live") {
-      return (
-        cachedSettings?.live_recommendation_sheet_url || LIVE_SHEET_URL_DEFAULT
-      );
+      return await getLiveRecommendationsSheetUrl();
     }
-
-    return cachedSettings?.recommendation_sheet_url || SHEET_URL_DEFAULT;
+    return await getAdminRecommendationsSheetUrl();
   } catch (error) {
-    console.error("Failed to fetch settings, using default URLs", error);
-    return type === "live" ? LIVE_SHEET_URL_DEFAULT : SHEET_URL_DEFAULT;
+    console.error("Failed to fetch settings from recommendations-apis", error);
+    // Optionally fallback to hardcoded values if APIs fail
+    if (type === "live") {
+      return "https://docs.google.com/spreadsheets/d/1ECA3hzUmyooulaWxArjM7iGzF9y-h45ogJ8yLdlEo3A/edit?gid=1899227714#gid=1899227714";
+    } else {
+      return "https://docs.google.com/spreadsheets/d/1ECA3hzUmyooulaWxArjM7iGzF9y-h45ogJ8yLdlEo3A/edit?gid=0#gid=0";
+    }
   }
 };
 
@@ -138,21 +129,50 @@ export const mapRow = (row: RowObject): RecommendationRecord => {
   } as RecommendationRecord;
 };
 
-export const fetchRecommendationsFromSheet = async (
-  urlOrType?: string | "recommendations" | "live"
-): Promise<RecommendationRecord[]> => {
-  let url: string;
+// Function to map a row from the "live" summary sheet (key-value grid) to a friendlier object
+export const liveRecMapRow = (row: RowObject) => {
+  // Card value in key 1, card label in key 0
+  // All keys, including numbers, are stringified in row
+  const label = typeof row["0"] !== "undefined" ? String(row["0"]).trim() : "";
+  // If label is empty, skip/return null
+  if (!label) return null;
 
-  if (!urlOrType) {
-    url = await getSheetUrl("recommendations");
-  } else if (urlOrType === "recommendations" || urlOrType === "live") {
-    url = await getSheetUrl(urlOrType);
-  } else {
-    url = urlOrType;
+  // Numeric value is always in column "1"
+  let value: any = row["1"];
+  // Try to parse to number if numeric
+  if (
+    typeof value === "string" &&
+    value.trim() !== "" &&
+    !isNaN(Number(value))
+  ) {
+    value = Number(value);
   }
 
+  // Sometimes value is a percent in decimal (0.10 = 10%)
+  // These fields by default: "Average Live Returns %", "Top Gainer", "Top Loser", etc.
+  // We'll preserve the raw for the consumer to parse as needed.
+
+  // All info in "live" summary comes as { label, value, notes?, extra? }
+  return {
+    label,
+    value,
+    notes: row["2"] || "",
+    extra: row["3"] || "",
+  };
+};
+
+export const fetchRecommendationsFromSheet = async (
+  url: string,
+  type: "recommendations" | "live"
+): Promise<RecommendationRecord[] | Record<any, any>> => {
   const rows = await fetchSheetObjects(url);
-  return rows.map(mapRow).filter((r) => r.companyName);
+  if (type === "recommendations") {
+    return rows.map(mapRow).filter((r) => r.companyName);
+  }
+  if (type === "live") {
+    // Flatten to key-value summary for dashboard use
+    return rows.map(liveRecMapRow).filter(Boolean);
+  }
 };
 
 export interface DashboardMetrics {

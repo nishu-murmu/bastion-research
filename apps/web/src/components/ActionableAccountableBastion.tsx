@@ -1,12 +1,6 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import {
-  fetchSheetObjects,
-  normalizeKey,
-  toNumber,
-  toPercent,
-  RowObject,
-} from "../lib/googleSheet";
+import { fetchSheetObjects } from "../lib/googleSheet";
 
 const ActionableAccountableBastion = () => {
   // 👉 Replace this with your actual Google Sheet URL

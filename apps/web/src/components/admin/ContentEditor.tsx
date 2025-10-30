@@ -41,6 +41,14 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
     video_url: "",
     is_premium: false,
     category: "",
+    // Scratch pad fields
+    description: "",
+    content: "",
+    featured_image: "",
+    author: "",
+    published_date: "",
+    is_published: false,
+    tags: [] as string[],
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -57,11 +65,22 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
         video_url: initialData.video_url || "",
         is_premium: initialData.is_premium || false,
         category: initialData.category || "",
+        // Scratch pad fields
+        description: initialData.description || "",
+        content: initialData.content || "",
+        featured_image: initialData.featured_image || "",
+        author: initialData.author || "",
+        published_date: initialData.published_date || "",
+        is_published: initialData.is_published || false,
+        tags: initialData.tags || [],
       });
     }
   }, [initialData]);
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (
+    field: string,
+    value: string | boolean | string[]
+  ) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -76,7 +95,27 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
 
     setIsLoading(true);
     try {
-      await onSave({ ...formData, contents: editorStore.editor.getHTML() });
+      const editorContent = editorStore.editor.getHTML();
+      let dataToSave = { ...formData };
+
+      // For scratch pad, map to correct database fields
+      if (type === "scratch-pad") {
+        dataToSave = {
+          title: formData.title,
+          description: formData.description,
+          content: editorContent,
+          featured_image: formData.featured_image,
+          author: formData.author,
+          published_date: formData.published_date,
+          is_published: formData.is_published,
+          tags: formData.tags,
+        };
+      } else {
+        // For other types, use contents field
+        dataToSave = { ...formData, contents: editorContent };
+      }
+
+      await onSave(dataToSave);
       toast.success(
         `${type.charAt(0).toUpperCase() + type.slice(1)} ${isEdit ? "updated" : "created"} successfully`
       );
@@ -211,6 +250,103 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
       );
     }
 
+    // Scratch pad specific fields
+    if (type === "scratch-pad") {
+      // Description
+      fields.push(
+        <div key="description" className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <textarea
+            id="description"
+            value={formData.description}
+            onChange={(e) => handleInputChange("description", e.target.value)}
+            placeholder="Enter a brief description"
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+      );
+
+      // Featured Image
+      fields.push(
+        <div key="featured_image" className="space-y-2">
+          <Label htmlFor="featured_image">Featured Image URL</Label>
+          <Input
+            id="featured_image"
+            value={formData.featured_image}
+            onChange={(e) => handleInputChange("featured_image", e.target.value)}
+            placeholder="Enter featured image URL"
+          />
+        </div>
+      );
+
+      // Author
+      fields.push(
+        <div key="author" className="space-y-2">
+          <Label htmlFor="author">Author</Label>
+          <Input
+            id="author"
+            value={formData.author}
+            onChange={(e) => handleInputChange("author", e.target.value)}
+            placeholder="Enter author name"
+          />
+        </div>
+      );
+
+      // Published Date
+      fields.push(
+        <div key="published_date" className="space-y-2">
+          <Label htmlFor="published_date">Published Date</Label>
+          <Input
+            id="published_date"
+            type="datetime-local"
+            value={
+              formData.published_date
+                ? new Date(formData.published_date).toISOString().slice(0, 16)
+                : ""
+            }
+            onChange={(e) =>
+              handleInputChange("published_date", e.target.value)
+            }
+          />
+        </div>
+      );
+
+      // Is Published checkbox
+      fields.push(
+        <div key="is_published" className="flex gap-x-2 group">
+          <Input
+            id="is_published"
+            type="checkbox"
+            checked={formData.is_published}
+            className="w-4 h-4 cursor-pointer"
+            onChange={(e) => handleInputChange("is_published", e.target.checked)}
+          />
+          <Label htmlFor="is_published" className="mt-0.5 cursor-pointer">
+            Is Published
+          </Label>
+        </div>
+      );
+
+      // Tags
+      fields.push(
+        <div key="tags" className="space-y-2">
+          <Label htmlFor="tags">Tags (comma-separated)</Label>
+          <Input
+            id="tags"
+            value={Array.isArray(formData.tags) ? formData.tags.join(", ") : ""}
+            onChange={(e) =>
+              handleInputChange(
+                "tags",
+                e.target.value.split(",").map((tag) => tag.trim()).filter(Boolean)
+              )
+            }
+            placeholder="Enter tags separated by commas"
+          />
+        </div>
+      );
+    }
+
     return fields;
   };
 
@@ -229,9 +365,14 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
           <Button
             variant="outline"
             onClick={() => {
+              const editorContent = editorStore.editor.getHTML();
               setFormData((prev) => ({
                 ...prev,
-                html_content: editorStore.editor.getHTML(),
+                html_content: editorContent,
+                // Update the appropriate content field based on type
+                ...(type === "scratch-pad"
+                  ? { content: editorContent }
+                  : { contents: editorContent }),
               }));
               setIsPreview(!isPreview);
             }}

@@ -2,6 +2,7 @@ import { getAllRecommendations } from "@/api/recommendations-apis";
 import {
   fetchRecommendationsFromSheet,
   getSheetUrl,
+  RecommendationRecord,
 } from "@/lib/recommendations";
 import { useSheetStocksStore } from "@/stores/recommendation-store";
 import { useEffect, useState } from "react";
@@ -22,10 +23,13 @@ const useSheetStocks = (onlySheet: boolean = false) => {
       try {
         // Fetch from Google Sheets
         const url = await getSheetUrl("recommendations");
-        const sheetData = await fetchRecommendationsFromSheet(url);
+        const sheetData = await fetchRecommendationsFromSheet(
+          url,
+          "recommendations"
+        );
 
         // Save raw sheet data globally in the atom
-        setRawSheetData(sheetData);
+        setRawSheetData(sheetData as RecommendationRecord[]);
 
         // Transform sheet data (common transformation for both cases)
         const transformedSheetStocks: StockData[] = sheetData.map(

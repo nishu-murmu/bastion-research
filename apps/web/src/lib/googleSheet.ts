@@ -3,7 +3,6 @@ export type RowObject = Record<string, any>;
 export const parseSheetUrl = (
   urlString: string
 ): { id: string; gid: string } => {
-  console.log(urlString, "str");
   const url = new URL(urlString);
   const pathParts = url.pathname.split("/d/");
   const id = pathParts[1]?.split("/")[0] || "";
@@ -31,12 +30,11 @@ export const fetchSheetObjects = async (
 
     const table = JSON.parse(updatedText) as any;
     if (!table || !Array.isArray(table?.rows)) return [];
-    const headers: string[] = (table.cols || []).map((c: any) =>
-      (c?.label ?? "").toString()
+    const headers: string[] = (table.cols || []).map((c: any, idx) =>
+      (c?.label ? c?.label : idx).toString()
     );
     const rows: any[] = table.rows || [];
 
-    // Convert GViz rows to plain array of objects
     return rows.map((r: any) => {
       const obj: RowObject = {};
       headers.forEach((h: string, i: number) => {
