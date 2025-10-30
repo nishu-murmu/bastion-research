@@ -20,7 +20,7 @@ import { confirmDelete } from "@/utils/confirm";
 interface TestimonialItem {
   id: string;
   title: string;
-  review: string;
+  text: string;
   name: string;
   position: string;
   created_at: string;
