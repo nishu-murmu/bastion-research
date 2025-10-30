@@ -74,7 +74,7 @@ const ScratchPadManagement: React.FC = () => {
   };
 
   const handleCreate = () => {
-    navigate("/admin/content/scratch-pad/new");
+    navigate("/admin/content/scratch-pad/create");
   };
 
   const filtered = newsletters.filter((n) =>
