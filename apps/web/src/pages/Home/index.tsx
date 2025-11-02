@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import BackgroundShapes from "../../components/generic/framer-motion.tsx";
+import SignUpForm from "../Register/SignupForm.tsx";
 
 const NAVY = "#1C2852";
 const MAROON = "#C00000";
@@ -12,12 +13,14 @@ const tabs = [
   //  { key: "ipo", label: "IPO Investor" },
 ] as const;
 
+
 type TabKey = (typeof tabs)[number]["key"];
 
 export default function LandingPage() {
   const [active, setActive] = useState<TabKey>("qualified");
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const activeIndex = tabs.findIndex((t) => t.key === active);
@@ -81,7 +84,6 @@ export default function LandingPage() {
       `width=${width},height=${height},top=${top},left=${left},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
     );
   }
-
 
   return (
     <>
@@ -347,14 +349,13 @@ export default function LandingPage() {
                     >
                       {[
                         { label: "Bastion CORE", href: "/bastion-core" },
-                        { label: "Access Research", href: "/register" },
-                        { label: "Subscribe Now", href: "/bastion-core" },
+                        { label: "Access Research", action: () => setIsSignUpOpen(true) },
+                        { label: "Subscribe Now", action: () => setIsSignUpOpen(true) },
                       ].map((item, i) => (
-                        <motion.a
+                        <motion.button
                           key={item.label}
                           aria-label={item.label}
                           className="px-5 py-2.5 rounded-xl font-medium shadow-sm border"
-                          href={item.href}
                           style={{
                             background: `linear-gradient(135deg, ${MAROON}, ${MAROON}dd)`,
                             color: "white",
@@ -368,12 +369,17 @@ export default function LandingPage() {
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.4 + i * 0.1 }}
+                          onClick={() =>
+                            item.action ? item.action() : (window.location.href = item.href!)
+                          }
                         >
                           {item.label}
-                        </motion.a>
+                        </motion.button>
                       ))}
+
                     </motion.div>
                   )}
+
 
                   {active === "non_diy" && (
                     <motion.div
@@ -434,6 +440,12 @@ export default function LandingPage() {
           </div>
         </div>
       </div>
+      {isSignUpOpen && (
+        <SignUpForm
+          isOpen={isSignUpOpen}
+          onClose={() => setIsSignUpOpen(false)}
+        />
+      )}
     </>
   );
 }

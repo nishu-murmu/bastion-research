@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import axiosInstance from "@/api/axios";
 import { endpoints } from "@/api/endpoints";
+import SignUpForm from "../Register/SignupForm.tsx";
 // Brand Colors
 const COLORS = {
   red: "#C00000",
@@ -80,6 +81,7 @@ export default function BastionCoreProductPage() {
   const [plans, setPlans] = useState<any[]>([]);
   const [plansLoading, setPlansLoading] = useState<boolean>(false);
   const [plansError, setPlansError] = useState<string | null>(null);
+  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -229,18 +231,18 @@ export default function BastionCoreProductPage() {
 
             {/* Right Card: Buttons */}
             <div className="p-8 flex flex-col gap-4 justify-center items-center md:items-start">
-              <a
-                href="/register"
+              <button
+                onClick={() => setIsSignUpOpen(true)}
                 className="w-full md:w-auto px-6 py-3 bg-[#C00000] text-white rounded-xl hover:bg-[#a00000] transition-colors text-center font-semibold"
               >
                 {startingPrice ? `Subscribe starting at ${startingPrice}` : "Subscribe Now"}
-              </a>
-              <a
-                href="/register"
+              </button>
+              <button
+                onClick={() => setIsSignUpOpen(true)}
                 className="w-full md:w-auto px-6 py-3 border border-[#C00000] text-[#C00000] rounded-xl hover:bg-[#C00000] hover:text-white transition-colors text-center font-semibold"
               >
                 View Research
-              </a>
+              </button>
             </div>
           </div>
         </section>
@@ -271,11 +273,12 @@ export default function BastionCoreProductPage() {
                   <p className={`text-sm ${idx === 1 ? "text-gray-200" : "text-slate-500"}`}>Including GST</p>
                 </div>
                 <div className="mt-6 flex justify-end">
-                  <a href="/register">
-                    <button className={`px-4 py-2 rounded-xl transition-colors ${idx === 1 ? "bg-[#C4B696] text-[#1C2852] hover:bg-[#b3a67d]" : "bg-[#C00000] text-white hover:bg-[#a00000]"}`}>
-                      Subscribe Now
-                    </button>
-                  </a>
+                  <button
+                    onClick={() => setIsSignUpOpen(true)}
+                    className={`px-4 py-2 rounded-xl transition-colors ${idx === 1 ? "bg-[#C4B696] text-[#1C2852] hover:bg-[#b3a67d]" : "bg-[#C00000] text-white hover:bg-[#a00000]"}`}
+                  >
+                    Subscribe Now
+                  </button>
                 </div>
               </div>
             ))}
@@ -539,6 +542,9 @@ export default function BastionCoreProductPage() {
           © {new Date().getFullYear()} Bastion Research. All rights reserved.
         </footer>
       </div>
+
+      {/* SignUp Modal */}
+      <SignUpForm isOpen={isSignUpOpen} onClose={() => setIsSignUpOpen(false)} />
     </div>
   );
 }

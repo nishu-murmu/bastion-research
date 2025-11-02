@@ -238,6 +238,7 @@ const SingleRecommendation = () => {
         </div>
       ) : (
         <>
+         
           {/* HEADER */}
           <Header stock={stock} />
 
@@ -249,7 +250,7 @@ const SingleRecommendation = () => {
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <h2 className="text-lg font-semibold text-gray-900">
-                      Stock NAV, Index NAV
+                      Index NAV, Stock NAV
                     </h2>
                     <p className="text-sm text-gray-500">Since Jan 2024</p>
                   </div>
@@ -298,7 +299,7 @@ const SingleRecommendation = () => {
                       dataKey="Stock NAV"
                       stroke="#2563eb"
                       strokeWidth={1}
-                      name="Stock NAV"
+                      name={`${stock?.name || stock?.nseSymbol || "Stock"} NAV`}
                       dot={false}
                       yAxisId="left"
                       connectNulls

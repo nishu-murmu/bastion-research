@@ -28,13 +28,14 @@ interface StockData {
 
   code?: string;
   marketCap?: string;
-  upside?: number;
+  upside?: string;
   cmp?: number;
   entryPrice?: number;
   target1?: number;
   sector?: string;
   band?: "BUY" | "HOLD" | "EXITED";
   lastUpdated?: string;
+  percentReturn?: number;
 }
 /**
  * Controls for search, sort, and filter.

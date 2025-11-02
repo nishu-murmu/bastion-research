@@ -156,24 +156,23 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl }) => {
         justifyContent: "flex-start",
         padding: "20px",
         minHeight: "100vh",
-        backgroundColor: "#f8f9fa",
+        backgroundColor: "#ffffff",
       }}
     >
       {/* Header: Go Back Button and Title Side by Side */}
       <div
-        className="flex flex-row items-center w-full mb-5 relative"
+        className="flex flex-row items-center w-full mb-5 relative width-810px"
         style={{ minHeight: 40 }}
       >
-        <button
+       
+        <div className="fixed w-full flex justify-left">
+           <button
           onClick={handleGoBack}
-          className="absolute left-0 text-xs px-3 py-1 bg-transparent border-none text-blue-900 font-medium cursor-pointer"
+          className="sticky top-4 left-4 z-10 text-xs px-3 py-1 bg-white border border-gray-300 rounded shadow-md text-blue-900 font-medium cursor-pointer hover:bg-gray-50"
           aria-label="Go back"
-          style={{ top: "50%", transform: "translateY(-50%)" }}
         >
           ← Go Back
         </button>
-        <div className="w-full flex justify-center">
-          <h1 className="m-0 text-center">📄 PDF Viewer</h1>
         </div>
       </div>
 
