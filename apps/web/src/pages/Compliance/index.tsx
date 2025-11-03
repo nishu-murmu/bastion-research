@@ -25,54 +25,48 @@ export default function Complaince() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Complaint Redressal Section */}
         <div className="mb-6">
-          <button
-            onClick={() => toggleSection("complaints")}
-            className="flex items-center text-lg font-semibold text-gray-800 hover:text-red-600"
-          >
-            {expandedSections.complaints ? (
-              <ChevronDown className="w-4 h-4 mr-2" />
-            ) : (
-              <ChevronRight className="w-4 h-4 mr-2" />
-            )}
-            Complaint Redressal
-          </button>
+  <button
+    onClick={() => toggleSection("complaints")}
+    className="flex items-center text-lg font-semibold text-gray-800 hover:text-red-600"
+  >
+    {expandedSections.complaints ? (
+      <ChevronDown className="w-4 h-4 mr-2" />
+    ) : (
+      <ChevronRight className="w-4 h-4 mr-2" />
+    )}
+    Complaints redressal and scores to be mentioned on website
+  </button>
 
-          {expandedSections.complaints && (
-            <div className="ml-6 mt-4 text-gray-700 leading-relaxed">
-              <p className="mb-4">
-                Client's queries / complaints may arise due to lack of understanding or a deficiency of service experienced by clients. Deficiency of service may include lack of explanation, clarifications, understanding which escalates into shortfalls in the expected delivery standards, either due to inadequacy of facilities available or through the attitude of staff towards client.
-              </p>
+  {expandedSections.complaints && (
+    <div className="ml-6 mt-4 text-gray-700 leading-relaxed">
+      <p className="mb-4">
+        Client's queries / complaints may arise due to lack of understanding or a deficiency of service experienced by clients. Deficiency of service may include lack of explanation, clarifications, understanding which escalates into shortfalls in the expected delivery standards, either due to inadequacy of facilities available or through the attitude of staff towards client.
+      </p>
 
-              <p className="mb-4">
-                Clients can seek clarification to their query and are further entitled to make a complaint in writing, orally or telephonically. An email may be sent to the Client Servicing Team on <strong><u>connect@bastionresearch.in</u></strong>. Alternatively, the Investor may call on <strong>8780507966</strong>.
-              </p>
+      <ol className="list-decimal ml-6 mb-4 space-y-4">
+        <li>
+          In case of any complain or query:
+          <br /><br />
+          Please contact our compliance officer Mr. Navid Virani, email id – <span className="text-red-600">navid@bastionresearch.in</span> and phone no <span className="font-semibold">+91 7874205366</span>.
+          <br /><br />
+          You may also approach Partner/RA - Mr. Parth L Agarwal, Email ID: <span className="text-red-600">parth@bastionresearch.in</span> and Phone No.- <span className="font-semibold">+91 8866358747</span>.
+        </li>
 
-              <ol className="list-decimal ml-6 mb-4 space-y-4">
-                <li>
-                  A letter may also be written with their query/complaint and posted at the below mentioned address:
-                  <br />
-                  <strong className="text-base block ml-4 mt-2">
-                    UG-64, VIP Plaza<br />
-                    VIP Road, Surat<br />
-                    395007, Gujrat, India
-                  </strong>
-                </li>
+        <li>
+          Clients can write to the research analyst at <span className="text-red-600">connect@bastionresearch.in</span> if the Investor does not receive a response within 10 business days of writing to the Client Servicing Team. The client can expect a reply within 10 business days of approaching research analyst.
+        </li>
 
-                <li>
-                  Clients can write to the research analyst at <strong>connect@bastionresearch.in</strong> if the Investor does not receive a response within 10 business days of writing to the Client Servicing Team. The client can expect a reply within 10 business days of approaching research analyst.
-                </li>
-
-                <li>
-                  In case you are not satisfied with our response you can lodge your grievance with SEBI at <a href="http://scores.sebi.gov.in" className="text-red-600 hover:underline">http://scores.sebi.gov.in</a> or you may also write to any of the offices of SEBI. SCORES may be accessed thorough SCORES mobile application as well, same can be downloaded from this <a href="https://play.google.com/store/apps/details?id=com.sebi.invapp&hl=en&gl=US" className="text-red-600 hover:underline">link.</a>
-                </li>
-              </ol>
-
-              <p>
-                ODR Portal could be accessed, if unsatisfied with the response. Your attention is drawn to the SEBI circular no. SEBI/HO/OIAE/OIAE_IAD-1/P/CIR/2023/131 dated July 31, 2023, on "Online Resolution of Disputes in the Indian Securities Market". A common Online Dispute Resolution Portal ("ODR Portal") which harnesses conciliation and online arbitration for resolution of disputes arising in the Indian Securities Market has been established. ODR Portal can be accessed via the following <a href="https://smartodr.in/" className="text-red-600 hover:underline">link.</a>
-              </p>
-            </div>
-          )}
-        </div>
+        <li>
+          In case you are not satisfied with our response you can lodge your grievance with SEBI at <a href="https://scores.sebi.gov.in/" className="text-red-600 hover:underline">https://scores.sebi.gov.in/</a> or you may also write to any of the offices of SEBI. SCORES may be accessed thorough SCORES mobile application as well, same can be downloaded from below link:
+          <br />
+          <a href="https://play.google.com/store/apps/details?id=com.sebi&pcampaignid=web" className="text-red-600 hover:underline">https://play.google.com/store/apps/details?id=com.sebi&pcampaignid=web</a>
+          <br /><br />
+          ODR Portal could be accessed, if unsatisfied with the response. Your attention is drawn to the SEBI circular no. SEBI/HO/OIAE/OIAE_JAD-1/P/CIR/2023/131 dated July 31, 2023, on "Online Resolution of Disputes in the Indian Securities Market". A common Online Dispute Resolution Portal ("ODR Portal") which harnesses conciliation and online arbitration for resolution of disputes arising in the Indian Securities Market has been established. ODR Portal can be accessed via the following link - <a href="https://smartodr.in/" className="text-red-600 hover:underline">https://smartodr.in/</a>
+        </li>
+      </ol>
+    </div>
+  )}
+</div>
 
         {/* Investor Charter Section */}
         <div className="mb-6">
