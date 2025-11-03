@@ -260,7 +260,7 @@ export default function Complaince() {
         </div>
 
         {/* Grievances Section */}
-        <div className="mb-8">
+        {/* <div className="mb-8">
           <button
             onClick={() => toggleSection("grievances")}
             className="flex items-center text-lg font-semibold text-gray-800 hover:text-red-600 mb-4"
@@ -331,7 +331,7 @@ export default function Complaince() {
               </div>
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* Annexure B */}
 <div className="mb-8">
