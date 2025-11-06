@@ -15,27 +15,27 @@ import favicon from "../../../../server/public/favicon.webp";
 const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
 
-  const [currentStep, setCurrentStep] = useState(5);
+  const [currentStep, setCurrentStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<OnboardingFormData>({
-    email: "nishumurmu017@gmail.com",
-    phone: "6355965638",
+    email: "",
+    phone: "",
     password: "",
     confirmPassword: "",
     otp: ["", "", "", "", "", ""],
-    firstName: "Nishu",
-    lastName: "Murmu",
-    dateOfBirth: "2001-09-11",
-    address1: "605, Luxuria Business Hub",
-    address2: "Vesu,Surat",
-    state: "Gujarat",
-    city: "Surat",
-    pinCode: "395007",
-    company: "EnactOn",
-    panCard: "FMQPM9044D",
-    panVerification: { valid: true }, // populated since pan_card_number is present
+    firstName: "",
+    lastName: "",
+    dateOfBirth: "",
+    address1: "",
+    address2: "",
+    state: "",
+    city: "",
+    pinCode: "",
+    company: "",
+    panCard: "",
+    panVerification: null,
     agreeToTerms: false,
-    selectedPlan: "freemium", // inferred from plan_code
+    selectedPlan: "",
     agreementSignatureUrl: "",
     agreementSignaturePath: "",
     agreementSignedAt: "",
