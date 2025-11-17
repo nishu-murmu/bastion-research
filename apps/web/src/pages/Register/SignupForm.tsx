@@ -83,12 +83,10 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
       setCurrentStep(6);
     }
 
- if (process.env.NODE_ENV === "development") {
-    console.log("🧪 Dev mode: forcing onboarding step to 5");
-    setCurrentStep(5);
-  }
-}, [user]);
-
+    if (process.env.NODE_ENV === "development") {
+      setCurrentStep(5);
+    }
+  }, [user]);
 
   const updateFormData = (field: string, value: any) => {
     setFormData((prev) => {
@@ -288,9 +286,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-start sm:items-center  justify-center p-2 sm:p-4 z-50 top-0"
-    >
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start sm:items-center  justify-center p-2 sm:p-4 z-50 top-0">
       <div className="bg-white rounded-xl shadow-2xl sm:mt-[0px] mt-[10vh] w-full max-w-5xl max-h-[84dvh] overflow-auto flex flex-col sm:flex-row">
         {/* Sidebar for larger screens */}
         <div className="hidden sm:block w-80 bg-gray-50 p-6 border-r overflow-y-auto">
@@ -299,7 +295,9 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
               <img src={favicon} alt="BASTION" className="w-8 h-8 mr-3" />
               <span className="font-bold text-lg">BASTION</span>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">TripleEdge</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">
+              TripleEdge
+            </h1>
           </div>
 
           <div className="space-y-2">
@@ -310,8 +308,8 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
                   currentStep === step.id
                     ? "bg-red-100 text-red-700 border-l-4 border-red-500"
                     : currentStep > step.id
-                    ? "bg-green-50 text-green-700"
-                    : "text-gray-500"
+                      ? "bg-green-50 text-green-700"
+                      : "text-gray-500"
                 }`}
               >
                 <div
@@ -319,8 +317,8 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
                     currentStep === step.id
                       ? "bg-red-500 text-white"
                       : currentStep > step.id
-                      ? "bg-green-500 text-white"
-                      : "bg-gray-300 text-gray-600"
+                        ? "bg-green-500 text-white"
+                        : "bg-gray-300 text-gray-600"
                   }`}
                 >
                   {currentStep > step.id ? <Check size={12} /> : step.id}
@@ -357,8 +355,8 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
                     currentStep === step.id
                       ? "bg-red-100 text-red-700"
                       : currentStep > step.id
-                      ? "bg-green-50 text-green-700"
-                      : "text-gray-500"
+                        ? "bg-green-50 text-green-700"
+                        : "text-gray-500"
                   }`}
                 >
                   <div
@@ -366,8 +364,8 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
                       currentStep === step.id
                         ? "bg-red-500 text-white"
                         : currentStep > step.id
-                        ? "bg-green-500 text-white"
-                        : "bg-gray-300 text-gray-600"
+                          ? "bg-green-500 text-white"
+                          : "bg-gray-300 text-gray-600"
                     }`}
                   >
                     {currentStep > step.id ? <Check size={10} /> : step.id}
