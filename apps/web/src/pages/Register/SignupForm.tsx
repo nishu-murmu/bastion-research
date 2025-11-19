@@ -286,23 +286,9 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-<<<<<<< HEAD
-    <div
-      className="fixed
-    inset-0
-    bg-black bg-opacity-50
-    flex items-center justify-center
-    p-2 sm:p-4
-    z-50
-    sm:top-16"
-    >
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-fit max-h-screen overflow-hidden flex flex-col sm:flex-row">
-        {/* Vertical Sidebar for larger screens */}
-=======
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start sm:items-center  justify-center p-2 sm:p-4 z-50 top-0">
       <div className="bg-white rounded-xl shadow-2xl sm:mt-[0px] mt-[10vh] w-full max-w-5xl max-h-[84dvh] overflow-auto flex flex-col sm:flex-row">
         {/* Sidebar for larger screens */}
->>>>>>> 45acb7f14cceadcf79814e4f77cd80de4069984c
         <div className="hidden sm:block w-80 bg-gray-50 p-6 border-r overflow-y-auto">
           <div className="mb-8">
             <div className="flex items-center mb-2">
