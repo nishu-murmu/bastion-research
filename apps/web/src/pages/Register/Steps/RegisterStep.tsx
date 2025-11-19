@@ -91,7 +91,7 @@ const RegisterStep: React.FC<RegisterStepProps> = ({
               type="tel"
               value={formData.phone}
               onChange={(e) => updateFormData("phone", e.target.value)}
-              className="flex-1 px-3 py-2 border-t border-r border-b border-gray-300 rounded-r-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full flex-1 px-3 py-2 border-t border-r border-b border-gray-300 rounded-r-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
               placeholder="Enter phone number"
             />
           </div>

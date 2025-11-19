@@ -271,7 +271,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
     flex items-center justify-center
     p-2 sm:p-4
     z-50
-    sm:top-[8rem]"
+    sm:top-16"
     >
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-fit max-h-screen overflow-hidden flex flex-col sm:flex-row">
         {/* Vertical Sidebar for larger screens */}
