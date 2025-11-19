@@ -17,9 +17,7 @@ const useSheetStocks = (onlySheet: boolean = false) => {
       setLoading(true);
       setError(null);
       try {
-        // Fetch sheet-backed recommendations from backend
         const sheetData = await getSheetRecommendations();
-        console.log(sheetData, 'list shse')
 
         const transformedSheetStocks: StockData[] = sheetData.map(
           (sheetRow, idx) => ({
@@ -42,11 +40,8 @@ const useSheetStocks = (onlySheet: boolean = false) => {
             target1: Math.round(sheetRow.targetPrice || 0),
             sector: (sheetRow as any).sector || "",
             band: (sheetRow.action?.toUpperCase() as any) || "BUY",
-<<<<<<< HEAD
-=======
             lastUpdated: (sheetRow.dateRecommended || "").toString(),
             percentReturn: Math.round((sheetRow.percentReturn || 0) * 100),
->>>>>>> 4120fd5e4cc26cd5570353d271d0833c3f40c928
           })
         );
         setSheetStocks(transformedSheetStocks);

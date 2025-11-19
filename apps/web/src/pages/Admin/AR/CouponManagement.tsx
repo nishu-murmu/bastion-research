@@ -132,7 +132,6 @@ const CouponsManagement = () => {
       active: Boolean(form.active),
       max_uses: form.max_uses == null || (form.max_uses as any) === "" ? null : Number(form.max_uses),
     } as any;
-    console.log(editing, payload)
     if (editing?.coupon_id) {
       await axiosInstance.put(`${endpoints.coupons.base}/${editing.coupon_id}`, payload);
     } else {
