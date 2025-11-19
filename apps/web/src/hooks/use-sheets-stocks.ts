@@ -42,9 +42,11 @@ const useSheetStocks = (onlySheet: boolean = false) => {
             target1: Math.round(sheetRow.targetPrice || 0),
             sector: (sheetRow as any).sector || "",
             band: (sheetRow.action?.toUpperCase() as any) || "BUY",
-            lastUpdated: sheetRow.dateRecommended || null,
-            percentReturn:
-              Math.round((sheetRow.percentReturn || 0) * 100).toString() || 0,
+<<<<<<< HEAD
+=======
+            lastUpdated: (sheetRow.dateRecommended || "").toString(),
+            percentReturn: Math.round((sheetRow.percentReturn || 0) * 100),
+>>>>>>> 4120fd5e4cc26cd5570353d271d0833c3f40c928
           })
         );
         setSheetStocks(transformedSheetStocks);
