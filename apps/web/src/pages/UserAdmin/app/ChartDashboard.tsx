@@ -273,8 +273,6 @@ const ChartDashboard = () => {
     );
   }
 
-  console.log(loading, "loading");
-
   return (
     <div className="mb-8 rounded-xl bg-gradient-to-br from-[#13013d] to-[#010313] p-4 sm:p-6 lg:p-8 responsive-container">
       <div className="text-center mb-6 lg:mb-8">
