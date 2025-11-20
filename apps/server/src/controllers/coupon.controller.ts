@@ -11,7 +11,6 @@ export const getCoupons = async (_: any, res: Response) => {
 
 export const createCoupon = async (req: Request, res: Response) => {
   const { coupon_code, discount_type, discount_value, expiry_date, max_uses, active } = req.body;
-  console.log(req.body)
   const { data, error } = await supabase
     .from("coupons")
     .insert([{ coupon_code, discount_type, discount_value, expiry_date, active, max_uses }])

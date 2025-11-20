@@ -26,7 +26,6 @@ const useSheetStocks = (
       store.setError(null);
 
       try {
-        // Fetch sheet-backed recommendations from backend
         const sheetData = await getSheetRecommendations();
         const transformedSheetStocks: StockData[] = sheetData.map(
           (sheetRow, idx) => ({
