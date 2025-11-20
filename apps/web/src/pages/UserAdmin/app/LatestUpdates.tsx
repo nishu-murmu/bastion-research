@@ -17,6 +17,14 @@ const parseDate = (value: string): number => {
   return isNaN(d.getTime()) ? 0 : d.getTime();
 };
 
+const safeFormatDate = (dateInput: string): string => {
+  const dateObj = new Date(dateInput);
+  if (!dateInput || isNaN(dateObj.getTime())) {
+    return "(Invalid Date)";
+  }
+  return format(dateObj, "d MMM, yyyy");
+};
+
 const LatestUpdates: React.FC = () => {
   const { stocks, loading, error } = useSheetStocks();
 
@@ -35,7 +43,7 @@ const LatestUpdates: React.FC = () => {
         .map((u) => ({
           title: u.title,
           description: u.description,
-          date: format(new Date(u.date), "d MMM, yyyy"),
+          date: safeFormatDate(u.date),
           company,
           type: "Quarterly" as const,
           pdf_url: u.pdf_url,
@@ -48,7 +56,7 @@ const LatestUpdates: React.FC = () => {
         .map((u) => ({
           title: u.title,
           description: u.description,
-          date: format(new Date(u.date), "d MMM, yyyy"),
+          date: safeFormatDate(u.date),
           company,
           type: "Announcement" as const,
           pdf_url: u.pdf_url,

@@ -18,7 +18,6 @@ const useSheetStocks = (onlySheet: boolean = false) => {
       setError(null);
       try {
         const sheetData = await getSheetRecommendations();
-        console.log(sheetData, "list shse");
 
         const transformedSheetStocks: StockData[] = sheetData.map(
           (sheetRow, idx) => ({
