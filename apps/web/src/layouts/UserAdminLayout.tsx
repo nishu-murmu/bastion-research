@@ -1,6 +1,5 @@
 import UserSidebar from "@/components/UserSidebar";
 import { Outlet } from "react-router-dom";
-import BetaBanner from "@/components/BetaBanner";
 
 const UserAdminLayout = () => {
   return (
@@ -8,7 +7,7 @@ const UserAdminLayout = () => {
       <UserSidebar />
       <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
         {/* <BetaBanner /> */}
-        <div className="lg:hidden h-12"></div> {/* Spacer for mobile header */}
+        <div className="lg:hidden h-12"></div>
         <Outlet />
       </main>
     </div>

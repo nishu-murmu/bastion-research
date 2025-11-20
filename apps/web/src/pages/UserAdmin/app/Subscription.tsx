@@ -26,11 +26,8 @@ import { useSubscription } from "@/hooks/use-subscription";
 
 const Subscription = () => {
   const { user, refetchUser, isAuthenticated, isLoading } = useAuth();
-  const {
-    data: subscription,
-    isLoading: isSubscriptionLoading,
-    refetch: refetchSubscription,
-  } = useSubscription();
+  const { data: subscription, isLoading: isSubscriptionLoading } =
+    useSubscription();
   const loader = useLoader();
   const navigate = useNavigate();
 
@@ -286,7 +283,7 @@ const Subscription = () => {
   const onFreePlan = user?.membership_plans?.plan_code === "freemium";
 
   if (!isAuthenticated) {
-    return null; // Will redirect in useEffect
+    return null;
   }
 
   return (

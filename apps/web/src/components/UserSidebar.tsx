@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { AppRoutes } from "@/routes/app-routes";
 import { useSubscription } from "@/hooks/use-subscription";
+import { AppRoutes } from "@/routes/app-routes";
 import { PersonIcon } from "@radix-ui/react-icons";
 import {
   BarChart3,
@@ -20,7 +20,6 @@ import {
   Shield,
   TrendingUp,
   User,
-  FileText,
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -86,7 +85,7 @@ const navItems = [
   },
 ];
 
-export default function Sidebar() {
+export default function UserSidebar() {
   const { user, isAdmin, logout } = useAuth();
   const { data: subscription } = useSubscription();
   const [showPricing, setShowPricing] = useState(false);
