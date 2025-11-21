@@ -20,6 +20,7 @@ interface Webinar {
   video_url?: string;
   contents?: string;
   created_at: string;
+  is_premium?: boolean;
 }
 
 interface ScratchPadNewsletter {

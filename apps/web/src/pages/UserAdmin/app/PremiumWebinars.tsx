@@ -54,6 +54,8 @@ export default function PremiumWebinarsPage() {
     [currentPage, filteredWebinars]
   );
 
+  console.log({ currentWebinars });
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -73,10 +75,8 @@ export default function PremiumWebinarsPage() {
 
   // Access guard: only allow users with premium subscription
   const { user, isLoading, isAdmin } = useAuth();
-  const {
-    data: subscription,
-    isLoading: isSubscriptionLoading,
-  } = useSubscription();
+  const { data: subscription, isLoading: isSubscriptionLoading } =
+    useSubscription();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -197,7 +197,7 @@ export default function PremiumWebinarsPage() {
                             className="text-gray-600 group-hover/play:text-[#C00000] transition-colors"
                           />
                           <span className="transition-colors group-hover/play:text-[#C00000]">
-                            {webinar.views || "Play Now"}
+                            {"Play Now"}
                           </span>
                         </div>
 

@@ -434,8 +434,11 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
             variant="outline"
             onClick={() => {
               let editorContent = editorStore.editor.getHTML();
+              console.log(editorContent, "content list");
               // Replace all empty <p> tags (with any whitespace inside) with <br/>
-              editorContent = editorContent.replace(/<p>\s*<\/p>/g, "<br/>");
+              editorContent = editorContent.replace(/<p[^>]*><\/p>/g, "<br>");
+              console.log(editorContent, "content list after");
+
               setFormData((prev) => ({
                 ...prev,
                 html_content: editorContent,
@@ -519,8 +522,11 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
                       dangerouslySetInnerHTML={{
                         __html:
                           type === "scratch-pad"
-                            ? formData.content
-                            : formData.contents,
+                            ? formData.content.replace(/<p[^>]*><\/p>/g, "<br>")
+                            : formData.contents.replace(
+                                /<p[^>]*><\/p>/g,
+                                "<br>"
+                              ),
                       }}
                     />
                   </div>

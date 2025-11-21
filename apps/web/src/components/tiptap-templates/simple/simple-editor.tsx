@@ -65,18 +65,6 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
 import content from "@/components/tiptap-templates/simple/data/content.json";
 import { useEditorStore } from "@/stores/editor-store";
 
-const CustomParagraph = Paragraph.extend({
-  renderHTML({ node, HTMLAttributes }) {
-    if (node.content.size === 0) {
-      // "Empty" paragraph: show <p><br></p>
-      return ["p", HTMLAttributes, ["br"]];
-    }
-    // Non-empty: preserve content and marks
-    // 0 is replaced with children (text, marks, inline nodes, etc)
-    return ["p", HTMLAttributes, 0];
-  },
-});
-
 const MainToolbarContent = ({
   onHighlighterClick,
   onLinkClick,
@@ -214,7 +202,7 @@ export function SimpleEditor({
         horizontalRule: false,
         paragraph: false,
       }),
-      CustomParagraph,
+      Paragraph,
       Link.configure({
         openOnClick: false,
         autolink: true,
@@ -297,6 +285,7 @@ export function SimpleEditor({
   const editorStore = useEditorStore();
 
   React.useEffect(() => {
+    // console.log(editor.getJSON(), editor.getHTML());
     editorStore.setEditor(editor);
   }, [editor]);
 

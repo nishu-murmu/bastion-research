@@ -201,7 +201,14 @@ const SingleCareer = () => {
                         className="flex items-start gap-3 text-gray-700"
                       >
                         <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <span dangerouslySetInnerHTML={{ __html: responsibility}}></span>
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: responsibility.replace(
+                              /<p[^>]*><\/p>/g,
+                              "<br>"
+                            ),
+                          }}
+                        ></span>
                       </li>
                     )
                   )}
@@ -306,7 +313,9 @@ const SingleCareer = () => {
               </div>
               <div>
                 <span className="font-medium text-gray-900">Team:</span>
-                <span className="ml-2 text-gray-700">{careerData.team || "—"}</span>
+                <span className="ml-2 text-gray-700">
+                  {careerData.team || "—"}
+                </span>
               </div>
 
               <div className="border-t border-gray-200 pt-4 md:col-span-2">

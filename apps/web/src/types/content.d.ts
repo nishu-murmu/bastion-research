@@ -14,13 +14,6 @@ interface Newsletter {
   source?: "mailchimp" | "cms";
 }
 
-interface Webinar {
-  id: string;
-  title: string;
-  video_url?: string;
-  created_at: string;
-}
-
 interface Podcast {
   id: string;
   title: string;
