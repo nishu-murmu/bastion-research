@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import ContentViewer from "@/components/public/ContentViewer";
-import { mailchimpNewsletterApi } from "@/api/mailchimp-api";
+import mailchimpNewsletterApi from "@/api/mailchimp-api";
 
 const NewsletterView: React.FC = () => {
   const navigate = useNavigate();

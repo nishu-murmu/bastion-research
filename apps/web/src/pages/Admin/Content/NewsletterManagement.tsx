@@ -1,4 +1,3 @@
-import { mailchimpNewsletterApi } from "@/api/mailchimp-api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import mailchimpApi from "@/api/mailchimp-api";
+import mailchimpNewsletterApi from "@/api/mailchimp-api";
 
 const MAILCHIMP_DASHBOARD_URL = import.meta.env.VITE_MAILCHIMP_MANAGE_URL as
   | string

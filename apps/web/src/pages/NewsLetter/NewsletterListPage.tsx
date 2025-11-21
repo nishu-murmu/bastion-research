@@ -9,9 +9,9 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BackgroundShapes from "../../components/generic/framer-motion.tsx";
-import { mailchimpNewsletterApi } from "@/api/mailchimp-api.ts";
 import { toast } from "sonner";
 import { Newsletter } from "@repo/types";
+import mailchimpNewsletterApi from "@/api/mailchimp-api.ts";
 
 const COLORS = {
   red: "#C00000",

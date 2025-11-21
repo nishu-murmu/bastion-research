@@ -13,7 +13,8 @@ import { useState, useEffect } from "react";
 import favicon from "../../../../server/public/favicon.webp";
 import { AppRoutes } from "@/routes/app-routes";
 import ActionableAccountableBastion from "@/components/ActionableAccountableBastion";
-import { sendEmailOtp, signIn } from "@/api/auth-api";
+import { signIn } from "@/api/auth-api";
+import { sendEmailOtp } from "@/api/onboarding-apis";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -89,8 +90,6 @@ const Login = () => {
     }
     sendOtpMutation.mutate(email);
   };
-
-
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
