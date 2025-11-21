@@ -14,6 +14,7 @@ import Link from "@tiptap/extension-link";
 import { Subscript } from "@tiptap/extension-subscript";
 import { Superscript } from "@tiptap/extension-superscript";
 import { Selection } from "@tiptap/extensions";
+import Paragraph from "@tiptap/extension-paragraph";
 
 // --- UI Primitives ---
 import { Button } from "@/components/tiptap-ui-primitive/button";
@@ -63,6 +64,16 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
 
 import content from "@/components/tiptap-templates/simple/data/content.json";
 import { useEditorStore } from "@/stores/editor-store";
+
+const CustomParagraph = Paragraph.extend({
+  renderHTML({ node, HTMLAttributes }) {
+    if (node.content.size === 0) {
+      return ["p", HTMLAttributes, ["br"]];
+    }
+
+    return ["p", HTMLAttributes, 0];
+  },
+});
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -199,11 +210,13 @@ export function SimpleEditor({
     extensions: [
       StarterKit.configure({
         horizontalRule: false,
+        paragraph: false,
         // link: {
         //   openOnClick: false,
         //   enableClickSelection: true,
         // },
       }),
+      CustomParagraph,
       Link.configure({
         openOnClick: false,
         autolink: true,
