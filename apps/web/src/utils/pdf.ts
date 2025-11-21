@@ -72,7 +72,7 @@ async function addAddressToPdf(
     color: rgb(0, 0, 0),
   });
 
-  const addressYTop = startY - rowGap - 60;
+  const addressYTop = startY - rowGap - 24;
   const afterAddressY = drawWrappedText(
     address,
     valueX,
@@ -82,7 +82,7 @@ async function addAddressToPdf(
     12
   );
 
-  const emailY = (afterAddressY ?? addressYTop) - 25;
+  const emailY = (afterAddressY ?? addressYTop) - 13;
   firstPage.drawText(email, {
     x: valueX,
     y: emailY,
@@ -91,7 +91,7 @@ async function addAddressToPdf(
     color: rgb(0, 0, 0),
   });
 
-  const mobileY = emailY - rowGap + 7;
+  const mobileY = emailY - rowGap + 6;
   firstPage.drawText(mobile, {
     x: valueX,
     y: mobileY,
