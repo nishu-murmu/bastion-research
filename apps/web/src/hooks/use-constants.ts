@@ -11,6 +11,7 @@ import {
   User,
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
+import { SiSubstack } from "react-icons/si";
 
 const useConstants = () => {
   // Brand Colors
@@ -77,6 +78,12 @@ const useConstants = () => {
       name: "Join WhatsApp Group",
       icon: FaWhatsapp,
       path: "https://chat.whatsapp.com/BtcHdUM5CT3953nLHajCQR?mode=wwt",
+    },
+    {
+      key: "subscribe_substack",
+      name: "Subscribe to Substack",
+      icon: SiSubstack,
+      path: "https://substack.com/@bastionresearch?utm_campaign=profile&utm_medium=profile-page",
     },
     {
       key: "admin_panel",
