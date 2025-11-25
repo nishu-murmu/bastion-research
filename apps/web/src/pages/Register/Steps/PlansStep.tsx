@@ -17,7 +17,7 @@ const PlansStep: React.FC<PlansStepProps> = ({
     const selectedPlanDetails = plans.find(
       (p) => p.code === formData.selectedPlan
     );
-    const isFree = selectedPlanDetails?.plan_code === "freemium";
+    const isFree = String(selectedPlanDetails?.amount) === "0" || selectedPlanDetails?.plan_code === "freemium";
     if (isFree) {
       const response = await createFreeAccount({
         ...formData,
