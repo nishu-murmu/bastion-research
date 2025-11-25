@@ -1,5 +1,5 @@
-import { createCashfreeOrder, updateUser } from "@/api/onboarding-apis";
-import { useAuth } from "@/contexts/AuthContext";
+import { createFreeAccount } from "@/api/onboarding-apis";
+import { formatINR } from "@/utils";
 import { ArrowLeft, Check, Sparkles } from "lucide-react";
 import { useEffect } from "react";
 
@@ -12,34 +12,23 @@ const PlansStep: React.FC<PlansStepProps> = ({
   isLoading,
   error,
 }) => {
-  const { user } = useAuth();
   const plansStepNextHandler = async () => {
     const selectedPlanDetails = plans.find(
       (p) => p.code === formData.selectedPlan
     );
     const isFree = selectedPlanDetails?.plan_code === "freemium";
     if (isFree) {
-      const userId = user?.id || formData.email;
-      const planCode = selectedPlanDetails?.code || "1";
-      await updateUser(userId, {
-        status: "active",
-        plan_id: planCode,
+      const response = await createFreeAccount({
+        ...formData,
+        status: "free",
+        role: "free_subscriber",
+        plan_id: 1,
       });
-
-      await createCashfreeOrder({
-        plan: formData.selectedPlan,
-        customer_id: userId,
-        customer_email: formData.email,
-        customer_phone: formData.phone,
-        source: "register",
-        is_free: true,
-        discount_amount: 0,
-      });
-
-      // Redirect to login/dashboard
+      console.log(response, "response");
       window.location.href = location.origin + "/login";
       return;
     }
+    updateFormData("role", "core_subscriber");
     onNext();
   };
 
@@ -135,7 +124,7 @@ const PlansStep: React.FC<PlansStepProps> = ({
                       <div
                         className={`text-xl font-bold ${isFree ? "text-gray-700" : "text-red-600"}`}
                       >
-                        {isFree ? "₹0" : `₹${plan.amount}`}
+                        {formatINR(isFree ? 0 : Number(plan.amount || 0))}
                       </div>
                       {!isFree && (
                         <div className="text-[11px] text-gray-400">

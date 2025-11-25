@@ -1,7 +1,7 @@
 import {
-  createCashfreeOrder,
-  updateUser,
   validateCoupon as apiValidateCoupon,
+  createCashfreeOrder,
+  zeroAmountPayment,
 } from "@/api/onboarding-apis";
 import { useAuth } from "@/contexts/AuthContext";
 import { Config } from "@/utils/config";
@@ -98,60 +98,48 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
     setError(null);
 
     if (!formData?.panVerification?.valid) {
-      setError("Please complete PAN verification before proceeding to payment.");
+      setError(
+        "Please complete PAN verification before proceeding to payment."
+      );
       return;
     }
 
     setIsLoading(true);
     try {
       const finalAmount = getFinalAmount();
-      const isFreeOrZero = finalAmount === 0 || selectedPlanDetails?.code === "1";
-
       if (isFreeOrZero) {
-        const userId = user?.id || formData.email;
-        const planCode = selectedPlanDetails?.code || "1";
-
-        await updateUser(userId, {
-          status: "active",
-          plan_id: planCode,
+        console.log({ selectedPlanDetails });
+        const response = await zeroAmountPayment({
+          plan_id: Number(selectedPlanDetails?.code),
+          payer_email: formData.email,
+          coupon_code: couponCode,
+          user_id: user?.id,
+          role: formData?.role,
         });
-
-        await createCashfreeOrder({
+        console.log(response, "zero payment log");
+      } else {
+        const orderResponse = await createCashfreeOrder({
           plan: formData.selectedPlan,
-          customer_id: userId,
+          customer_id: user?.id || formData.firstName + "_" + formData.lastName,
           customer_email: formData.email,
           customer_phone: formData.phone,
           source: "register",
-          is_free: true,
           coupon_code: appliedCoupon?.coupon_code || null,
-          discount_amount: 0,
+          discount_amount: finalAmount,
+          metadata: {
+            panReference: formData.panVerification?.referenceId || null,
+            panStatus: formData.panVerification?.status || null,
+          },
         });
 
-        window.location.href = location.origin + "/login";
-        return;
+        const { payment_session_id } = (orderResponse as any).order;
+
+        const cashfree = await load({ mode: Config.cashfree_environment });
+        await cashfree.checkout({
+          paymentSessionId: payment_session_id,
+          redirectTarget: "_self",
+        });
       }
-
-      const orderResponse = await createCashfreeOrder({
-        plan: formData.selectedPlan,
-        customer_id: user?.id || formData.firstName + "_" + formData.lastName,
-        customer_email: formData.email,
-        customer_phone: formData.phone,
-        source: "register",
-        coupon_code: appliedCoupon?.coupon_code || null,
-        discount_amount: finalAmount,
-        metadata: {
-          panReference: formData.panVerification?.referenceId || null,
-          panStatus: formData.panVerification?.status || null,
-        },
-      });
-
-      const { payment_session_id } = (orderResponse as any).order;
-
-      const cashfree = await load({ mode: Config.cashfree_environment });
-      await cashfree.checkout({
-        paymentSessionId: payment_session_id,
-        redirectTarget: "_self",
-      });
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || "An unexpected error occurred.";

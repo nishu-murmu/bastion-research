@@ -150,7 +150,10 @@ const ManageSubscriptions = () => {
         : "",
       amount:
         typeof r.amount === "number"
-          ? `${r.amount} ${r.currency || ""}`.trim()
+          ? new Intl.NumberFormat("en-IN", {
+              maximumFractionDigits: 2,
+            }).format(r.amount) +
+            (r.currency ? ` ${r.currency}` : "")
           : r.amount,
       paymentType: r.payment_type || "",
       transactionId: r.transaction_id || "",
@@ -172,7 +175,10 @@ const ManageSubscriptions = () => {
           : "",
       amount:
         typeof r.amount === "number"
-          ? `${r.amount} ${r.currency || ""}`.trim()
+          ? new Intl.NumberFormat("en-IN", {
+              maximumFractionDigits: 2,
+            }).format(r.amount) +
+            (r.currency ? ` ${r.currency}` : "")
           : r.amount,
       paymentType: r.payment_type || r.payment_gateway || "",
       status: r.transaction_status || "",

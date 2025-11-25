@@ -41,13 +41,13 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
   });
 
   const stepsValues = [
-    { id: 1, name: "Register", icon: "👤" },
-    { id: 2, name: "Verify", icon: "✓" },
-    { id: 3, name: "Onboard", icon: "📋" },
-    { id: 4, name: "KYC", icon: "🆔" },
-    { id: 5, name: "Agreement", icon: "📄" },
-    { id: 6, name: "Plans", icon: "📋" },
-    { id: 7, name: "Payment", icon: "💳" },
+    { id: 1, name: "Register", icon: "??" },
+    { id: 2, name: "Verify", icon: "V" },
+    { id: 3, name: "Onboard", icon: "??" },
+    { id: 4, name: "Plans", icon: "??" },
+    { id: 5, name: "KYC", icon: "??" },
+    { id: 6, name: "Agreement", icon: "??" },
+    { id: 7, name: "Payment", icon: "??" },
   ];
 
   const [isLoading, setIsLoading] = useState(false);
@@ -57,7 +57,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
   const maxStep = stepsValues.length;
 
   useEffect(() => {
-    const shouldResumeOnboarding = user?.status === "onboarding";
+    const shouldResumeOnboarding = user?.status === "onboarded";
     const agreementSigned = user?.status === "agreement_signed";
     if (shouldResumeOnboarding) {
       setFormData((prev) => ({
@@ -76,14 +76,12 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
         panCard: user?.pan_card_number || "",
         panVerification: user?.pan_card_number ? { valid: true } : {},
       }));
-      setCurrentStep(5);
+      // KYC is already completed in this state; resume from Agreement step.
+      setCurrentStep(6);
     }
     if (agreementSigned) {
-      setCurrentStep(6);
-    }
-
-    if (process.env.NODE_ENV === "development") {
-      setCurrentStep(6);
+      // Agreement is signed, so resume from plan selection.
+      setCurrentStep(7);
     }
   }, [user]);
 
@@ -125,7 +123,8 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     const loadPlans = async () => {
-      if (currentStep >= 5) {
+      // Plans are needed from the Plans step onwards.
+      if (currentStep >= 4) {
         setIsLoading(true);
         try {
           const apiPlans: Plan[] = await fetchPlans();
@@ -144,7 +143,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
     loadPlans();
   }, [currentStep]);
 
-  // ✅ Auto-scroll mobile step bar when step changes
+  // ? Auto-scroll mobile step bar when step changes
   useEffect(() => {
     const activeStep = document.getElementById(`step-${currentStep}`);
     const scrollContainer = document.getElementById("mobile-steps");
@@ -222,7 +221,10 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
         );
       case 4:
         return (
-          <KYCStep
+          <PlansStep
+            plans={plans}
+            error={error}
+            isLoading={isLoading}
             formData={formData}
             onBack={prevStep}
             onNext={nextStep}
@@ -231,8 +233,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
         );
       case 5:
         return (
-          <AgreementStep
-            agreeToTerms={formData.agreeToTerms}
+          <KYCStep
             formData={formData}
             onBack={prevStep}
             onNext={nextStep}
@@ -241,10 +242,8 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
         );
       case 6:
         return (
-          <PlansStep
-            plans={plans}
-            error={error}
-            isLoading={isLoading}
+          <AgreementStep
+            agreeToTerms={formData.agreeToTerms}
             formData={formData}
             onBack={prevStep}
             onNext={nextStep}
@@ -344,7 +343,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ isOpen, onClose }) => {
               {/* <h1 className="text-xl font-bold text-gray-900">Bastion Core</h1> */}
             </div>
 
-            {/* 🔥 Horizontal Scroll Steps */}
+            {/* ?? Horizontal Scroll Steps */}
             <div
               id="mobile-steps"
               className="flex overflow-x-auto no-scrollbar space-x-2 py-2"

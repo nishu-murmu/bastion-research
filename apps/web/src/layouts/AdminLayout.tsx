@@ -1,6 +1,5 @@
-import AdminSidebar from "@/components/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
-import BetaBanner from "@/components/BetaBanner";
+import AdminSidebar from "@/components/AdminSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppRoutes } from "@/routes/app-routes";
 import { Navigate, Outlet } from "react-router-dom";
@@ -33,7 +32,6 @@ const AdminLayout = () => {
       <AdminSidebar />
       <div className="flex flex-col flex-1 min-h-0">
         <AdminHeader />
-        {/* <BetaBanner /> */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <Outlet />
         </main>

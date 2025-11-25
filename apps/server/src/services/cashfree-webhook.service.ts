@@ -68,17 +68,16 @@ export const handlePaymentSuccess = async (payload: any) => {
     );
   }
 
+  console.log({ currentPlan }, "cashfree webhook");
+
   const updateUserPromise = supabase
     .from("users")
     .update({
       status: "active",
-      plan_code: currentPlan?.plan_code || null,
+      plan_id: currentPlan?.plan_id || null,
     })
     .eq("id", customer_details?.customer_id);
 
-  // Reuse transaction id from order tags when available so that
-  // order creation, webhooks, and reconciliation all point to
-  // the same payment_history row.
   const transactionId = taggedTransactionId || crypto.randomUUID();
 
   const { data: existingPayment } = await supabase
@@ -117,7 +116,7 @@ export const handlePaymentUserDropped = async (payload: any) => {
   const { customer_details } = payload?.data || {};
   await supabase
     .from("users")
-    .update({ status: "pending" })
+    .update({ status: "payment_pending" })
     .eq("id", customer_details?.customer_id);
 };
 
@@ -125,6 +124,6 @@ export const handlePaymentFailed = async (payload: any) => {
   const { customer_details } = payload?.data || {};
   await supabase
     .from("users")
-    .update({ status: "pending" })
+    .update({ status: "payment_pending" })
     .eq("id", customer_details?.customer_id);
 };

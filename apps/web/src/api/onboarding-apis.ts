@@ -50,6 +50,14 @@ export async function createCashfreeOrder(payload: {
   return data;
 }
 
+export async function zeroAmountPayment(payload: Record<string, any>) {
+  const { data } = await axiosInstance.post(
+    endpoints.auth.zeroAmountPayment,
+    payload
+  );
+  return data;
+}
+
 // ---------- Cashfree Verification (PAN) ----------
 
 export async function verifyPan(payload: { pan: string; name: string }) {
@@ -69,6 +77,27 @@ export async function getPanStatus(referenceId: string | number) {
 
 // ---------- Onboarding Auth ----------
 
+export async function createFreeAccount(payload: {
+  email: string;
+  phone: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  address1?: string;
+  address2?: string;
+  state?: string;
+  city?: string;
+  pinCode?: string;
+  company?: string;
+  status?: string;
+  role?: string;
+  plan_id?: number;
+}) {
+  const { data } = await axiosInstance.post(endpoints.auth.onboard, payload);
+  return data;
+}
+
 export async function startOnboarding(payload: {
   email: string;
   phone: string;
@@ -84,11 +113,11 @@ export async function startOnboarding(payload: {
   company?: string;
   panCard: string;
   panVerification: any;
+  status?: string;
+  role?: string;
+  plan_id?: string;
 }) {
-  const { data } = await axiosInstance.post(
-    endpoints.auth.onboardStart,
-    payload
-  );
+  const { data } = await axiosInstance.post(endpoints.auth.onboard, payload);
   return data;
 }
 

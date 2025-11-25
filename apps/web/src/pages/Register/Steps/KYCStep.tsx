@@ -165,6 +165,8 @@ const KYCStep: React.FC<KYCStepProps> = ({
         company: formData.company,
         panCard: formData.panCard,
         panVerification: verification,
+        status: "onboarded",
+        role: formData.role,
       });
       setLoading(false);
       onNext();

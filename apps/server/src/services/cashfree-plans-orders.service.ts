@@ -94,7 +94,6 @@ export const createOrderForPlanService = async (params: {
         status: "active",
         plan_id: planRow.plan_id,
         plan_code: planRow.plan_code || null,
-        is_premium: true,
       })
       .eq("id", params.customer_id);
 
@@ -113,8 +112,8 @@ export const createOrderForPlanService = async (params: {
       order: {
         order_id: `free_${Date.now()}`,
         status: "FREE_TIER",
-        message: "Free tier subscription activated"
-      }
+        message: "Free tier subscription activated",
+      },
     };
   }
 

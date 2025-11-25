@@ -1,4 +1,4 @@
-import UserSidebar from "@/components/UserSidebar";
+import UserSidebar from "@/components/generic/UserSidebar";
 import { Outlet } from "react-router-dom";
 
 const UserAdminLayout = () => {
@@ -6,7 +6,6 @@ const UserAdminLayout = () => {
     <div className="flex h-screen bg-gray-100">
       <UserSidebar />
       <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-        {/* <BetaBanner /> */}
         <div className="lg:hidden h-12"></div>
         <Outlet />
       </main>

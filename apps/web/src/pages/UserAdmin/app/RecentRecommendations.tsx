@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import useSheetStocks from "@/hooks/use-sheets-stocks";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { formatIndianNumber } from "@/utils";
 
 const getBandColor = (band: string) => {
   switch (band) {
@@ -142,7 +143,7 @@ const RecentRecommendations: React.FC = () => {
 
                   <div className="flex flex-col sm:items-end gap-1">
                     <div className="text-sm font-medium text-gray-900">
-                      ₹{stock.cmp}
+                      ₹{formatIndianNumber(Number(stock.cmp ?? 0))}
                     </div>
                     <div
                       className={`text-sm ${

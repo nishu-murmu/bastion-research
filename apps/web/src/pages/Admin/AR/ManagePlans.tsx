@@ -140,7 +140,16 @@ const MembershipPlans = () => {
       cellRenderer: PlanTypeRenderer,
     },
     { headerName: "Members", field: "members" },
-    { headerName: "Price Amount", field: "price_amount" },
+    {
+      headerName: "Price Amount",
+      field: "price_amount",
+      valueFormatter: (params) =>
+        typeof params.value === "number"
+          ? new Intl.NumberFormat("en-IN", {
+              maximumFractionDigits: 2,
+            }).format(params.value)
+          : params.value,
+    },
     { headerName: "Currency", field: "currency" },
     { headerName: "Duration (months)", field: "duration_months" },
     {

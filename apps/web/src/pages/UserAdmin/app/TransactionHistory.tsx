@@ -39,7 +39,7 @@ const currency = (v?: number | string | null) => {
   if (v == null || v === "") return "-";
   const n = typeof v === "string" ? Number(v) : v;
   if (isNaN(n as number)) return String(v);
-  return new Intl.NumberFormat(undefined, {
+  return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
   }).format(n as number);

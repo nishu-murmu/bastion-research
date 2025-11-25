@@ -6,6 +6,26 @@ import { supabase } from "../supabase";
 import crypto from "crypto";
 import sendEmail from "../utils/email";
 import { validateEmailOtp } from "./otp.controller";
+type OnboardingUserData = {
+  email: string;
+  phone: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  panCard: string;
+  dateOfBirth: string;
+  address1?: string;
+  address2?: string;
+  state?: string;
+  city?: string;
+  pinCode?: string;
+  company?: string;
+  panVerification: { valid: boolean; [key: string]: any };
+  agreementSignatureUrl: string;
+  agreementSignaturePath?: string;
+  agreementSignedAt?: string;
+  [key: string]: any; // To allow extra props if necessary
+};
 
 const generateToken = (id: string, email: string, expiresIn: string = "1d") => {
   const secret = process.env.JWT_SECRET;
@@ -13,147 +33,6 @@ const generateToken = (id: string, email: string, expiresIn: string = "1d") => {
     throw new Error("JWT_SECRET is not defined in environment variables.");
   }
   return jwt.sign({ id, email }, secret, { expiresIn: expiresIn as any });
-};
-
-export const createUserAfterOnboarding = async (userData: any) => {
-  const {
-    email,
-    phone,
-    password,
-    firstName,
-    lastName,
-    panCard,
-    dateOfBirth,
-    address1,
-    address2,
-    state,
-    city,
-    pinCode,
-    company,
-    panVerification,
-    agreementSignatureUrl,
-    agreementSignaturePath,
-    agreementSignedAt,
-  } = userData;
-
-  // Basic validation
-  if (
-    !email ||
-    !phone ||
-    !password ||
-    !firstName ||
-    !lastName ||
-    !dateOfBirth
-  ) {
-    console.error("Validation failed for userData:", userData);
-    throw new Error("Missing required fields for user creation.");
-  }
-
-  if (!panVerification || !panVerification.valid) {
-    throw new Error("PAN must be verified before onboarding can be completed.");
-  }
-
-  if (!agreementSignatureUrl) {
-    throw new Error("Agreement signature is required to finalize onboarding.");
-  }
-
-  const { data: existingUser } = await supabase
-    .from("users")
-    .select("email")
-    .eq("email", email)
-    .maybeSingle();
-
-  if (existingUser) {
-    console.warn(`Attempted to create a user that already exists: ${email}`);
-    throw new Error(`Attempted to create a user that already exists: ${email}`);
-  }
-
-  const hashedPassword = await bcrypt.hash(password, config.salt_rounds);
-  const username =
-    email.split("@")[0] + `_${Math.random().toString(36).substring(2, 7)}`;
-
-  // Create the user
-  const { data: newUser, error: insertError } = await supabase
-    .from("users")
-    .insert({
-      email,
-      phone,
-      password: hashedPassword,
-      username,
-      first_name: firstName,
-      last_name: lastName,
-      pan_card_number: panCard,
-      date_of_birth: dateOfBirth,
-      // optional address/company fields
-      address_1: address1 || null,
-      address_2: address2 || null,
-      state: state || null,
-      city: city || null,
-      pin_code: pinCode || null,
-      company: company || null,
-      status: "active",
-    })
-    .select("id, email")
-    .single();
-
-  if (insertError) {
-    console.error("Error inserting new user:", insertError);
-    throw insertError;
-  }
-  if (!newUser) {
-    throw new Error(
-      "User not created after onboarding, but no error was thrown."
-    );
-  }
-
-  // Try to persist optional metadata (ignore missing column errors)
-  try {
-    const optionalPayload: Record<string, any> = {};
-    if (panVerification?.referenceId) {
-      optionalPayload.pan_verification_reference = panVerification.referenceId;
-    }
-    if (panVerification?.status) {
-      optionalPayload.pan_verification_status = panVerification.status;
-    }
-    if (panVerification?.checkedAt) {
-      optionalPayload.pan_verified_at = panVerification.checkedAt;
-    }
-    if (agreementSignatureUrl) {
-      optionalPayload.agreement_signature_url = agreementSignatureUrl;
-    }
-    if (agreementSignaturePath) {
-      optionalPayload.agreement_signature_path = agreementSignaturePath;
-    }
-    if (agreementSignedAt) {
-      optionalPayload.agreement_signed_at = agreementSignedAt;
-    }
-
-    if (Object.keys(optionalPayload).length > 0) {
-      const { error: metadataError } = await supabase
-        .from("users")
-        .update(optionalPayload)
-        .eq("id", newUser.id);
-
-      if (metadataError) {
-        const msg = metadataError?.message || "";
-        if (/column .* does not exist/i.test(msg)) {
-          console.warn(
-            "Optional onboarding metadata columns missing. Skipping persistence.",
-            msg
-          );
-        } else {
-          console.error(
-            "Failed to persist onboarding metadata for user",
-            metadataError
-          );
-        }
-      }
-    }
-  } catch (metaErr) {
-    console.error("Unexpected error while saving onboarding metadata", metaErr);
-  }
-
-  return newUser;
 };
 
 export const signIn = async (req: Request, res: Response) => {
@@ -213,7 +92,10 @@ export const signIn = async (req: Request, res: Response) => {
         user_id: user.id,
         event_type: "login",
         occurred_at: new Date().toISOString(),
-        ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || null,
+        ip:
+          (req.headers["x-forwarded-for"] as string) ||
+          req.socket.remoteAddress ||
+          null,
         user_agent: (req.headers["user-agent"] as string) || null,
         metadata: null,
       } as any);
@@ -359,10 +241,7 @@ export const resetPassword = async (req: Request, res: Response) => {
   }
 };
 
-export const createOrUpdateUserAfterKYC = async (
-  req: Request,
-  res: Response
-) => {
+export const onboardUser = async (req: Request, res: Response) => {
   try {
     const {
       email,
@@ -379,7 +258,10 @@ export const createOrUpdateUserAfterKYC = async (
       company,
       panCard,
       panVerification,
-    } = req.body || {};
+      status,
+      role,
+      plan_id,
+    }: OnboardingUserData = req.body || {};
 
     if (
       !email ||
@@ -387,27 +269,22 @@ export const createOrUpdateUserAfterKYC = async (
       !password ||
       !firstName ||
       !lastName ||
-      !dateOfBirth ||
-      !panCard
+      !dateOfBirth
     ) {
       return res
         .status(400)
         .json({ message: "Missing required fields to start onboarding." });
     }
-    if (!panVerification || panVerification.valid !== true) {
+
+    console.log({ panVerification, status });
+    if (
+      (!panVerification || panVerification.valid !== true) &&
+      status !== "free"
+    ) {
       return res
         .status(400)
         .json({ message: "PAN verification is required and must be valid." });
     }
-
-    // Check existing user by email
-    const { data: existingUserByEmail } = await supabase
-      .from("users")
-      .select("*")
-      .eq("email", email)
-      .maybeSingle();
-
-    const existingUser = existingUserByEmail;
 
     const baseUpdate: any = {
       phone,
@@ -421,44 +298,30 @@ export const createOrUpdateUserAfterKYC = async (
       pin_code: pinCode || null,
       company: company || null,
       pan_card_number: panCard,
-      status: "onboarding",
+      status,
       pan_verification_metadata: panVerification,
+      role: role,
+      plan_id,
     };
 
     let userId: string | null = null;
-    if (existingUser && existingUser.id) {
-      // Update existing
-      const { data: upd, error: updError } = await supabase
-        .from("users")
-        .update(baseUpdate)
-        .eq("id", existingUser.id)
-        .select("id, email")
-        .single();
-      if (updError) {
-        return res.status(500).json({ message: updError.message });
-      }
-      userId = upd?.id || existingUser.id;
-    } else {
-      // Create new user with hashed password
-      const hashedPassword = await bcrypt.hash(password, config.salt_rounds);
-      const username =
-        email.split("@")[0] + `_${Math.random().toString(36).substring(2, 7)}`;
-      const { data: inserted, error: insError } = await supabase
-        .from("users")
-        .insert({
-          email,
-          phone,
-          password: hashedPassword,
-          username,
-          ...baseUpdate,
-        })
-        .select("id, email")
-        .single();
-      if (insError) {
-        return res.status(500).json({ message: insError.message });
-      }
-      userId = inserted?.id || null;
+    const hashedPassword = await bcrypt.hash(password, config.salt_rounds);
+    const username = firstName.toLowerCase() + "_" + lastName.toLowerCase();
+    const { data: inserted, error: insError } = await supabase
+      .from("users")
+      .insert({
+        email,
+        phone,
+        password: hashedPassword,
+        username,
+        ...baseUpdate,
+      })
+      .select("id, email")
+      .single();
+    if (insError) {
+      return res.status(500).json({ message: insError.message });
     }
+    userId = inserted?.id || null;
 
     // Try to persist optional PAN verification metadata if columns exist
     try {
@@ -493,12 +356,59 @@ export const createOrUpdateUserAfterKYC = async (
 
     return res.status(200).json({
       message: "Onboarding started. User saved.",
-      user: { id: userId, email, status: "onboarding" },
+      user: { id: userId, email, status },
     });
   } catch (error: any) {
     return res
       .status(500)
       .json({ message: error?.message || "Failed to start onboarding" });
+  }
+};
+
+export const zeroAmountAccountCreation = async (
+  req: Request,
+  res: Response
+) => {
+  const { plan_id, coupon_code, user_id, payer_email } = req.body;
+  const { data, error } = await supabase
+    .from("coupons")
+    .select("*")
+    .eq("coupon_code", coupon_code)
+    .eq("active", true)
+    .single();
+  console.log(data, "coupon data");
+
+  supabase
+    .from("payment_history")
+    .insert({
+      transaction_status: "SUCCESS",
+      plan_id: plan_id,
+      user_id,
+      payer_email,
+      transaction_id: crypto.randomUUID(),
+      coupon_applied: data?.coupon_id,
+    })
+    .maybeSingle();
+
+  try {
+    const { data, error } = await supabase
+      .from("users")
+      .update({
+        plan_id,
+        status: "active",
+      })
+      .eq("id", user_id)
+      .select();
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    return res.status(200).json(data);
+  } catch (e: any) {
+    return res
+      .status(500)
+      .json({ error: e?.message || "Failed to update user" });
   }
 };
 
@@ -540,7 +450,6 @@ export const getUserSession = async (req: Request, res: Response) => {
           ),
           created_at,
           updated_at,
-          is_premium,
           status,
           role,
           digio_documents(document_id)
@@ -565,38 +474,4 @@ export const logout = (req: Request, res: Response) => {
     expires: new Date(0),
   });
   res.status(200).json({ message: "Logged out successfully" });
-};
-
-export const registerFromOnboarding = async (req: Request, res: Response) => {
-  try {
-    const userData = req.body;
-
-    // createUserAfterOnboarding already validates required fields and checks duplicates
-    const newUser = (await createUserAfterOnboarding(userData)) as {
-      id: any;
-      email: any;
-    };
-
-    // Optionally, auto-login user here by setting a cookie
-    try {
-      const token = generateToken(newUser.id, newUser.email);
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 24 * 60 * 60 * 1000,
-      });
-    } catch {}
-
-    return res.status(201).json({
-      message: "User created successfully",
-      user: newUser,
-    });
-  } catch (error: any) {
-    console.error("Onboarding finalize error:", error);
-    return res.status(400).json({
-      message: error?.message || "Failed to create user from onboarding data",
-      error: error?.message,
-    });
-  }
 };

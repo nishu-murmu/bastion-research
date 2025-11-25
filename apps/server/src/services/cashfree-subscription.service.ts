@@ -9,7 +9,6 @@ export const getUserSubscriptionService = async (userId: string) => {
         id,
         plan_id,
         plan_code,
-        is_premium,
         status,
         membership_plans!users_plan_id_fkey (
           plan_id,
@@ -56,8 +55,7 @@ export const getUserSubscriptionService = async (userId: string) => {
   const effectivePlan =
     user?.membership_plans || lastPayment?.membership_plans || null;
 
-  const isPremium =
-    Boolean(user?.is_premium) || Boolean(user?.plan_id || user?.plan_code);
+  const isPremium = Boolean(user?.plan_id || user?.plan_code);
 
   const currentPlan: string | null =
     user?.plan_code ||
@@ -102,9 +100,7 @@ export const getUserSubscriptionService = async (userId: string) => {
           date: lastPayment.created_at,
           plan_code:
             effectivePlan?.plan_code ||
-            (lastPayment.plan_id != null
-              ? String(lastPayment.plan_id)
-              : null),
+            (lastPayment.plan_id != null ? String(lastPayment.plan_id) : null),
         }
       : null,
   };

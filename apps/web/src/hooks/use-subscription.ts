@@ -16,12 +16,9 @@ export const useSubscription = () => {
     queryFn: async () => {
       if (!isAuthenticated || !user) return null;
 
-      const currentPlan =
-        user.membership_plans?.plan_code ?? null;
+      const currentPlan = user.membership_plans?.plan_code ?? null;
 
-      // Treat only non-freemium plans as premium
-      const isPremium =
-        Boolean(user.is_premium) && currentPlan !== "freemium";
+      const isPremium = currentPlan !== "freemium";
 
       const data: SubscriptionData = {
         is_premium: isPremium,
@@ -40,4 +37,3 @@ export const useSubscription = () => {
     retry: 0,
   });
 };
-

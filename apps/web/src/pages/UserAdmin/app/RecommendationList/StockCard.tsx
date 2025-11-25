@@ -6,6 +6,7 @@ import { userCompanyAnalytics } from "@/api/recommendations-apis";
 import { useAuth } from "@/contexts/AuthContext";
 import PricingDialogModal from "@/components/core/common/Modals/PricingDialogModal";
 import { useNavigate } from "react-router-dom";
+import { formatIndianNumber } from "@/utils";
 
 const StockCard = ({ stock }: { stock: StockData }) => {
   const { user } = useAuth();
@@ -131,7 +132,9 @@ const StockCard = ({ stock }: { stock: StockData }) => {
                 {/* Entry Price (left) */}
                 <div className="absolute top-6 left-0 flex flex-col text-xs text-gray-500">
                   <span className="flex flex-col items-center justify-center">
-                    <span style={blurStyle}>₹{stock.entryPrice}</span>
+                    <span style={blurStyle}>
+                      ₹{formatIndianNumber(Number(stock.entryPrice ?? 0))}
+                    </span>
                     <span>Entry Price</span>
                   </span>
                 </div>
@@ -146,14 +149,18 @@ const StockCard = ({ stock }: { stock: StockData }) => {
                 >
                   <span className="flex flex-col items-center justify-center">
                     <span>CMP</span>
-                    <span style={blurStyle}>₹{stock.cmp}</span>
+                    <span style={blurStyle}>
+                      ₹{formatIndianNumber(Number(stock.cmp ?? 0))}
+                    </span>
                   </span>
                 </div>
 
                 {/* Target Price (right) */}
                 <div className="absolute top-6 right-0 flex flex-col text-xs text-gray-500">
                   <span className="flex flex-col items-center justify-center">
-                    <span style={blurStyle}>₹{stock.target1}</span>
+                    <span style={blurStyle}>
+                      ₹{formatIndianNumber(Number(stock.target1 ?? 0))}
+                    </span>
                     <span>Target Price</span>
                   </span>
                 </div>
@@ -183,7 +190,9 @@ const StockCard = ({ stock }: { stock: StockData }) => {
                 >
                   <span className="flex flex-col items-center justify-center">
                     <span>CMP</span>
-                    <span style={blurStyle}>₹{stock.cmp}</span>
+                    <span style={blurStyle}>
+                      ₹{formatIndianNumber(Number(stock.cmp ?? 0))}
+                    </span>
                   </span>
                 </div>
 
@@ -196,7 +205,9 @@ const StockCard = ({ stock }: { stock: StockData }) => {
                   }}
                 >
                   <span className="flex flex-col items-center justify-center">
-                    <span style={blurStyle}>₹{stock.entryPrice}</span>
+                    <span style={blurStyle}>
+                      ₹{formatIndianNumber(Number(stock.entryPrice ?? 0))}
+                    </span>
                     <span>Entry Price</span>
                   </span>
                 </div>
@@ -204,7 +215,9 @@ const StockCard = ({ stock }: { stock: StockData }) => {
                 {/* Target Price fixed right */}
                 <div className="absolute top-6 right-0 flex flex-col text-xs text-gray-500">
                   <span className="flex flex-col items-center justify-center">
-                    <span style={blurStyle}>₹{stock.target1}</span>
+                    <span style={blurStyle}>
+                      ₹{formatIndianNumber(Number(stock.target1 ?? 0))}
+                    </span>
                     <span>Target Price</span>
                   </span>
                 </div>

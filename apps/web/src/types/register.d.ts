@@ -22,6 +22,7 @@ interface OnboardingFormData {
   agreementSignatureUrl?: string;
   agreementSignaturePath?: string;
   agreementSignedAt?: string;
+  role?: string;
 }
 
 interface PanVerificationSummary {

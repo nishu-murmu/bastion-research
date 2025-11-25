@@ -247,8 +247,15 @@ const Subscription = () => {
     const isPaidPlan =
       selectedPlan.amount > 0 && selectedPlan.plan_code !== "freemium";
 
-    // Require KYC only for paid plans when PAN is missing
-    if (isPaidPlan && !hasKyc && !opts?.bypassKyc) {
+    const upgradingFromFreeToPaid = onFreePlan && isPaidPlan;
+
+    // When upgrading from free to a paid plan, always go through
+    // KYC + Agreement steps. Also enforce KYC for any paid plan
+    // if PAN is not yet available.
+    if (
+      (upgradingFromFreeToPaid || (isPaidPlan && !hasKyc)) &&
+      !opts?.bypassKyc
+    ) {
       startUpgradeFlow(selectedPlan);
       return;
     }

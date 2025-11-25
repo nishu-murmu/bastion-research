@@ -6,7 +6,7 @@ export const endpoints = {
     forgotPassword: "/api/auth/forgot-password",
     resetPassword: "/api/auth/reset-password",
     onboard: "/api/auth/onboard",
-    onboardStart: "/api/auth/onboard/start",
+    zeroAmountPayment: "/api/auth/zero-amount-payment",
   },
   users: {
     base: "/api/users",

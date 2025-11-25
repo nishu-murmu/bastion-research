@@ -120,7 +120,16 @@ const PaymentHistory = () => {
       cellRenderer: StatusBadge,
     },
     { headerName: "Date", field: "payment_date" },
-    { headerName: "Amount", field: "amount" },
+    {
+      headerName: "Amount",
+      field: "amount",
+      valueFormatter: (params) =>
+        typeof params.value === "number"
+          ? new Intl.NumberFormat("en-IN", {
+              maximumFractionDigits: 2,
+            }).format(params.value)
+          : params.value,
+    },
     {
       headerName: "Actions",
       filter: false,

@@ -40,6 +40,11 @@ export const formatINR = (amount: number) =>
     maximumFractionDigits: 0,
   }).format(amount);
 
+export const formatIndianNumber = (value: number) =>
+  new Intl.NumberFormat("en-IN", {
+    maximumFractionDigits: 2,
+  }).format(value);
+
 export const planFeatures: Record<string, string[]> = {
   core: ["Core premium research access", "Member webinars", "Standard support"],
   core_annual: [

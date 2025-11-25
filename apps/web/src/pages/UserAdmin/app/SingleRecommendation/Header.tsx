@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { getBandColor, getTextColor } from "../RecommendationList/utils";
 // import { Building2 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { formatIndianNumber } from "@/utils";
 
 const Header = ({ stock }) => {
   const percentReturnNum = stock.percentReturn;
@@ -40,19 +41,22 @@ const Header = ({ stock }) => {
       label: "Recommendation Price",
       value:
         typeof entryPrice !== "undefined" && entryPrice !== null
-          ? `₹${entryPrice}`
+          ? `₹${formatIndianNumber(Number(entryPrice))}`
           : "₹0",
     },
     {
       label: "Target Price",
       value:
         typeof target1 !== "undefined" && target1 !== null
-          ? `₹${target1}`
+          ? `₹${formatIndianNumber(Number(target1))}`
           : "₹0",
     },
     {
       label: "CMP",
-      value: typeof cmp !== "undefined" && cmp !== null ? `₹${cmp}` : "₹0",
+      value:
+        typeof cmp !== "undefined" && cmp !== null
+          ? `₹${formatIndianNumber(Number(cmp))}`
+          : "₹0",
     },
     {
       label: "Total Return",

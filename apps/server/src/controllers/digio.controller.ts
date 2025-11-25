@@ -306,6 +306,8 @@ export const digioWebhook = async (req: Request, res: Response) => {
         };
         const normalized = statusMap[eventType] || String(eventType || "");
 
+        console.log({ eventType });
+
         // Attempt to update existing row by document_id
         await supabase
           .from("digio_documents")

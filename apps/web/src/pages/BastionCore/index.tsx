@@ -112,7 +112,9 @@ export default function BastionCoreProductPage() {
 
   const startingPrice = useMemo(() => {
     const amount = sortedPaid[0]?.amount;
-    return amount ? `₹${Number(amount).toLocaleString()}` : null;
+    return amount
+      ? `₹${Number(amount).toLocaleString("en-IN")}`
+      : null;
   }, [sortedPaid]);
 
   const items: Item[] = [
@@ -296,7 +298,7 @@ export default function BastionCoreProductPage() {
                   <p
                     className={`mt-3 text-3xl font-bold ${idx === 0 ? "text-[#C00000]" : ""}`}
                   >
-                    {`₹${Number(plan.amount || 0).toLocaleString()}/-`}
+                    {`₹${Number(plan.amount || 0).toLocaleString("en-IN")}/-`}
                   </p>
                   <p
                     className={`text-sm ${idx === 1 ? "text-gray-200" : "text-slate-500"}`}
