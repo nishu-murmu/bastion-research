@@ -143,16 +143,16 @@ export default function BastionCoreProductPage() {
       desc: "Gain free access to our exclusive webinars, where we bring sharp perspectives and practical insights to the investing community.",
       img: "/media/premium-webinars.png",
     },
-    {
-      title: "Subscriber-Only Model Portfolio Discounts",
-      desc: "Want research plus execution? As a CORE subscriber, you get special discounts on our ready-to-use model portfolios.",
-      img: "/media/modelPortfolio-compressed.png",
-    },
-    {
-      title: "Premium IPO Coverage",
-      desc: "Get free access to our in-depth IPO notes, covering the positives, risks, and our perspective on businesses going public.",
-      img: "/public/media/premium-ipo-coverage.png",
-    },
+    // {
+    //   title: "Subscriber-Only Model Portfolio Discounts",
+    //   desc: "Want research plus execution? As a CORE subscriber, you get special discounts on our ready-to-use model portfolios.",
+    //   img: "/media/modelPortfolio-compressed.png",
+    // },
+    // {
+    //   title: "Premium IPO Coverage",
+    //   desc: "Get free access to our in-depth IPO notes, covering the positives, risks, and our perspective on businesses going public.",
+    //   img: "/public/media/premium-ipo-coverage.png",
+    // },
   ];
 
   // 👇 State for which item is active
@@ -380,7 +380,7 @@ export default function BastionCoreProductPage() {
       <div className="hidden md:flex md:col-span-3 relative bg-[#ffffff] items-center justify-center">
 
         {/* FIX: Fixed height container to prevent left side movement */}
-        <div className="w-full h-[900px] flex items-center justify-center">
+        <div className="w-full h-[700px] flex items-center justify-center">
           <img
             key={items[active].img}
             src={items[active].img}
