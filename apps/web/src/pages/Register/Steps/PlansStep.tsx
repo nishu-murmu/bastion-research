@@ -1,8 +1,10 @@
 import { createFreeAccount } from "@/api/onboarding-apis";
-import { formatINR } from "@/utils";
-import { ArrowLeft, Check, Sparkles, Info } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { formatINR, sleep } from "@/utils";
+import { ArrowLeft, Check, Info, Sparkles } from "lucide-react";
 import { useEffect } from "react";
-
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const PlansStep: React.FC<PlansStepProps> = ({
   plans,
@@ -12,25 +14,41 @@ const PlansStep: React.FC<PlansStepProps> = ({
   onNext,
   isLoading,
   error,
+  setIsLoading,
 }) => {
+  const navigate = useNavigate();
+  const { refetchUser } = useAuth();
   const plansStepNextHandler = async () => {
-    const selectedPlanDetails = plans.find(
-      (p) => p.code === formData.selectedPlan
-    );
-    const isFree = String(selectedPlanDetails?.amount) === "0" || selectedPlanDetails?.plan_code === "freemium";
-    if (isFree) {
-      const response = await createFreeAccount({
-        ...formData,
-        status: "free",
-        role: "free_subscriber",
-        plan_id: 1,
-      });
-      console.log(response, "response");
-      window.location.href = location.origin + "/login";
-      return;
+    try {
+      setIsLoading(true);
+      const selectedPlanDetails = plans.find(
+        (p) => p.code === formData.selectedPlan
+      );
+      const isFree = selectedPlanDetails?.plan_code === "freemium";
+      if (isFree) {
+        const response = await createFreeAccount({
+          ...formData,
+          status: "free",
+          role: "free_subscriber",
+          plan_id: 1,
+        });
+        setIsLoading(false);
+        await refetchUser();
+        await sleep(500);
+        navigate("/user/app/dashboard");
+        return;
+      }
+      updateFormData("role", "core_subscriber");
+      onNext();
+    } catch (error) {
+      setIsLoading(false);
+      if (error?.response?.data?.message?.includes("users_email_key")) {
+        toast.error(
+          "Duplicate email address, can't create account with an existing email."
+        );
+      }
+      console.error("Error in plansStepNextHandler:", error);
     }
-    updateFormData("role", "core_subscriber");
-    onNext();
   };
 
   useEffect(() => {
@@ -96,13 +114,13 @@ const PlansStep: React.FC<PlansStepProps> = ({
               return (
                 <div
                   key={index}
-                  className={`relative rounded-xl border p-4 flex flex-col h-full transition-colors cursor-pointer bg-white ${isSelected
+                  className={`relative rounded-xl border p-4 flex flex-col h-full transition-colors cursor-pointer bg-white ${
+                    isSelected
                       ? "border-red-500 ring-2 ring-red-500/20"
                       : "border-gray-200 hover:border-red-300"
-                    }`}
+                  }`}
                   onClick={() => updateFormData("selectedPlan", plan.code)}
                 >
-
                   {isPopular && (
                     <div className="absolute -top-2 right-3 inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-xs font-medium">
                       <Sparkles className="h-3 w-3" /> Most popular
@@ -134,7 +152,9 @@ const PlansStep: React.FC<PlansStepProps> = ({
 
                           {/* Tooltip ABOVE the icon */}
                           <div className="absolute bottom-5 left-1/2 -translate-x-1/2 w-60 hidden group-hover:block bg-gray-800 text-white text-xs rounded-md px-3 py-2 shadow-lg z-20 text-center">
-                            This plan is once in a lifetime access. It is available only for 3 months. After that, you will not be able to purchase it again in your lifetime.
+                            This plan is once in a lifetime access. It is
+                            available only for 3 months. After that, you will
+                            not be able to purchase it again in your lifetime.
                           </div>
                         </div>
                       )}
@@ -152,7 +172,6 @@ const PlansStep: React.FC<PlansStepProps> = ({
                         )}
                       </div>
                     </div>
-
                   </div>
 
                   {features.length > 0 && (
@@ -172,10 +191,11 @@ const PlansStep: React.FC<PlansStepProps> = ({
                   <div className="mt-auto pt-4">
                     <button
                       type="button"
-                      className={`w-full rounded-lg py-2 text-sm font-medium transition-colors ${isSelected
-                        ? "bg-red-600 text-white"
-                        : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                        }`}
+                      className={`w-full rounded-lg py-2 text-sm font-medium transition-colors ${
+                        isSelected
+                          ? "bg-red-600 text-white"
+                          : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                      }`}
                     >
                       {isSelected
                         ? "Selected"
