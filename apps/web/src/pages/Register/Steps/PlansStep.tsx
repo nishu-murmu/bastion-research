@@ -131,12 +131,13 @@ const PlansStep: React.FC<PlansStepProps> = ({
                       <Sparkles className="h-3 w-3" /> Once in a lifetime access
                     </div>
                   )}
-                  <div className="mb-3 flex items-start justify-between">
+                  <div className="mb-3 flex items-start justify-between plan-wrapper">
+
                     <div>
                       <h3 className="font-semibold text-base text-gray-900">
                         {plan.name}
                       </h3>
-                      <p className="text-sm text-gray-500 whitespace-nowrap">
+                      <p className="text-sm text-gray-500 ">
                         {isFree
                           ? "Free forever"
                           : pc === "core_annual"
@@ -144,7 +145,7 @@ const PlansStep: React.FC<PlansStepProps> = ({
                             : "Billed quarterly"}
                       </p>
                     </div>
-                    <div className="text-right flex items-start gap-1 relative -ml-3">
+                    <div className="text-right flex items-start gap-1 relative ml-3">
                       {/* Info icon only for CORE plan */}
                       {pc === "core" && (
                         <div className="relative group">
