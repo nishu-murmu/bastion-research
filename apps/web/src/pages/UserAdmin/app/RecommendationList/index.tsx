@@ -5,6 +5,7 @@ import { useState } from "react";
 import RecommendationsControls from "./Controls";
 import StockGrid from "./StockGrid";
 import { COLORS } from "./utils";
+import { User } from "@repo/types";
 
 const PricingDialogContent = () => (
   <div className="space-y-4">
@@ -27,9 +28,16 @@ const normalizeText = (value?: string | null) => {
   return normalized === "exited" ? "exit" : normalized;
 };
 
-const prioritizeFreemium = <T extends { tags?: string }>(stocks: T[]) => {
+const prioritizeFreemium = <T extends { tags?: string }>(
+  stocks: T[],
+  user: User
+) => {
   const freemium: T[] = [];
   const others: T[] = [];
+
+  if (user?.role !== "free_subscriber") {
+    return stocks;
+  }
 
   stocks.forEach((stock) => {
     if (normalizeText(stock.tags) === "freemium") {
@@ -101,7 +109,7 @@ const RecommendationList = () => {
     }
   });
 
-  const prioritizedStocks = prioritizeFreemium(sortedStocks);
+  const prioritizedStocks = prioritizeFreemium(sortedStocks, user);
 
   const handleLoadMore = () => {
     //@ts-ignore
