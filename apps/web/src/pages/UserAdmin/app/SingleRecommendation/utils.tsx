@@ -228,3 +228,154 @@ export function rowsToSeries(rows: PBRow[]): SeriesPoint[] {
   }
   return series;
 }
+
+
+export function actionToNumeric(action: string | null | undefined): number | null {
+  if (!action) return null;
+  const val = action?.toLowerCase();
+  if (val === "buy") return 1;
+  if (val === "sell") return -1;
+  if (val === "hold") return 0;
+  return null;
+}
+
+export function formatMonthYear(dateStr: string) {
+  if (!dateStr) return "";
+  const dailyMatch = dateStr.match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/);
+  if (dailyMatch) {
+    return `${dailyMatch[2]} ${dailyMatch[3]}`;
+  }
+  const monthYearMatch = dateStr.match(/^([A-Za-z]{3})-(\d{2})$/);
+  if (monthYearMatch) {
+    const year = parseInt(monthYearMatch[2], 10);
+    return `${monthYearMatch[1]} 20${year < 50 ? ("0" + year).slice(-2) : year}`;
+  }
+  const isoMatch = dateStr.match(/^(\d{4})-(\d{2})-\d{2}$/);
+  if (isoMatch) {
+    const dt = new Date(dateStr);
+    const mths = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+      "Aug", "Sep", "Oct", "Nov", "Dec",
+    ];
+    return `${mths[dt.getMonth()]} ${dt.getFullYear()}`;
+  }
+  return dateStr || "";
+}
+
+
+
+export function getGraphData(externalRows: PBRow[]): Array<{
+  date: string;
+  "Stock NAV": number | null;
+  "Index NAV": number | null;
+  Action: number | null;
+  actualDate: string;
+}> | null {
+  if (externalRows && Array.isArray(externalRows) && externalRows.length) {
+    const first = externalRows[0] || {};
+    const dateKey = Object.keys(first).find(
+      (k) => k.toLowerCase() === "date"
+    );
+    const stockNavKey = Object.keys(first).find(
+      (k) => k.replace(/\s/g, "").toLowerCase() === "stocknav"
+    );
+    const indexNavKey = Object.keys(first).find(
+      (k) => k.replace(/\s/g, "").toLowerCase() === "indexnav"
+    );
+    const actionKey = Object.keys(first).find(
+      (k) => k.toLowerCase() === "action"
+    );
+    return externalRows.map(
+      (
+        row
+      ): {
+        date: string;
+        "Stock NAV": number | null;
+        "Index NAV": number | null;
+        Action: number | null;
+        actualDate: string;
+      } => {
+        const dateVal = dateKey ? (row[dateKey] as string) : "";
+        let stockNavVal =
+          stockNavKey && typeof row[stockNavKey] !== "undefined"
+            ? Number(row[stockNavKey])
+            : null;
+        if (Number.isNaN(stockNavVal)) stockNavVal = null;
+        let indexNavVal =
+          indexNavKey && typeof row[indexNavKey] !== "undefined"
+            ? Number(row[indexNavKey])
+            : null;
+        if (Number.isNaN(indexNavVal)) indexNavVal = null;
+        let action = actionKey ? row[actionKey] : null;
+
+        return {
+          date: formatMonthYear(dateVal),
+          "Stock NAV": stockNavVal,
+          "Index NAV": indexNavVal,
+          Action: actionToNumeric(action as string),
+          actualDate: dateVal,
+        };
+      }
+    );
+  }
+  // fallback default (if needed)
+  return [
+    {
+      date: "Jan 2024",
+      "Stock NAV": 92,
+      "Index NAV": 80,
+      Action: 1,
+      actualDate: String(new Date()),
+    },
+    {
+      date: "Feb 2024",
+      "Stock NAV": 96,
+      "Index NAV": 95,
+      Action: 1,
+      actualDate: String(new Date()),
+    },
+    {
+      date: "Mar 2024",
+      "Stock NAV": 100,
+      "Index NAV": 100,
+      Action: 1,
+      actualDate: String(new Date()),
+    },
+  ];
+}
+
+export const parseAnyDate = (d: string) => {
+  if (!d) return new Date(0);
+  if (/^\d{1,2}\s+[A-Za-z]{3}\s+\d{4}$/.test(d)) {
+    const dt = new Date(d);
+    return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+  }
+  return parseDate(d);
+};
+
+
+
+export const getFilteredData = (externalRows: PBRow[], timeRange: string) => {
+  const allData = getGraphData(externalRows)
+  if (!Array.isArray(allData)) return [];
+  let cutoff: Date;
+  switch (timeRange) {
+    case "1M":
+      cutoff = new Date();
+      cutoff.setMonth(cutoff.getMonth() - 1);
+      break;
+    case "3M":
+      cutoff = new Date();
+      cutoff.setMonth(cutoff.getMonth() - 3);
+      break;
+    case "1Y":
+      cutoff = new Date();
+      cutoff.setFullYear(cutoff.getFullYear() - 1);
+      break;
+    default:
+      return allData;
+  }
+  return allData.filter((d: any) =>
+    parseAnyDate(d?.actualDate) >= cutoff
+  );
+};

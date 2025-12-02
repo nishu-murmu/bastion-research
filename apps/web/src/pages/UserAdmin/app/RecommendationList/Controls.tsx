@@ -15,7 +15,7 @@ const RecommendationsControls = ({
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
-            placeholder="Search by Name, Code or Tag (BUY/HOLD/EXITED)"
+            placeholder="Search by Name, Code or Band (BUY/HOLD/EXIT)"
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-10 border-gray-300 w-full"
@@ -49,7 +49,7 @@ const RecommendationsControls = ({
             <option value="All">All</option>
             <option value="BUY">BUY</option>
             <option value="HOLD">HOLD</option>
-            <option value="EXITED">EXITED</option>
+            <option value="EXIT">EXIT</option>
           </select>
         </div>
       </div>
