@@ -39,7 +39,7 @@ const StockNavChart=({
             <h2 className="text-lg font-semibold text-gray-900">
               Index NAV, Stock NAV
             </h2>
-            <p className="text-sm text-gray-500">Since Jan 2024</p>
+            {/* <p className="text-sm text-gray-500">Since Jan 2024</p> */}
           </div>
           <div className="flex gap-2">
             {["1M", "3M", "1Y", "ALL"].map((range) => (
