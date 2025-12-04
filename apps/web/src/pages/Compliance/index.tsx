@@ -10,7 +10,7 @@ function getFinancialYearMonths() {
 
   let currentMonth = today.getMonth() + 1; // 1–12 format
 
-  // Adjust month based on day
+  // Adjust month based on Day
   if (currentDay <= 9) {
     currentMonth -= 5;
   } else {
