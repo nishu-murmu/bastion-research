@@ -95,19 +95,57 @@ export async function zeroAmountPayment(payload: ZeroAmountPaymentPayload) {
 
 // ---------- Cashfree Verification (PAN) ----------
 
+/**
+ * TEMPORARY BYPASS:
+ * PAN verification is currently mocked on the client side so that the user
+ * flow still looks like a real verification, but no PAN verification API
+ * is actually called.
+ *
+ * To restore the real behaviour, replace the implementation below with:
+ *
+ *   const { data } = await axiosInstance.post(
+ *     endpoints.cashfreeVerification.verifyPan,
+ *     payload
+ *   );
+ *   return data;
+ */
 export async function verifyPan(payload: VerifyPanPayload) {
-  const { data } = await axiosInstance.post(
-    endpoints.cashfreeVerification.verifyPan,
-    payload
-  );
-  return data;
+  // Simulate a small network delay so the UI still shows a "verifying" state.
+  await new Promise((resolve) => setTimeout(resolve, 800));
+
+  return {
+    referenceId: `PAN-MOCK-${Date.now()}`,
+    valid: true,
+    status: "SUCCESS",
+    registeredName: payload.name,
+    nameMatchScore: 100,
+    message: "PAN verification temporarily bypassed (mocked success)",
+  };
 }
 
+/**
+ * TEMPORARY BYPASS:
+ * PAN status checks are also mocked so that "Check status" continues to work
+ * without hitting the PAN verification API.
+ *
+ * To restore the real behaviour, replace the implementation below with:
+ *
+ *   const { data } = await axiosInstance.get(
+ *     endpoints.cashfreeVerification.panStatus(referenceId)
+ *   );
+ *   return data;
+ */
 export async function getPanStatus(referenceId: string | number) {
-  const { data } = await axiosInstance.get(
-    endpoints.cashfreeVerification.panStatus(referenceId)
-  );
-  return data;
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  return {
+    referenceId,
+    valid: true,
+    status: "SUCCESS",
+    registeredName: "",
+    nameMatchScore: 100,
+    message: "PAN status check temporarily bypassed (mocked success)",
+  };
 }
 
 // ---------- Onboarding Auth ----------
