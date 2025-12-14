@@ -56,7 +56,7 @@ function mergeSheetAndDbRow(sheetRow: any, dbRow: any, idx: number): StockData {
     lastUpdated: dbRow?.updated_at || null,
     logo: dbRow?.logo,
     business_note: dbRow?.business_note,
-    stock_performance_url: dbRow?.stock_performance_url || "",
+    stock_performance_url: dbRow?.stock_performance_url ?? undefined,
     tags: dbRow?.tags || "",
     quick_bite: dbRow?.quick_bite,
     video: dbRow?.video,

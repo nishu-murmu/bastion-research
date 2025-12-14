@@ -67,7 +67,7 @@ export const mapToStock = (sheetRow: any, apiRow: any) => {
 
     // Resources, communications, news...
     business_note: apiRow?.business_note ?? undefined,
-    stock_performance_url: apiRow?.stock_performance_url || "",
+    stock_performance_url: apiRow?.stock_performance_url,
     quick_bite: apiRow?.quick_bite ?? undefined,
     video: apiRow?.video ?? undefined,
     exit_rationale: apiRow?.exit_rationale ?? undefined,

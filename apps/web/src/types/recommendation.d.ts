@@ -12,6 +12,12 @@ interface Announcement {
   description: string;
 }
 
+interface StockPerformanceItem {
+  date: string;
+  title: string;
+  stock_recommendation_url: string;
+}
+
 interface StockData {
   id: string | number;
   logo?: string;
@@ -136,7 +142,7 @@ interface ExtendedRecommendationRecord {
   exit_rationale?: string;
   quarterly_update?: UpdateItem[];
   announcements_and_update?: UpdateItem[];
-  stock_performance_url?: string;
+  stock_performance_url?: StockPerformanceItem[] | string;
   tags?: string;
   created_at?: string;
 }

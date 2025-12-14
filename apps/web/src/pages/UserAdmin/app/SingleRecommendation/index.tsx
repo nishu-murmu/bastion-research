@@ -14,6 +14,13 @@ import {
   getFilteredData,
   type PBRow,
 } from "./utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const SingleRecommendation = () => {
   const { symbol } = useParams<{ symbol: string }>();
@@ -23,6 +30,8 @@ const SingleRecommendation = () => {
   const [timeRange, setTimeRange] = useState("ALL");
   const { stocks, loading } = useSheetStocks(true);
   const [externalRows, setExternalRows] = useState<PBRow[] | null>(null);
+  const [selectedPerformanceIndex, setSelectedPerformanceIndex] =
+    useState<number>(0);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -40,6 +49,8 @@ const SingleRecommendation = () => {
             ? stocks.find((r: any) => r && r.code === symbol)
             : null;
         setStock({ ...(response || {}), ...(foundStock || {}) });
+        // Reset selected performance index when stock changes
+        setSelectedPerformanceIndex(0);
       })
       .catch(() => {
         setFetchError("Failed to fetch recommendation.");
@@ -49,9 +60,28 @@ const SingleRecommendation = () => {
 
   useEffect(() => {
     let cancelled = false;
-    if (stock && stock?.stock_performance_url) {
+    const performanceArray = Array.isArray(stock?.stock_performance_url)
+      ? stock.stock_performance_url
+      : stock?.stock_performance_url
+        ? [
+            {
+              date: stock.dateRecommended || "",
+              title: "Initial recommendation",
+              stock_recommendation_url: stock.stock_performance_url,
+            },
+          ]
+        : [];
+
+    const currentItem =
+      performanceArray.length > 0
+        ? performanceArray[
+            Math.min(selectedPerformanceIndex, performanceArray.length - 1)
+          ]
+        : null;
+
+    if (currentItem && currentItem.stock_recommendation_url) {
       fetchSingleRecommendationGraphSheetData(
-        stock.stock_performance_url as string
+        currentItem.stock_recommendation_url as string
       )
         .then((rows) => {
           if (!cancelled) setExternalRows(rows);
@@ -65,7 +95,12 @@ const SingleRecommendation = () => {
     return () => {
       cancelled = true;
     };
-  }, [stock?.nseSymbol, stock?.name, stock?.stock_performance_url]);
+  }, [
+    stock?.nseSymbol,
+    stock?.name,
+    stock?.stock_performance_url,
+    selectedPerformanceIndex,
+  ]);
 
   const announcements = Array.isArray(stock?.announcements_and_update)
     ? stock.announcements_and_update.map((item: any, idx: number) => ({
@@ -95,13 +130,66 @@ const SingleRecommendation = () => {
           <Header stock={stock} />
           <main className="max-w-7xl mx-auto px-6 py-10 space-y-10">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <StockNavChart
-                stock={stock}
-                isMobile={!!isMobile}
-                timeRange={timeRange}
-                setTimeRange={setTimeRange}
-                data={getFilteredData(externalRows, timeRange)}
-              />
+              <div className="space-y-4">
+                {/* Performance URL selector */}
+                {Array.isArray(stock?.stock_performance_url) &&
+                  stock.stock_performance_url.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <label className="text-sm font-medium">
+                        Select Performance Date
+                      </label>
+                      <div className="flex flex-col gap-1">
+                        <Select
+                          value={String(selectedPerformanceIndex)}
+                          onValueChange={(v) =>
+                            setSelectedPerformanceIndex(parseInt(v, 10))
+                          }
+                        >
+                          <SelectTrigger className="w-full max-w-xs">
+                            <SelectValue placeholder="Select date" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {stock.stock_performance_url.map(
+                              (item: any, index: number) => (
+                                <SelectItem
+                                  key={index}
+                                  value={String(index)}
+                                >
+                                  {item.date || "Unknown date"}{" "}
+                                  {item.title ? `- ${item.title}` : ""}
+                                </SelectItem>
+                              )
+                            )}
+                          </SelectContent>
+                        </Select>
+                        {stock.stock_performance_url[
+                          selectedPerformanceIndex
+                        ]?.stock_recommendation_url && (
+                          <a
+                            href={
+                              stock.stock_performance_url[
+                                selectedPerformanceIndex
+                              ].stock_recommendation_url
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 underline"
+                          >
+                            Open selected performance URL
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                <StockNavChart
+                  stock={stock}
+                  isMobile={!!isMobile}
+                  timeRange={timeRange}
+                  setTimeRange={setTimeRange}
+                  data={getFilteredData(externalRows, timeRange)}
+                />
+              </div>
               <ResourcesQuarterly
                 stock={stock}
                 setSelectedUpdate={setSelectedUpdate}
