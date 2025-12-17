@@ -11,6 +11,7 @@ import SidebarFloatingSubMenu from "./SidebarFloatingSubMenu";
 import SidebarProfile from "./SidebarProfile";
 import useConstants from "@/hooks/use-constants";
 import PricingDialogModal from "@/components/core/common/Modals/PricingDialogModal";
+import { FaWhatsapp } from "react-icons/fa";
 
 function MobileSidebarButton({ isMobileOpen, toggleMobileMenu }) {
   return (
@@ -117,6 +118,23 @@ const UserSidebar = () => {
     });
   };
 
+  const whatsappItems = [
+    {
+      key: "join_whatsapp_group",
+      name: "Join WhatsApp Group",
+      icon: FaWhatsapp,
+      path: subscription?.is_premium
+        ? "https://chat.whatsapp.com/BtcHdUM5CT3953nLHajCQR?mode=wwt"
+        : "https://whatsapp.com/channel/0029Vb6dMe21SWsvoYQwxp1M",
+    },
+  ];
+
+  const effectiveNavItems = [
+    ...navItems.slice(0, 5),
+    ...whatsappItems,
+    ...navItems.slice(5),
+  ];
+
   const sidebarContent = (
     <div
       ref={sidebarRef}
@@ -132,7 +150,7 @@ const UserSidebar = () => {
       <SidebarNav
         isAdmin={isAdmin}
         profile={profile}
-        navItems={navItems}
+        navItems={effectiveNavItems}
         openMenus={openMenus}
         isCollapsed={isCollapsed}
         navigate={navigate}

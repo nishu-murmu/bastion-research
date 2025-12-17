@@ -16,8 +16,14 @@ export const trackPageView = async (req: Request, res: Response) => {
     }
 
     const ip = getClientIp(req);
-    const userId = (req as any).user?.id || null;
+    const user = (req as any).user || null;
+    const userId = user?.id || null;
     const userAgent = (req.headers["user-agent"] as string) || null;
+
+    // Do not record analytics for admin users
+    if (user && user.role === "admin") {
+      return res.status(202).json({ message: "Accepted (admin not recorded)" });
+    }
 
     // Insert into analytics_pageviews (table should exist; see SQL in README)
     const { error } = await supabase.from("analytics_pageviews").insert({

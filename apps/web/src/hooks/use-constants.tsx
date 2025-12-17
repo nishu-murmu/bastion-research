@@ -112,12 +112,9 @@ const useConstants = () => {
         },
       ],
     },
-    {
-      key: "join_whatsapp_group",
-      name: "Join WhatsApp Group",
-      icon: FaWhatsapp,
-      path: "https://chat.whatsapp.com/BtcHdUM5CT3953nLHajCQR?mode=wwt",
-    },
+    // WhatsApp group access: free vs paid
+    // Free users: channel link; paid users: existing group link
+    // The actual gating happens in the sidebar using subscription data.
     {
       key: "subscribe_substack",
       name: "Subscribe to Substack",
