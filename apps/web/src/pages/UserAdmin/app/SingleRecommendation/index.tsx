@@ -151,10 +151,7 @@ const SingleRecommendation = () => {
                           <SelectContent>
                             {stock.stock_performance_url.map(
                               (item: any, index: number) => (
-                                <SelectItem
-                                  key={index}
-                                  value={String(index)}
-                                >
+                                <SelectItem key={index} value={String(index)}>
                                   {item.date || "Unknown date"}{" "}
                                   {item.title ? `- ${item.title}` : ""}
                                 </SelectItem>
@@ -162,22 +159,6 @@ const SingleRecommendation = () => {
                             )}
                           </SelectContent>
                         </Select>
-                        {stock.stock_performance_url[
-                          selectedPerformanceIndex
-                        ]?.stock_recommendation_url && (
-                          <a
-                            href={
-                              stock.stock_performance_url[
-                                selectedPerformanceIndex
-                              ].stock_recommendation_url
-                            }
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-blue-600 underline"
-                          >
-                            Open selected performance URL
-                          </a>
-                        )}
                       </div>
                     </div>
                   )}
