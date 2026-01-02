@@ -1,5 +1,7 @@
 import crypto from "crypto";
 import { supabase } from "../supabase";
+import { createOrGetCustomer, createInvoice, getInvoicePDF } from "./zoho-invoice.service";
+import { createInvoiceRecord } from "./invoice.service";
 
 export const verifyWebhookSignature = (
   signature: string | undefined,
@@ -111,6 +113,95 @@ export const handlePaymentSuccess = async (payload: any) => {
         .maybeSingle();
 
   await Promise.all([updateUserPromise, paymentHistoryPromise]);
+
+  // --- Zoho Invoice integration (create & persist invoice) ---
+  try {
+    const userId = customer_details?.customer_id as string | undefined;
+    const customerEmail =
+      customer_details?.customer_email ||
+      customer_details?.customer_phone ||
+      null;
+
+    if (!userId || !customerEmail) {
+      console.warn(
+        "Skipping Zoho invoice creation: missing userId or customerEmail",
+        { userId, customerEmail }
+      );
+      return;
+    }
+
+    // Fetch user info for a better display name if available
+    const { data: userRow } = await supabase
+      .from("users")
+      .select("first_name, last_name, email")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const displayName =
+      [userRow?.first_name, userRow?.last_name].filter(Boolean).join(" ") ||
+      userRow?.email ||
+      customerEmail;
+
+    const zohoCustomer = await createOrGetCustomer({
+      email: customerEmail,
+      displayName,
+    });
+
+    const amount = currentPlan?.price_amount ?? payment?.payment_amount ?? 0;
+    const today = new Date();
+    const dueDate = today.toISOString().split("T")[0]; // YYYY-MM-DD
+
+    const zohoInvoice = await createInvoice({
+      customer_id: zohoCustomer.contact_id,
+      date: dueDate,
+      due_date: dueDate,
+      line_items: [
+        {
+          name: currentPlan?.plan_name || "Subscription Plan",
+          rate: amount,
+          quantity: 1,
+        },
+      ],
+      custom_fields: [
+        {
+          label: "Cashfree Transaction ID",
+          value: transactionId,
+        },
+        {
+          label: "Plan ID",
+          value: currentPlan?.plan_id ?? null,
+        },
+      ],
+    });
+
+    const { pdfUrl } = await getInvoicePDF(zohoInvoice.invoice_id);
+
+    // Persist invoice metadata in dedicated invoices table
+    await createInvoiceRecord({
+      user_id: userId,
+      plan_id: currentPlan?.plan_id ?? null,
+      zoho_customer_id: zohoCustomer.contact_id,
+      zoho_invoice_id: zohoInvoice.invoice_id,
+      invoice_pdf_url: pdfUrl,
+      status: zohoInvoice.status || "sent",
+      transaction_id: transactionId,
+    });
+
+    // Also backfill onto payment_history for easy joins in existing UIs
+    const updateFields: Record<string, any> = {
+      invoice_id: zohoInvoice.invoice_id,
+      invoice_pdf_url: pdfUrl,
+      zoho_customer_id: zohoCustomer.contact_id,
+      zoho_invoice_id: zohoInvoice.invoice_id,
+    };
+
+    await supabase
+      .from("payment_history")
+      .update(updateFields)
+      .eq("transaction_id", transactionId);
+  } catch (err: any) {
+    console.error("Zoho invoice creation failed (non-blocking):", err?.message || err);
+  }
 };
 
 export const handlePaymentUserDropped = async (payload: any) => {

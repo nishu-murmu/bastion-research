@@ -42,6 +42,22 @@ const RowActions = ({
     <button
       className="text-blue-600 hover:text-blue-800 p-1"
       title="View Invoice"
+      onClick={async () => {
+        if (!data?.invoice_id) return;
+        try {
+          const res = await fetch(`/api/admin/invoices/${data.invoice_id}`, {
+            credentials: "include",
+          });
+          if (!res.ok) return;
+          const json = (await res.json()) as { url?: string };
+          if (json?.url) {
+            window.open(json.url, "_blank");
+          }
+        } catch (e) {
+          // Swallow error – admin can still see payment row even if invoice open fails
+          console.error("Failed to open invoice", e);
+        }
+      }}
     >
       <FileText size={16} />
     </button>

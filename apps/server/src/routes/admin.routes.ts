@@ -27,13 +27,17 @@ import { admin, protect } from "../middleware/auth.middleware";
 import {
   getUserActivitySummary,
   getUserPageVisits,
-  getUserRecommendationVisits
+  getUserRecommendationVisits,
 } from "../controllers/userActivity.controller";
 import {
   getMailchimpNewsletter,
   listMailchimpNewsletters,
   setMailchimpNewsletterHidden,
 } from "../controllers/mailchimp.controller";
+import {
+  adminGetAllInvoices,
+  downloadInvoice,
+} from "../controllers/invoice.controller";
 
 const router = Router();
 
@@ -97,5 +101,9 @@ router.delete("/content/testimonials/:id", protect, admin, deleteTestimonial);
 // Admin settings (full object)
 router.get("/settings", protect, admin, getAdminSettings);
 router.put("/settings", protect, admin, updateAdminSettings);
+
+// Invoices for admin
+router.get("/invoices", protect, admin, adminGetAllInvoices);
+router.get("/invoices/:id", protect, admin, downloadInvoice);
 
 export default router;
