@@ -99,7 +99,10 @@ const EditProfile = () => {
     mutationFn: async (payload: ProfileFormValues) => {
       if (!user?.id) throw new Error("User not loaded");
       // Send only provided fields; backend already whitelists
-      const res = await axiosInstance.put(`/api/users/${user.id}`, payload);
+      const res = await axiosInstance.put(
+        `/api/users/${user.id}`,
+        payload
+      );
       return res.data;
     },
     onSuccess: async () => {
@@ -242,7 +245,7 @@ const EditProfile = () => {
                 <Input id="pan_card_number" {...register("pan_card_number")} />
               </div>
 
-              <div>
+              <div className="flex flex-col justify-end h-full">
                 <Button
                   type="button"
                   variant="outline"
@@ -258,6 +261,7 @@ const EditProfile = () => {
                 </Button>
               </div>
             </div>
+
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>

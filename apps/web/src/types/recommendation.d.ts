@@ -12,6 +12,12 @@ interface Announcement {
   description: string;
 }
 
+interface StockPerformanceItem {
+  date: string;
+  title: string;
+  stock_recommendation_url: string;
+}
+
 interface StockData {
   id: string | number;
   logo?: string;
@@ -36,6 +42,9 @@ interface StockData {
   lastUpdated?: string;
   percentReturn?: number | string;
   tags?: string;
+  dateRecommended?: string;
+  holdingPeriod?: string;
+  dateExit?: string;
 }
 /**
  * Controls for search, sort, and filter.
@@ -133,7 +142,7 @@ interface ExtendedRecommendationRecord {
   exit_rationale?: string;
   quarterly_update?: UpdateItem[];
   announcements_and_update?: UpdateItem[];
-  stock_performance_url?: string;
+  stock_performance_url?: StockPerformanceItem[] | string;
   tags?: string;
   created_at?: string;
 }

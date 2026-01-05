@@ -9,21 +9,7 @@ const StockGrid = ({
   visibleCount,
   onLoadMore,
 }: StockGridProps) => {
-  const sortedStocks = [...stocks].sort((a, b) => {
-    const aFreemium = a.tags === "freemium";
-    const bFreemium = b.tags === "freemium";
-
-    if (aFreemium !== bFreemium) {
-      return aFreemium ? -1 : 1;
-    }
-
-    return (
-      Number(b.marketCap.replace(/[^0-9.]/g, "")) -
-      Number(a.marketCap.replace(/[^0-9.]/g, ""))
-    );
-  });
-
-  const visibleStocks = sortedStocks.slice(0, visibleCount);
+  const visibleStocks = stocks.slice(0, visibleCount);
 
   return (
     <>
@@ -44,7 +30,7 @@ const StockGrid = ({
       </div>
 
       {/* Load More */}
-      {visibleCount < sortedStocks.length && (
+      {visibleCount < stocks.length && (
         <div className="text-center mt-8">
           <Button
             variant="outline"

@@ -30,7 +30,10 @@ const recommendationSchema = z.object({
   nseSymbol: z.string().min(1, "Symbol is required"),
   logo: z.string().min(1, "Company Logo is required"),
   business_note: z.string().min(1, "Business Note (PDF) is required"),
-  stock_performance_url: z.string().min(1, "Performance URL is required"),
+  // Stock performance URLs are managed via local state as an array of
+  // { date, title, stock_recommendation_url } objects.
+  // Keep this optional so zod doesn't block submit; we validate manually.
+  stock_performance_url: z.any().optional(),
   tags: z.string().min(1, "Tags is required"),
   video: z.string().optional(),
   quick_bite: z.string().optional(),
@@ -44,6 +47,12 @@ interface UpdateItem {
   title: string;
   description: string;
   pdf_url: string;
+}
+
+interface StockPerformanceItem {
+  date: string;
+  title: string;
+  stock_recommendation_url: string;
 }
 
 interface AddRecommendationModalProps {
@@ -62,6 +71,7 @@ const AddRecommendationModal: React.FC<AddRecommendationModalProps> = ({
   const [selectedFiles, setSelectedFiles] = useState<Record<string, File | null>>({});
   const [quarterlyUpdates, setQuarterlyUpdates] = useState<UpdateItem[]>([]);
   const [announcements, setAnnouncements] = useState<UpdateItem[]>([]);
+  const [stockPerformanceItems, setStockPerformanceItems] = useState<StockPerformanceItem[]>([]);
   const [quarterlyUploading, setQuarterlyUploading] = useState<Record<number, boolean>>({});
   const [announcementUploading, setAnnouncementUploading] = useState<Record<number, boolean>>({});
 
@@ -91,7 +101,6 @@ const AddRecommendationModal: React.FC<AddRecommendationModalProps> = ({
       nseSymbol: "",
       logo: "",
       business_note: "",
-      stock_performance_url: "",
       tags: "",
       video: "",
     },
@@ -106,6 +115,7 @@ const AddRecommendationModal: React.FC<AddRecommendationModalProps> = ({
       setSelectedFiles({});
       setQuarterlyUpdates([]);
       setAnnouncements([]);
+      setStockPerformanceItems([]);
       setLocalError({});
     }
   }, [open, reset]);
@@ -175,7 +185,17 @@ const AddRecommendationModal: React.FC<AddRecommendationModalProps> = ({
     const err: Record<string, string> = {};
     if (!selectedFiles.logo) err.logo = "Company Logo is required";
     if (!selectedFiles.business_note) err.business_note = "Business Note (PDF) is required";
-    if (!watch("stock_performance_url")?.trim()) err.stock_performance_url = "Performance URL is required";
+    if (
+      !stockPerformanceItems.length ||
+      stockPerformanceItems.some(
+        (item) =>
+          !item.date.trim() ||
+          !item.title.trim() ||
+          !item.stock_recommendation_url.trim()
+      )
+    ) {
+      err.stock_performance_url = "At least one complete performance URL (date, title, URL) is required";
+    }
     if (!watch("tags")?.trim()) err.tags = "Tags is required";
     setLocalError(err);
     return Object.keys(err).length === 0;
@@ -191,7 +211,7 @@ const AddRecommendationModal: React.FC<AddRecommendationModalProps> = ({
     const formData = new FormData();
     formData.append("company_symbol", data.nseSymbol);
     formData.append("video", data.video || "");
-    formData.append("stock_performance_url", data.stock_performance_url);
+    formData.append("stock_performance_url", JSON.stringify(stockPerformanceItems));
     formData.append("quarterly_update", JSON.stringify(quarterlyUpdates));
     formData.append("announcements_and_update", JSON.stringify(announcements));
     formData.append("tags", data.tags);
@@ -385,6 +405,118 @@ const AddRecommendationModal: React.FC<AddRecommendationModalProps> = ({
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Stock Performance URLs */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">
+                  Stock Performance URLs <span className="text-red-600">*</span>
+                </h3>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    setStockPerformanceItems((prev) => [
+                      ...prev,
+                      { date: "", title: "", stock_recommendation_url: "" },
+                    ])
+                  }
+                >
+                  <Plus className="h-4 w-4 mr-2" /> Add Performance URL
+                </Button>
+              </div>
+              {localError.stock_performance_url && (
+                <p className="text-xs text-red-600">
+                  {localError.stock_performance_url}
+                </p>
+              )}
+              {stockPerformanceItems.length === 0 ? (
+                <p className="text-center text-gray-500 py-4">
+                  No performance URLs added yet.
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Performance URL</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {stockPerformanceItems.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell>
+                          <Input
+                            type="date"
+                            value={item.date}
+                            onChange={(e) =>
+                              setStockPerformanceItems((prev) => {
+                                const next = [...prev];
+                                next[index] = {
+                                  ...next[index],
+                                  date: e.target.value,
+                                };
+                                return next;
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            placeholder="Title"
+                            value={item.title}
+                            onChange={(e) =>
+                              setStockPerformanceItems((prev) => {
+                                const next = [...prev];
+                                next[index] = {
+                                  ...next[index],
+                                  title: e.target.value,
+                                };
+                                return next;
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            placeholder="Performance URL"
+                            value={item.stock_recommendation_url}
+                            onChange={(e) =>
+                              setStockPerformanceItems((prev) => {
+                                const next = [...prev];
+                                next[index] = {
+                                  ...next[index],
+                                  stock_recommendation_url: e.target.value,
+                                };
+                                return next;
+                              })
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-600"
+                            onClick={() =>
+                              setStockPerformanceItems((prev) =>
+                                prev.filter((_, i) => i !== index)
+                              )
+                            }
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </div>
 
             {/* Quarterly Updates */}

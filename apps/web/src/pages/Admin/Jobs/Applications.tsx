@@ -3,7 +3,7 @@ import { ColDef } from "ag-grid-community";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createApplication,
-  deleteApplication,
+  deleteApplication as deleteApplicationApi,
   getApplications,
   updateApplication,
 } from "@/api/applications-api";
@@ -52,7 +52,7 @@ const Applications = () => {
         status: form.status,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["applications"] });
+      queryClient.invalidateQueries({ queryKey: [queryKeys.applications] });
       setForm({
         job_id: "",
         job_title: "",
@@ -70,13 +70,13 @@ const Applications = () => {
     mutationFn: (payload: any) =>
       updateApplication(payload.id, payload.body),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["applications"] }),
+      queryClient.invalidateQueries({ queryKey: [queryKeys.applications] }),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number | string) => deleteApplication(id),
+    mutationFn: (id: number | string) => deleteApplicationApi(id),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["applications"] }),
+      queryClient.invalidateQueries({ queryKey: [queryKeys.applications] }),
   });
 
   const [editOpen, setEditOpen] = useState(false);
@@ -155,6 +155,18 @@ const Applications = () => {
         );
       },
       minWidth: 110,
+    },
+    {
+      headerName: "Cover Letter",
+      field: "cover_letter",
+      flex: 2,
+      minWidth: 240,
+      tooltipField: "cover_letter",
+      valueFormatter: (p) => {
+        if (!p.value) return "";
+        const str = String(p.value);
+        return str.length > 120 ? `${str.slice(0, 120)}…` : str;
+      },
     },
     { headerName: "Comments", field: "comments", editable: true },
     { headerName: "Date Applied", field: "date_applied" },
@@ -298,8 +310,18 @@ const Applications = () => {
           { name: "applicant_name", label: "Applicant Name" },
           { name: "email", label: "Email", type: "email" },
           { name: "phone", label: "Phone", type: "tel" },
-          { name: "cover_letter", label: "Cover Letter" },
-          { name: "comments", label: "Comments" },
+          {
+            name: "cover_letter",
+            label: "Cover Letter",
+            multiline: true,
+            rows: 6,
+          },
+          {
+            name: "comments",
+            label: "Comments",
+            multiline: true,
+            rows: 4,
+          },
           { name: "status", label: "Status" },
         ]}
         initialValues={editRow}

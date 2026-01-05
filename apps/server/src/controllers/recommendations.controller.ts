@@ -163,7 +163,29 @@ export const upsertRecommendationByCompany = async (
 
     // Gather text fields
     let video: string | undefined = body.video;
-    let stock_performance_url: string | undefined = body.stock_performance_url;
+
+    // Stock performance URLs can now be sent as:
+    // - JSON stringified array of { date, title, stock_recommendation_url }
+    // - direct JS array (e.g. from JSON body)
+    // - legacy single URL string
+    let stock_performance_url: any = parseMaybeJson(
+      body.stock_performance_url,
+      []
+    );
+
+    // Normalize legacy single-string inputs into an array of objects
+    if (
+      typeof stock_performance_url === "string" &&
+      stock_performance_url.trim() !== ""
+    ) {
+      stock_performance_url = [
+        {
+          date: new Date().toISOString().slice(0, 10),
+          title: "Initial recommendation",
+          stock_recommendation_url: stock_performance_url,
+        },
+      ];
+    }
 
     // Arrays can arrive as JSON-strings in multipart
     let quarterly_update: any = parseMaybeJson(body.quarterly_update, []);
@@ -194,7 +216,9 @@ export const upsertRecommendationByCompany = async (
       return undefined;
     };
 
-    const dirBase = `recommendations/${encodeURIComponent(company_symbol)}`;
+    // Replace all non-word characters with underscore for safe directory name
+    const safeCompanySymbol = String(company_symbol).replace(/[^\w]/g, "_");
+    const dirBase = `recommendations/${safeCompanySymbol}`;
 
     let logoUrl: string | undefined = body.logo;
     const logoFile = pickFirstFile("logo");

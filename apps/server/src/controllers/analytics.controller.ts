@@ -16,8 +16,14 @@ export const trackPageView = async (req: Request, res: Response) => {
     }
 
     const ip = getClientIp(req);
-    const userId = (req as any).user?.id || null;
+    const user = (req as any).user || null;
+    const userId = user?.id || null;
     const userAgent = (req.headers["user-agent"] as string) || null;
+
+    // Do not record analytics for admin users
+    if (user && user.role === "admin") {
+      return res.status(202).json({ message: "Accepted (admin not recorded)" });
+    }
 
     // Insert into analytics_pageviews (table should exist; see SQL in README)
     const { error } = await supabase.from("analytics_pageviews").insert({
@@ -49,62 +55,110 @@ export const getAnalyticsSummary = async (req: Request, res: Response) => {
     const days = Math.max(1, Math.min(90, Number(req.query.days) || 7));
     const since = new Date();
     since.setDate(since.getDate() - days + 1);
+    const sinceIso = since.toISOString();
 
-    // We will fetch raw rows since the supabase-js v2 client has limited agg helpers without SQL
-    const { data: rows, error } = await supabase
-      .from("analytics_pageviews")
-      .select("occurred_at, path, ip, user_id")
-      .gte("occurred_at", since.toISOString());
+    // Fetch all matching rows in deterministic pages to avoid the default 1000-row cap
+    const PAGE_SIZE = 1000;
+    let from = 0;
+    const rows: {
+      occurred_at: string;
+      path: string | null;
+      ip: string | null;
+      user_id: string | null;
+    }[] = [];
 
-    if (error) {
-      return res.status(500).json({ message: "Failed to load analytics" });
+    while (true) {
+      const { data, error } = await supabase
+        .from("analytics_pageviews")
+        .select("occurred_at, path, ip, user_id")
+        .gte("occurred_at", sinceIso)
+        .order("occurred_at", { ascending: true })
+        .range(from, from + PAGE_SIZE - 1);
+
+      if (error) {
+        console.error("Analytics summary fetch error:", error);
+        return res.status(500).json({ message: "Failed to load analytics" });
+      }
+
+      if (!data || data.length === 0) {
+        break;
+      }
+
+      rows.push(
+        ...(data as any[]).map((r) => ({
+          occurred_at: (r as any).occurred_at as string,
+          path: ((r as any).path as string | null) ?? null,
+          ip: ((r as any).ip as string | null) ?? null,
+          user_id: ((r as any).user_id as string | null) ?? null,
+        }))
+      );
+
+      if (data.length < PAGE_SIZE) {
+        break;
+      }
+
+      from += PAGE_SIZE;
     }
 
     // Aggregate in-memory
     const byDay: Record<
       string,
-      { total: number; uniqueIPs: Set<string>; uniqueUsers: Set<string> }
+      {
+        total: number;
+        uniqueUsers: Set<string | null>;
+        uniqueIps: Set<string | null>;
+      }
     > = {};
     const topPaths: Record<
       string,
-      { views: number; ips: Set<string>; users: Set<string> }
+      {
+        views: number;
+        users: Set<string | null>;
+        ips: Set<string | null>;
+      }
     > = {};
-    const allIps = new Set<string>();
-    const allUsers = new Set<string>();
+    const allUsers = new Set<string | null>();
+    const allIps = new Set<string | null>();
 
     const now = Date.now();
-    let activeIps = new Set<string>();
-    let activeUsers = new Set<string>();
+    const activeUsers = new Set<string | null>();
+    const activeIps = new Set<string | null>();
 
-    for (const r of rows || []) {
+    for (const r of rows) {
       const d = new Date(r.occurred_at);
       const dayKey = d.toISOString().slice(0, 10); // YYYY-MM-DD
       byDay[dayKey] ||= {
         total: 0,
-        uniqueIPs: new Set(),
         uniqueUsers: new Set(),
+        uniqueIps: new Set(),
       };
       byDay[dayKey].total += 1;
-      if (r.ip) {
-        byDay[dayKey].uniqueIPs.add(r.ip);
-        allIps.add(r.ip);
-      }
-      if (r.user_id) {
-        byDay[dayKey].uniqueUsers.add(r.user_id);
-        allUsers.add(r.user_id);
-      }
+      const userId = r.user_id ?? null;
+      const ip = r.ip ?? null;
+      byDay[dayKey].uniqueUsers.add(userId);
+      byDay[dayKey].uniqueIps.add(ip);
+      allUsers.add(userId);
+      allIps.add(ip);
 
       const pathKey = r.path || "";
-      topPaths[pathKey] ||= { views: 0, ips: new Set(), users: new Set() };
+      topPaths[pathKey] ||= { views: 0, users: new Set(), ips: new Set() };
       topPaths[pathKey].views += 1;
-      if (r.ip) topPaths[pathKey].ips.add(r.ip);
-      if (r.user_id) topPaths[pathKey].users.add(r.user_id);
+      topPaths[pathKey].users.add(userId);
+      topPaths[pathKey].ips.add(ip);
 
       // Active in last 5 minutes
       if (now - d.getTime() <= 5 * 60 * 1000) {
-        if (r.ip) activeIps.add(r.ip);
-        if (r.user_id) activeUsers.add(r.user_id);
+        activeUsers.add(userId);
+        activeIps.add(ip);
       }
+    }
+
+    // Remove null from sets for stats where identifiers do not exist
+    function countUniqueWithoutNull(set: Set<string | null>): number {
+      const filtered = Array.from(set).filter(
+        (u) => u !== null && u !== undefined
+      );
+      return filtered.length;
     }
 
     const visitsByDay = Object.keys(byDay)
@@ -112,8 +166,8 @@ export const getAnalyticsSummary = async (req: Request, res: Response) => {
       .map((k) => ({
         date: k,
         totalViews: byDay[k].total,
-        uniqueIPs: byDay[k].uniqueIPs.size,
-        uniqueUsers: byDay[k].uniqueUsers.size,
+        uniqueUsers: countUniqueWithoutNull(byDay[k].uniqueUsers),
+        uniqueIPs: countUniqueWithoutNull(byDay[k].uniqueIps),
       }));
 
     const usersByDay = visitsByDay.map((v) => ({
@@ -125,8 +179,8 @@ export const getAnalyticsSummary = async (req: Request, res: Response) => {
       .map(([path, v]) => ({
         path,
         views: v.views,
-        uniqueIPs: v.ips.size,
-        uniqueUsers: v.users.size,
+        uniqueUsers: countUniqueWithoutNull(v.users),
+        uniqueIPs: countUniqueWithoutNull(v.ips),
       }))
       .sort((a, b) => b.views - a.views)
       .slice(0, 10);
@@ -351,8 +405,14 @@ export const getAnalyticsSummary = async (req: Request, res: Response) => {
       visitsByDay,
       usersByDay,
       topPaths: topPathsArr,
-      activeNow: { ips: activeIps.size, users: activeUsers.size },
-      totals: { uniqueIPs: allIps.size, uniqueUsers: allUsers.size },
+      activeNow: {
+        ips: countUniqueWithoutNull(activeIps),
+        users: countUniqueWithoutNull(activeUsers),
+      },
+      totals: {
+        uniqueIPs: countUniqueWithoutNull(allIps),
+        uniqueUsers: countUniqueWithoutNull(allUsers),
+      },
       // Business metrics
       subscribers: {
         totalActive: totalActiveSubscribers,

@@ -81,6 +81,7 @@ export const getPaymentHistory = async (req: Request, res: Response) => {
     .select(
       `
       transaction_id,
+      zoho_invoice_id,
       payer_email,
       transaction_status,
       user_id,
@@ -100,9 +101,7 @@ export const getPaymentHistory = async (req: Request, res: Response) => {
     const plan = r?.membership_plans || {};
     return {
       transaction_id: r.transaction_id,
-      // Prefer real Zoho invoice id if present, otherwise fall back to txn id
-      invoice_id: (r as any).invoice_id || r.transaction_id,
-      invoice_pdf_url: (r as any).invoice_pdf_url || null,
+      invoice_id: r.transaction_id, // using txn id as invoice placeholder
       user_id: r.user_id,
       user_email: user.email || null,
       membership:
@@ -133,6 +132,7 @@ export const getMyPaymentHistory = async (req: Request, res: Response) => {
       .select(
         `
         transaction_id,
+        zoho_invoice_id,
         payer_email,
         transaction_status,
         user_id,
@@ -153,8 +153,7 @@ export const getMyPaymentHistory = async (req: Request, res: Response) => {
       const plan = r?.membership_plans || {};
       return {
         transaction_id: r.transaction_id,
-        invoice_id: (r as any).invoice_id || r.transaction_id,
-        invoice_pdf_url: (r as any).invoice_pdf_url || null,
+        invoice_id: r.transaction_id,
         payment_gateway: "Cashfree",
         payment_type: "Subscription",
         payer_email: r.payer_email || null,
@@ -234,52 +233,6 @@ export const deleteMembershipPlan = async (req: Request, res: Response) => {
     .select();
   if (error) return res.status(500).json({ error: error.message });
   res.status(200).json(data);
-};
-
-export const createSubscription = async (_req: Request, res: Response) => {
-  return res
-    .status(410)
-    .json({ error: "Manual subscription creation is no longer supported." });
-};
-
-export const updateSubscription = async (_req: Request, res: Response) => {
-  return res
-    .status(410)
-    .json({ error: "Manual subscription updates are no longer supported." });
-};
-
-export const deleteSubscription = async (_req: Request, res: Response) => {
-  return res.status(410).json({
-    error: "Manual subscription deletion is no longer supported.",
-  });
-};
-
-export const createPaymentHistory = async (req: Request, res: Response) => {
-  const {
-    transaction_id,
-    user_id,
-    plan_id,
-    payer_email,
-    transaction_status,
-    // payment_date,
-    // amount,
-  } = req.body;
-  const { data, error } = await supabase
-    .from("payment_history")
-    .insert([
-      {
-        transaction_id,
-        user_id,
-        plan_id,
-        payer_email,
-        transaction_status,
-        // payment_date,
-        // amount,
-      },
-    ])
-    .select();
-  if (error) return res.status(500).json({ error: error.message });
-  res.status(201).json(data);
 };
 
 export const deletePaymentHistory = async (req: Request, res: Response) => {

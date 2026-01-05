@@ -1,9 +1,10 @@
 import PricingDialogModal from "@/components/core/common/Modals/PricingDialogModal";
-import { useAuth } from "@/contexts/AuthContext";
 import useSheetStocks from "@/hooks/use-sheets-stocks";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { formatIndianNumber } from "@/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/use-subscription";
 
 const getBandColor = (band: string) => {
   switch (band) {
@@ -29,11 +30,13 @@ const RecentRecommendations: React.FC = () => {
   const { dbData: stocks, loading, error } = useSheetStocks();
   const { user } = useAuth();
   const [showPricing, setShowPricing] = useState(false);
+  const { data: subscription } = useSubscription();
 
   // Get user's tier
-  const userPlanCode = user?.membership_plans?.plan_code || "freemium";
+  const userPlanCode =
+    subscription?.currentPlan || user?.membership_plans?.plan_code || "freemium";
   const currentTier = tiers[userPlanCode] ?? tiers["freemium"];
-  const isPremiumUser = !!user?.is_premium;
+  const isPremiumUser = !!subscription?.is_premium;
 
   // Only include stocks this user's tier is allowed to access
   const accessibleStocks =
@@ -44,9 +47,10 @@ const RecentRecommendations: React.FC = () => {
 
   // Sorted by newest
   const sorted = [...accessibleStocks].sort(
-    (a, b) =>
-      new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
-  );
+  (a, b) =>
+    new Date(b.dateRecommended ?? 0).getTime() -
+    new Date(a.dateRecommended ?? 0).getTime()
+);
 
   // Show only up to 3 latest accessible recommendations
   const latestAccessibleStocks = sorted.slice(0, 3);
@@ -136,7 +140,11 @@ const RecentRecommendations: React.FC = () => {
                         {stock.code || stock.name}
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
-                        MCAP: {stock.marketCap}
+                        MCAP: ₹
+                        {Number(stock.marketCap).toLocaleString("en-IN", {
+                          maximumFractionDigits: 2,
+                        })}{" "}
+                        Cr
                       </div>
                     </div>
                   </div>

@@ -350,3 +350,10 @@
     margin-left: 0;
   }
 }
+
+@media (max-width: 2000px) {
+  .plan-wrapper {
+    flex-direction: column;
+    gap: 10px; /* optional spacing */
+  }
+}

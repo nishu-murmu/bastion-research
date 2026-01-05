@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { supabase } from "../supabase";
 import { pgCreateOrder } from "./cashfree-pg.service";
 import { getFrontendBaseUrl } from "./cashfree-config";
-
+import { incrementCouponUsage } from "../controllers/coupon.controller";
 export type PublicPlan = {
   code: string;
   name: string;
@@ -52,7 +52,9 @@ export const fetchPlans = async (): Promise<PublicPlan[]> => {
 export const resolvePlanById = async (planId: number) => {
   const { data: planRows, error } = await supabase
     .from("membership_plans")
-    .select("plan_id, plan_name, price_amount, currency, tier, plan_code")
+    .select(
+      "plan_id, plan_name, price_amount, currency, tier, plan_code, duration_months"
+    )
     .eq("plan_id", planId)
     .limit(1);
   if (error) throw new Error(error.message);
@@ -86,6 +88,15 @@ export const createOrderForPlanService = async (params: {
   // Handle free tier or zero-amount subscription
   if (params.is_free || params.discount_amount === 0) {
     const startDate = new Date();
+    const startDateStr = startDate.toISOString().split("T")[0];
+    let endDateStr: string | null = null;
+
+    const durationMonths = (planRow as any).duration_months;
+    if (typeof durationMonths === "number" && durationMonths > 0) {
+      const end = new Date(startDate);
+      end.setMonth(end.getMonth() + durationMonths);
+      endDateStr = end.toISOString().split("T")[0];
+    }
 
     // For free tier, mark the user as active on this plan in users table
     await supabase
@@ -93,7 +104,8 @@ export const createOrderForPlanService = async (params: {
       .update({
         status: "active",
         plan_id: planRow.plan_id,
-        plan_code: planRow.plan_code || null,
+        subscription_start_date: startDateStr,
+        subscription_end_date: endDateStr,
       })
       .eq("id", params.customer_id);
 
@@ -106,6 +118,16 @@ export const createOrderForPlanService = async (params: {
       transaction_id: transactionId,
       created_at: startDate.toISOString(),
     });
+
+    // Increment coupon usage if coupon was used
+    if (params.coupon_code) {
+      try {
+        await incrementCouponUsage(params.coupon_code);
+      } catch (e: any) {
+        console.error("Failed to increment coupon usage:", e);
+        // Do not fail the request if coupon increment fails
+      }
+    }
 
     return {
       selected,

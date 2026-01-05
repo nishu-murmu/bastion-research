@@ -17,7 +17,6 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
-import axiosInstance from "../../../../api/axios";
 // --- Patch for Radix Select & Dialog stacking issue ---
 import {
   Select,
@@ -29,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Updated: Add required validations for logo, business_note, stock_performance_url, tags
+// Updated: Add required validations for logo, business_note, tags
 const recommendationSchema = z.object({
   nseSymbol: z.string().min(1, "Symbol is required"),
   dateRecommended: z.string().optional(),
@@ -46,7 +45,8 @@ const recommendationSchema = z.object({
   business_note: z.string().min(1, "Business Note (PDF) is required"),
   quick_bite: z.string().optional(),
   video: z.string().optional(),
-  stock_performance_url: z.string().min(1, "Performance URL is required"),
+  // Stock performance URLs are managed as an array via local state
+  stock_performance_url: z.any().optional(),
   exit_rationale: z.string().optional(),
   quarterly_update: z.string().optional(),
   announcements_and_update: z.string().optional(),
@@ -74,6 +74,9 @@ const EditRecommendationModal: React.FC<EditRecommendationModalProps> = ({
   >({});
   const [quarterlyUpdates, setQuarterlyUpdates] = useState<UpdateItem[]>([]);
   const [announcements, setAnnouncements] = useState<UpdateItem[]>([]);
+  const [stockPerformanceItems, setStockPerformanceItems] = useState<
+    { date: string; title: string; stock_recommendation_url: string }[]
+  >([]);
   const [editingQuarterly, setEditingQuarterly] = useState<number | null>(null);
   const [editingAnnouncement, setEditingAnnouncement] = useState<number | null>(
     null
@@ -129,7 +132,6 @@ const EditRecommendationModal: React.FC<EditRecommendationModalProps> = ({
         action: record.action || "",
         targetPrice: String(record.targetPrice || ""),
         upsidePotential: String(record.upsidePotential || ""),
-        stock_performance_url: record?.stock_performance_url || "",
         latestMcapCr: String(record.latestMcapCr || ""),
         logo: (record as any).logo || "",
         business_note: record.business_note || "",
@@ -140,11 +142,34 @@ const EditRecommendationModal: React.FC<EditRecommendationModalProps> = ({
       });
       setQuarterlyUpdates(record.quarterly_update || []);
       setAnnouncements(record.announcements_and_update || []);
+      // Normalize stock_performance_url into an array of objects
+      const sp = (record as any).stock_performance_url;
+      if (Array.isArray(sp)) {
+        setStockPerformanceItems(
+          sp.map((item: any) => ({
+            date: item?.date || "",
+            title: item?.title || "",
+            stock_recommendation_url:
+              item?.stock_recommendation_url || item?.url || "",
+          }))
+        );
+      } else if (typeof sp === "string" && sp.trim() !== "") {
+        setStockPerformanceItems([
+          {
+            date: record.dateRecommended || "",
+            title: "Initial recommendation",
+            stock_recommendation_url: sp,
+          },
+        ]);
+      } else {
+        setStockPerformanceItems([]);
+      }
       setLocalError({});
     } else if (!open) {
       reset();
       setQuarterlyUpdates([]);
       setAnnouncements([]);
+      setStockPerformanceItems([]);
       setLocalError({});
     }
   }, [open, record, reset]);
@@ -300,10 +325,16 @@ const EditRecommendationModal: React.FC<EditRecommendationModalProps> = ({
 
     // For stock_performance_url
     if (
-      !watch("stock_performance_url") ||
-      watch("stock_performance_url").trim() === ""
+      !stockPerformanceItems.length ||
+      stockPerformanceItems.some(
+        (item) =>
+          !item.date.trim() ||
+          !item.title.trim() ||
+          !item.stock_recommendation_url.trim()
+      )
     ) {
-      errors.stock_performance_url = "Performance URL is required";
+      errors.stock_performance_url =
+        "At least one complete performance URL (date, title, URL) is required";
     }
 
     // For tags
@@ -331,7 +362,7 @@ const EditRecommendationModal: React.FC<EditRecommendationModalProps> = ({
       formData.append("video", data.video || "");
       formData.append(
         "stock_performance_url",
-        data.stock_performance_url || ""
+        JSON.stringify(stockPerformanceItems)
       );
       formData.append("quarterly_update", JSON.stringify(quarterlyUpdates));
       formData.append(
@@ -597,19 +628,117 @@ const EditRecommendationModal: React.FC<EditRecommendationModalProps> = ({
 
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Stock Performance URL{" "}
+                    Stock Performance URLs{" "}
                     <span className="text-red-600">*</span>
                   </label>
-                  <Input
-                    {...register("stock_performance_url")}
-                    placeholder="Spreadsheet URL"
-                    className={
-                      localError.stock_performance_url ||
-                      errors.stock_performance_url
-                        ? "border-red-500"
-                        : ""
-                    }
-                  />
+                  <div className="space-y-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setStockPerformanceItems((prev) => [
+                          ...prev,
+                          {
+                            date: "",
+                            title: "",
+                            stock_recommendation_url: "",
+                          },
+                        ])
+                      }
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Performance URL
+                    </Button>
+                    {stockPerformanceItems.length === 0 ? (
+                      <p className="text-xs text-gray-500">
+                        No performance URLs added yet.
+                      </p>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Performance URL</TableHead>
+                            <TableHead className="text-right">
+                              Actions
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {stockPerformanceItems.map((item, index) => (
+                            <TableRow key={index}>
+                              <TableCell>
+                                <Input
+                                  type="date"
+                                  value={item.date}
+                                  onChange={(e) =>
+                                    setStockPerformanceItems((prev) => {
+                                      const next = [...prev];
+                                      next[index] = {
+                                        ...next[index],
+                                        date: e.target.value,
+                                      };
+                                      return next;
+                                    })
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  placeholder="Title"
+                                  value={item.title}
+                                  onChange={(e) =>
+                                    setStockPerformanceItems((prev) => {
+                                      const next = [...prev];
+                                      next[index] = {
+                                        ...next[index],
+                                        title: e.target.value,
+                                      };
+                                      return next;
+                                    })
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  placeholder="Performance URL"
+                                  value={item.stock_recommendation_url}
+                                  onChange={(e) =>
+                                    setStockPerformanceItems((prev) => {
+                                      const next = [...prev];
+                                      next[index] = {
+                                        ...next[index],
+                                        stock_recommendation_url:
+                                          e.target.value,
+                                      };
+                                      return next;
+                                    })
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-red-600"
+                                  onClick={() =>
+                                    setStockPerformanceItems((prev) =>
+                                      prev.filter((_, i) => i !== index)
+                                    )
+                                  }
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </div>
                   {(localError.stock_performance_url ||
                     errors.stock_performance_url) && (
                     <div className="text-xs text-red-600 mt-1">

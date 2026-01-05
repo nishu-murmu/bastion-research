@@ -6,6 +6,7 @@ import { supabase } from "../supabase";
 import crypto from "crypto";
 import sendEmail from "../utils/email";
 import { validateEmailOtp } from "./otp.controller";
+import { incrementCouponUsage } from "./coupon.controller";
 type OnboardingUserData = {
   email: string;
   phone: string;
@@ -285,6 +286,7 @@ export const onboardUser = async (req: Request, res: Response) => {
         .json({ message: "PAN verification is required and must be valid." });
     }
 
+    // Prepare base user fields
     const baseUpdate: any = {
       phone,
       first_name: firstName,
@@ -302,6 +304,36 @@ export const onboardUser = async (req: Request, res: Response) => {
       role: role,
       plan_id,
     };
+
+    // If a plan is attached at onboarding (e.g. free tier),
+    // pre-compute subscription start and expiry dates based on plan duration.
+    if (plan_id) {
+      try {
+        const { data: planRow, error: planError } = await supabase
+          .from("membership_plans")
+          .select("duration_months")
+          .eq("plan_id", plan_id as any)
+          .maybeSingle();
+
+        if (!planError && planRow) {
+          const start = new Date();
+          const startDateStr = start.toISOString().split("T")[0];
+          let endDateStr: string | null = null;
+
+          const durationMonths = (planRow as any).duration_months;
+          if (typeof durationMonths === "number" && durationMonths > 0) {
+            const end = new Date(start);
+            end.setMonth(end.getMonth() + durationMonths);
+            endDateStr = end.toISOString().split("T")[0];
+          }
+
+          baseUpdate.subscription_start_date = startDateStr;
+          baseUpdate.subscription_end_date = endDateStr;
+        }
+      } catch {
+        // If membership_plans lookup fails, continue without subscription dates.
+      }
+    }
 
     let userId: string | null = null;
     const hashedPassword = await bcrypt.hash(password, config.salt_rounds);
@@ -370,26 +402,66 @@ export const zeroAmountAccountCreation = async (
   res: Response
 ) => {
   try {
-    const { plan_id, coupon_code, user_id, payer_email } = req.body;
-    // Fetch coupon
-    let coupon;
-    try {
-      const { data: couponData, error: couponError } = await supabase
-        .from("coupons")
-        .select("*")
-        .eq("coupon_code", coupon_code)
-        .eq("active", true)
-        .single();
+    const { plan_id, coupon_code, user_id, payer_email } = req.body as {
+      plan_id: number;
+      coupon_code?: string;
+      user_id: string;
+      payer_email: string;
+    };
 
-      if (couponError) {
-        return res.status(400).json({ error: couponError.message });
+    // Fetch coupon (if provided)
+    let coupon: any = null;
+    if (coupon_code && typeof coupon_code === "string" && coupon_code.trim()) {
+      try {
+        const { data: couponData, error: couponError } = await supabase
+          .from("coupons")
+          .select("*")
+          .eq("coupon_code", coupon_code.trim().toUpperCase())
+          .eq("active", true)
+          .maybeSingle();
+
+        if (couponError) {
+          return res.status(400).json({ error: couponError.message });
+        }
+
+        if (!couponData) {
+          return res.status(400).json({ error: "Invalid or inactive coupon" });
+        }
+
+        // Check expiry
+        if (
+          couponData.expiry_date &&
+          new Date(couponData.expiry_date) < new Date()
+        ) {
+          return res.status(400).json({ error: "Coupon has expired" });
+        }
+
+        // Respect max_uses / used_count if set
+        const maxUses =
+          typeof couponData.max_uses === "number"
+            ? couponData.max_uses
+            : null;
+        const usedCount =
+          typeof couponData.used_count === "number"
+            ? couponData.used_count
+            : 0;
+
+        if (maxUses !== null && usedCount >= maxUses) {
+          return res
+            .status(400)
+            .json({ error: "Coupon usage limit reached" });
+        }
+
+        coupon = couponData;
+      } catch (e: any) {
+        return res
+          .status(500)
+          .json({ error: e?.message || "Error fetching coupon" });
       }
-      coupon = couponData;
-    } catch (e: any) {
-      return res
-        .status(500)
-        .json({ error: e?.message || "Error fetching coupon" });
     }
+
+    // Record a zero-amount payment in history so subscription tables stay consistent
+    const startDate = new Date();
 
     try {
       const { error: paymentError } = await supabase
@@ -397,10 +469,11 @@ export const zeroAmountAccountCreation = async (
         .insert({
           transaction_status: "SUCCESS",
           plan_id: plan_id,
-          user_id,
-          payer_email,
+          user_id: user_id,
+          payer_email: payer_email,
           transaction_id: crypto.randomUUID(),
           coupon_applied: coupon?.coupon_id,
+          created_at: startDate.toISOString(),
         })
         .maybeSingle();
 
@@ -415,13 +488,44 @@ export const zeroAmountAccountCreation = async (
         .json({ error: e?.message || "Failed to insert payment history" });
     }
 
+    // Compute subscription window based on plan duration
+    let subscriptionStartDate: string | null = null;
+    let subscriptionEndDate: string | null = null;
     try {
+      const { data: planRow, error: planError } = await supabase
+        .from("membership_plans")
+        .select("duration_months")
+        .eq("plan_id", plan_id as any)
+        .maybeSingle();
+
+      if (!planError && planRow) {
+        subscriptionStartDate = startDate.toISOString().split("T")[0];
+        const durationMonths = (planRow as any).duration_months;
+        if (typeof durationMonths === "number" && durationMonths > 0) {
+          const end = new Date(startDate);
+          end.setMonth(end.getMonth() + durationMonths);
+          subscriptionEndDate = end.toISOString().split("T")[0];
+        }
+      }
+    } catch (e: any) {
+      // If we cannot compute duration, keep dates null; user still gets the plan.
+      console.error("Failed to compute subscription dates for zero-amount flow", e);
+    }
+
+    try {
+      const userUpdate: any = {
+        plan_id,
+        status: "active",
+      };
+
+      if (subscriptionStartDate) {
+        userUpdate.subscription_start_date = subscriptionStartDate;
+        userUpdate.subscription_end_date = subscriptionEndDate;
+      }
+
       const { data, error } = await supabase
         .from("users")
-        .update({
-          plan_id,
-          status: "active",
-        })
+        .update(userUpdate)
         .eq("id", user_id)
         .select(
           `
@@ -454,6 +558,32 @@ export const zeroAmountAccountCreation = async (
 
       if (error) {
         return res.status(500).json({ error: error.message });
+      }
+
+      // Mark coupon as used / expired (best-effort; do not block user activation)
+      if (coupon?.coupon_id) {
+        try {
+          const nextUsedCount =
+            typeof coupon.used_count === "number" ? coupon.used_count + 1 : 1;
+
+          await supabase
+            .from("coupons")
+            .update({
+              used_count: nextUsedCount,
+              active: false,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("coupon_id", coupon.coupon_id);
+        } catch (e) {
+          console.error("Failed to mark coupon as used/expired", e);
+        }
+      }
+      // Increment coupon usage after successful application
+      try {
+        await incrementCouponUsage(coupon_code!);
+      } catch (e: any) {
+        console.error("Failed to increment coupon usage:", e);
+        // Do not fail the request if coupon increment fails
       }
 
       return res.status(200).json({ user: data });
@@ -501,6 +631,8 @@ export const getUserSession = async (req: Request, res: Response) => {
           date_of_birth,
           company,
           plan_id,
+          subscription_start_date,
+          subscription_end_date,
           membership_plans (
             plan_code,
             plan_id
