@@ -8,6 +8,8 @@ export type Settings = {
   allow_user_registrations?: boolean;
   recommendation_sheet_url?: string;
   live_recommendation_sheet_url?: string;
+   agreement_file_url?: string;
+   invoice_file_url?: string;
 };
 
 export type PublicSettings = {
@@ -15,6 +17,7 @@ export type PublicSettings = {
   maintenance_mode?: boolean;
   allow_user_registrations?: boolean;
   agreement_file_url?: string;
+  invoice_file_url?: string;
 };
 
 let publicSettingsCache: PublicSettings | null = null;

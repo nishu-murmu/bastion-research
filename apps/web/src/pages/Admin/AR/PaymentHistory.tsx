@@ -42,6 +42,18 @@ const RowActions = ({
     <button
       className="text-blue-600 hover:text-blue-800 p-1"
       title="View Invoice"
+      onClick={() => {
+        const transactionId = data?.transaction_id;
+        const planCode = (data?.plan_code || "").toLowerCase();
+        const isFree =
+          planCode === "freemium" ||
+          (data?.amount != null && Number(data.amount) === 0 && !planCode);
+        if (!transactionId || isFree) return;
+        const url = `/api/payment-history/${encodeURIComponent(
+          transactionId
+        )}/invoice-pdf`;
+        window.open(url, "_blank", "noopener,noreferrer");
+      }}
     >
       <FileText size={16} />
     </button>

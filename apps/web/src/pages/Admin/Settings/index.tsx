@@ -26,6 +26,7 @@ type AdminSettings = {
   recommendation_sheet_url?: string;
   live_recommendation_sheet_url?: string;
   agreement_file_url?: string; // Added for displaying uploaded agreement
+  invoice_file_url?: string;
 };
 
 const AdminSettings = () => {
@@ -37,6 +38,7 @@ const AdminSettings = () => {
     recommendation_sheet_url: "",
     live_recommendation_sheet_url: "",
     agreement_file_url: "",
+    invoice_file_url: "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -44,6 +46,11 @@ const AdminSettings = () => {
   const [uploadingAgreement, setUploadingAgreement] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploadingInvoice, setUploadingInvoice] = useState(false);
+  const [invoiceUploadError, setInvoiceUploadError] = useState<string | null>(
+    null
+  );
+  const invoiceFileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -103,6 +110,44 @@ const AdminSettings = () => {
       // Clear file input so same file can be uploaded again if needed
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleInvoiceUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setInvoiceUploadError(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingInvoice(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await uploadFile(formData);
+
+      if (response.data && response.data.url) {
+        setForm((prev) => ({
+          ...prev,
+          invoice_file_url: response.data.url,
+        }));
+        toast.success("Invoice template uploaded successfully!");
+      } else {
+        setInvoiceUploadError("No url found in upload response");
+        toast.error("No URL found in upload response");
+      }
+    } catch (error: any) {
+      setInvoiceUploadError(
+        error?.response?.data?.error || "Failed to upload invoice template"
+      );
+      toast.error(
+        error?.response?.data?.error || "Failed to upload invoice template"
+      );
+    } finally {
+      setUploadingInvoice(false);
+      if (invoiceFileInputRef.current) {
+        invoiceFileInputRef.current.value = "";
       }
     }
   };
@@ -223,6 +268,50 @@ const AdminSettings = () => {
             </div>
             {uploadError && (
               <div className="text-xs text-red-600 mt-1">{uploadError}</div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="invoice-upload">Invoice Template Upload</Label>
+            <div className="flex gap-2 flex-col sm:flex-row items-start sm:items-center">
+              <label className="cursor-pointer flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploadingInvoice}
+                  asChild
+                >
+                  <span>
+                    <Upload className="h-4 w-4 mr-1" />
+                    {uploadingInvoice ? "Uploading..." : "Upload Invoice"}
+                  </span>
+                </Button>
+                <input
+                  ref={invoiceFileInputRef}
+                  type="file"
+                  accept="application/pdf"
+                  className="hidden"
+                  id="invoice-upload"
+                  onChange={handleInvoiceUpload}
+                  disabled={uploadingInvoice}
+                />
+              </label>
+              <Input
+                value={form.invoice_file_url || ""}
+                placeholder="Uploaded Invoice template"
+                readOnly
+                className="flex-1 min-w-[300px]"
+                style={{
+                  background: form.invoice_file_url ? "white" : "#f4f4f5",
+                  color: form.invoice_file_url ? "black" : "#9ca3af",
+                }}
+              />
+            </div>
+            {invoiceUploadError && (
+              <div className="text-xs text-red-600 mt-1">
+                {invoiceUploadError}
+              </div>
             )}
           </div>
 

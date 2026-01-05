@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { supabase } from "../supabase";
+import { generateInvoicePdf } from "../services/invoice-pdf.service";
 
 export const getMembershipPlans = async (req: Request, res: Response) => {
   const { data, error } = await supabase
@@ -88,7 +89,7 @@ export const getPaymentHistory = async (req: Request, res: Response) => {
       plan_id,
       created_at,
       users!payment_history_user_id_fkey ( id, email, first_name, last_name ),
-      membership_plans!payment_history_plan_id_fkey ( plan_id, plan_name, price_amount, currency )
+      membership_plans!payment_history_plan_id_fkey ( plan_id, plan_name, price_amount, currency, plan_code )
     `
     )
     .order("created_at", { ascending: false });
@@ -114,6 +115,7 @@ export const getPaymentHistory = async (req: Request, res: Response) => {
       amount: plan?.price_amount ?? null,
       currency: plan?.currency || "INR",
       plan_id: r.plan_id,
+      plan_code: plan?.plan_code || null,
       created_at: r.created_at,
     };
   });
@@ -138,7 +140,7 @@ export const getMyPaymentHistory = async (req: Request, res: Response) => {
         user_id,
         plan_id,
         created_at,
-        membership_plans!payment_history_plan_id_fkey ( plan_name, price_amount, currency )
+        membership_plans!payment_history_plan_id_fkey ( plan_name, price_amount, currency, plan_code )
       `
       )
       .eq("user_id", user.id as string)
@@ -164,11 +166,132 @@ export const getMyPaymentHistory = async (req: Request, res: Response) => {
         amount: plan?.price_amount ?? null,
         membership: plan?.plan_name || null,
         currency: plan?.currency || "INR",
+        plan_code: plan?.plan_code || null,
       };
     });
     return res.status(200).json(mapped);
   } catch (err: any) {
     return res.status(500).json({ error: err?.message || "Server error" });
+  }
+};
+
+export const getInvoicePdfForPayment = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const currentUser: any = (req as any).user;
+
+    if (!id) {
+      return res.status(400).json({ message: "Transaction id is required" });
+    }
+
+    const { data, error } = await supabase
+      .from("payment_history")
+      .select(
+        `
+        transaction_id,
+        zoho_invoice_id,
+        payer_email,
+        user_id,
+        plan_id,
+        created_at,
+        membership_plans!payment_history_plan_id_fkey ( plan_name, price_amount, currency, plan_code ),
+        users!payment_history_user_id_fkey ( first_name, last_name, email, phone, address_1, address_2, city, state, pin_code )
+      `
+      )
+      .eq("transaction_id", id)
+      .maybeSingle();
+
+    if (error) {
+      return res.status(500).json({ message: error.message });
+    }
+    if (!data) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    if (
+      currentUser &&
+      currentUser.role !== "admin" &&
+      currentUser.id !== data.user_id
+    ) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to access this invoice" });
+    }
+
+    const settingsRow = await supabase
+      .from("settings")
+      .select("data")
+      .maybeSingle();
+    if (settingsRow.error) {
+      return res
+        .status(500)
+        .json({ message: settingsRow.error.message || "Settings error" });
+    }
+    const settingsData = (settingsRow.data?.data || {}) as {
+      invoice_file_url?: string;
+    };
+
+    if (!settingsData.invoice_file_url) {
+      return res
+        .status(400)
+        .json({ message: "Invoice template is not configured" });
+    }
+
+    const plan = (data as any).membership_plans || {};
+    const user = (data as any).users || {};
+
+    const invoiceNumber = data.zoho_invoice_id || data.transaction_id;
+    const paymentDate = data.created_at
+      ? new Date(data.created_at)
+      : new Date();
+    const invoiceDateStr = paymentDate.toISOString().split("T")[0];
+
+    const billToName = [user.first_name, user.last_name]
+      .filter(Boolean)
+      .join(" ");
+
+    const addressParts = [
+      user.address_1,
+      user.address_2,
+      user.city,
+      user.state,
+      user.pin_code,
+      user.phone,
+    ]
+      .map((x: any) => (x == null ? "" : String(x)))
+      .filter((x: string) => x.trim().length > 0);
+    const fullAddress = addressParts.join(", ");
+
+    const itemDescription =
+      plan.plan_name || `Subscription Plan ${plan.plan_code || ""}`.trim();
+    const amountNumber =
+      typeof plan.price_amount === "number" ? plan.price_amount : 0;
+
+    const pdfBytes = await generateInvoicePdf(settingsData.invoice_file_url, {
+      invoiceNumber,
+      invoiceDate: invoiceDateStr,
+      dueDate: invoiceDateStr,
+      billToName: billToName || user.email || data.payer_email || "",
+      billToAddress: fullAddress,
+      shipToName: billToName || user.email || data.payer_email || "",
+      shipToAddress: fullAddress,
+      itemDescription,
+      quantity: 1,
+      amount: amountNumber,
+      total: amountNumber,
+      balanceDue: 0,
+    });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename=\"invoice-${invoiceNumber}.pdf\"`
+    );
+    return res.send(Buffer.from(pdfBytes));
+  } catch (err: any) {
+    return res
+      .status(500)
+      .json({ message: err?.message || "Failed to generate invoice PDF" });
   }
 };
 

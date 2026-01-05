@@ -193,6 +193,33 @@ const useConstants = () => {
       field: "invoice_id",
       minWidth: 100,
       maxWidth: 150,
+      cellRenderer: (params: any) => {
+        const row = params.data as PaymentRow;
+        const transactionId = row?.transaction_id;
+        const planCode = (row?.plan_code || "").toLowerCase();
+        const isFree =
+          planCode === "freemium" ||
+          (row?.amount != null &&
+            Number(row.amount) === 0 &&
+            !planCode);
+        if (!transactionId || isFree) {
+          return params.value || "";
+        }
+        const href = `/api/payment-history/${encodeURIComponent(
+          transactionId
+        )}/invoice-pdf`;
+        const label = params.value || "Download";
+        return (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
+            {label}
+          </a>
+        );
+      },
     },
     {
       headerName: TransactionHistoryConstants.columns.transaction,

@@ -108,6 +108,47 @@ const MemberManagementDashboard = () => {
     >
   );
 
+  // Rewritten downloadDigioDocument to handle file download properly as arrayBuffer/pdf
+  const downloadDigioDocument = async (documentId: string) => {
+    if (!documentId) return;
+    try {
+      const response = await axiosInstance.get(
+        `/api/digio/esign/${documentId}/download`,
+        { responseType: "blob" }
+      );
+      const blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${documentId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      toast.error("Failed to download Digio document.");
+    }
+  };
+
+  const AgreementRenderer = (params: any) => {
+    const documents = params.data?.digio_documents;
+    const documentId =
+      Array.isArray(documents) && documents.length > 0
+        ? documents[0]?.document_id
+        : null;
+
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={!documentId}
+        onClick={() => documentId && downloadDigioDocument(documentId)}
+      >
+        Download
+      </Button>
+    );
+  };
+
   const [selectedMembers, setSelectedMembers] = useState<any[]>([]);
   const setIsModalOpen = useModalStore((s) => s.set);
 
@@ -182,6 +223,14 @@ const MemberManagementDashboard = () => {
       },
       flex: 1,
       minWidth: 120,
+    },
+    {
+      headerName: "Agreement",
+      field: "digio_documents",
+      cellRenderer: AgreementRenderer,
+      sortable: false,
+      filter: false,
+      width: 150,
     },
   ];
 

@@ -46,6 +46,9 @@ export const getUsers = async (req: Request, res: Response) => {
       membership_plans (
         plan_code,
         plan_id
+      ),
+      digio_documents (
+        document_id
       )
     `);
     if (error) {

@@ -47,4 +47,5 @@ interface PaymentRow {
   payment_date?: string | null;
   amount?: number | string | null;
   membership?: string | null;
+  plan_code?: string | null;
 }

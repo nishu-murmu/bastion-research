@@ -9,6 +9,7 @@ type Settings = {
   recommendation_sheet_url?: string; // Admin recommendations list
   live_recommendation_sheet_url?: string; // Dashboard live recommendations
   agreement_file_url?: string;
+  invoice_file_url?: string;
 };
 
 const TABLE = "settings";
@@ -40,6 +41,7 @@ export async function getPublicSettings(req: Request, res: Response) {
       maintenance_mode: !!data.maintenance_mode,
       allow_user_registrations: !!data.allow_user_registrations,
       agreement_file_url: data?.agreement_file_url,
+      invoice_file_url: data?.invoice_file_url,
     };
     return res.status(200).json(pub);
   } catch (e: any) {

@@ -7,6 +7,7 @@ import {
   getPaymentHistory,
   getMyPaymentHistory,
   getSubscriptions,
+  getInvoicePdfForPayment,
   updateMembershipPlan,
 } from "../controllers/membership.controller";
 import { protect } from "../middleware/auth.middleware";
@@ -17,6 +18,11 @@ router.get("/membership-plans", getMembershipPlans);
 router.get("/subscriptions", getSubscriptions);
 router.get("/payment-history", getPaymentHistory);
 router.get("/payment-history/me", protect, getMyPaymentHistory);
+router.get(
+  "/payment-history/:id/invoice-pdf",
+  protect,
+  getInvoicePdfForPayment
+);
 
 router.post("/membership-plans", createMembershipPlan);
 router.put("/membership-plans/:id", updateMembershipPlan);
