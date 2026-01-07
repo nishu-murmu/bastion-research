@@ -139,6 +139,9 @@ const SmartFrameworks = lazy(
 );
 const ComingSoon = lazy(() => import("../components/ComingSoon"));
 const IpoLandingPage = lazy(() => import("../pages/IpoLandingPage"));
+const InstaLandingPage = lazy(
+  () => import("../pages/SocialMediaLandingPage/InstaLandingPage")
+);
 const IpoUserDashboardPage = lazy(
   () => import("../pages/IpoUserDashboardPage/components/IpoUserDashboard")
 );
@@ -182,6 +185,10 @@ export const routes: RouteObject[] = [
   {
     path: AppRoutes.ipoLanding,
     element: <IpoLandingPage />,
+  },
+  {
+    path: AppRoutes.instaLanding,
+    element: <InstaLandingPage />,
   },
   {
     element: <AdminLayout />,
