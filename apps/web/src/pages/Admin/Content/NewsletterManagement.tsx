@@ -162,6 +162,7 @@ const NewsletterManagement: React.FC = () => {
                   <TableHead>Category</TableHead>
                   <TableHead>Author</TableHead>
                   <TableHead>Created</TableHead>
+                  <TableHead>Publish Date</TableHead>
                   <TableHead className="w-[220px] text-center">
                     Actions
                   </TableHead>
@@ -192,6 +193,14 @@ const NewsletterManagement: React.FC = () => {
                       <div className="flex items-center text-sm text-gray-600">
                         <Calendar className="h-4 w-4 mr-1" />
                         {formatDate(newsletter.created_at)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        {newsletter.published_date
+                          ? formatDate(newsletter.published_date)
+                          : "-"}
                       </div>
                     </TableCell>
                     <TableCell className="flex justify-center space-x-2">

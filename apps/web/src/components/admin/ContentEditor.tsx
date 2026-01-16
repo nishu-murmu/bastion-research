@@ -266,6 +266,25 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
           </div>
         </div>
       );
+
+      // Published Date
+      fields.push(
+        <div key="published_date" className="space-y-2">
+          <Label htmlFor="published_date">Publish Date</Label>
+          <Input
+            id="published_date"
+            type="date"
+            value={
+              formData.published_date
+                ? new Date(formData.published_date).toISOString().slice(0, 10)
+                : ""
+            }
+            onChange={(e) =>
+              handleInputChange("published_date", e.target.value)
+            }
+          />
+        </div>
+      );
     }
 
     // Video URL (webinar and podcast)
@@ -536,9 +555,9 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
                           type === "scratch-pad"
                             ? formData.content.replace(/<p[^>]*><\/p>/g, "<br>")
                             : formData.contents.replace(
-                                /<p[^>]*><\/p>/g,
-                                "<br>"
-                              ),
+                              /<p[^>]*><\/p>/g,
+                              "<br>"
+                            ),
                       }}
                     />
                   </div>

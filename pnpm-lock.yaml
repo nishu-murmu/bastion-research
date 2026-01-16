@@ -405,7 +405,13 @@ importers:
         specifier: ^0.5.1
         version: 0.5.1(vite@5.4.19(@types/node@22.18.0)(sass-embedded@1.91.0)(sass@1.91.0)(terser@5.44.0))
 
-  packages/types: {}
+  packages/types:
+    devDependencies:
+      '@workspace/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+
+  packages/typescript-config: {}
 
 packages:
 

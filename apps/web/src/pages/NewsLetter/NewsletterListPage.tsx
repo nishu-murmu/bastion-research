@@ -31,6 +31,8 @@ const NewsletterArchive = () => {
   const [activeFilter, setActiveFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [publishDate, setPublishDate] = useState("");
+
 
   useEffect(() => {
     loadNewsletters();
@@ -56,6 +58,15 @@ const NewsletterArchive = () => {
   const filteredNewsletters = useMemo(() => {
     let filtered = newsletters;
 
+    if (publishDate) {
+      filtered = filtered.filter((newsletter) => {
+        if (!newsletter.published_date) return false;
+        // Compare just the date part YYYY-MM-DD
+        const nDate = new Date(newsletter.published_date).toISOString().slice(0, 10);
+        return nDate === publishDate;
+      });
+    }
+
     if (searchQuery) {
       const term = searchQuery.toLowerCase();
       filtered = filtered.filter((newsletter) => {
@@ -76,7 +87,7 @@ const NewsletterArchive = () => {
     }
 
     return filtered;
-  }, [newsletters, searchQuery, activeFilter]);
+  }, [newsletters, searchQuery, activeFilter, publishDate]);
 
   const totalPages = Math.ceil(filteredNewsletters.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -162,10 +173,10 @@ const NewsletterArchive = () => {
   }, [newsletters]);
 
   const getSubtitle = (newsletter: Newsletter) =>
-    //@ts-ignore
+
     newsletter.sub_title || newsletter.plain_text || "";
 
-  // CHANGE 2: Extract tag/label from newsletter.category and show it as a tag on the card
+
   function renderCategoryTag(category?: string) {
     if (!category) return null;
     let label = "";
@@ -189,17 +200,32 @@ const NewsletterArchive = () => {
     }
     return (
       <span
-        className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-2"
+        className="inline-flex w-fit rounded-full px-3 py-2 text-xs font-medium leading-none"
         style={{
           backgroundColor: color,
           color: category === "scratch-pad" ? COLORS.black : COLORS.white,
-          marginBottom: 8,
         }}
       >
         {label}
       </span>
     );
   }
+
+  function renderDate(dateString?: string) {
+    if (!dateString) return null;
+    return (
+      <span className="text-sm text-gray-500 whitespace-nowrap">
+        {new Date(dateString).toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })}
+      </span>
+    );
+  }
+
+
+
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -246,11 +272,10 @@ const NewsletterArchive = () => {
               <button
                 key={filter.id}
                 onClick={() => handleFilterChange(filter.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 transform-gpu ${
-                  activeFilter === filter.id
-                    ? "text-white shadow-md scale-105"
-                    : "text-gray-700 hover:bg-gray-100 border border-gray-300"
-                }`}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 transform-gpu ${activeFilter === filter.id
+                  ? "text-white shadow-md scale-105"
+                  : "text-gray-700 hover:bg-gray-100 border border-gray-300"
+                  }`}
                 style={{
                   backgroundColor:
                     activeFilter === filter.id ? COLORS.red : COLORS.white,
@@ -259,6 +284,19 @@ const NewsletterArchive = () => {
                 {filter.label} ({filter.count})
               </button>
             ))}
+
+            <div className="flex flex-col gap-1 ml-2">
+              <label className="block text-sm font-medium mb-1 sr-only">
+                Publish Date
+              </label>
+              <input
+                type="date"
+                value={publishDate}
+                onChange={(e) => setPublishDate(e.target.value)}
+                className="border rounded px-2 py-1 text-sm w-fit"
+                placeholder="Publish Date"
+              />
+            </div>
           </div>
         </div>
 
@@ -303,9 +341,12 @@ const NewsletterArchive = () => {
                     </div>
 
                     {/* Card Body */}
-                    <div className="flex flex-col flex-grow px-4 py-3">
-                      {/* CATEGORY TAG */}
-                      {renderCategoryTag(newsletter.category)}
+                    <div className="flex flex-col item-center gap-2 flex-grow px-4 py-3">
+                      {/* CATEGORY TAG and Date moved above */}
+                      <div className="flex items-center justify-between gap-2">
+                        {renderCategoryTag(newsletter.category)}
+                        {renderDate(newsletter.published_date)}
+                      </div>
 
                       <h3
                         className="text-[#1C2852] text-base font-semibold mb-2 line-clamp-2 group-hover:text-[#C00000] transition-colors"
@@ -430,11 +471,10 @@ const NewsletterArchive = () => {
                     <button
                       key={page}
                       onClick={() => handlePageChange(page as number)}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                        isActive
-                          ? "text-white shadow-md"
-                          : "text-gray-700 hover:bg-gray-100 border border-gray-300"
-                      }`}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all ${isActive
+                        ? "text-white shadow-md"
+                        : "text-gray-700 hover:bg-gray-100 border border-gray-300"
+                        }`}
                       style={{
                         backgroundColor: isActive ? COLORS.red : COLORS.white,
                       }}
