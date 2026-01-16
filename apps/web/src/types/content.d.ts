@@ -12,6 +12,9 @@ interface Newsletter {
   author?: string;
   plain_text?: string;
   source?: "mailchimp" | "cms";
+  category?: string;
+  hidden?: boolean;
+  published_date?: string;
 }
 
 interface Podcast {
