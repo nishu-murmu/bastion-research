@@ -124,3 +124,108 @@ export const sendSubscriptionExpiryReminderEmail = async (
     console.error("Failed to send subscription expiry reminder", error);
   }
 };
+
+interface SubscriptionExpirySummaryEntry {
+  email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  planName?: string | null;
+  subscriptionEndDate?: string | null;
+}
+
+interface SubscriptionExpirySummaryPayload {
+  to: string;
+  monthLabel: string;
+  entries: SubscriptionExpirySummaryEntry[];
+}
+
+const buildEntryLabel = (entry: SubscriptionExpirySummaryEntry) => {
+  const nameParts: string[] = [];
+  if (entry.firstName?.trim()) nameParts.push(entry.firstName.trim());
+  if (entry.lastName?.trim()) nameParts.push(entry.lastName.trim());
+  return nameParts.join(" ") || entry.email;
+};
+
+const formatPlanName = (entry: SubscriptionExpirySummaryEntry) => {
+  return entry.planName?.trim() || "(plan not recorded)";
+};
+
+export const sendMonthlySubscriptionExpirySummaryEmail = async (
+  payload: SubscriptionExpirySummaryPayload
+): Promise<void> => {
+  const sender = getSenderEmail();
+  if (!sender) {
+    console.warn(
+      "CONNECT_EMAIL is not configured; skipping monthly subscription expiry summary email."
+    );
+    return;
+  }
+
+  const subject = `Subscriptions expiring in ${payload.monthLabel}`;
+  const hasEntries = payload.entries.length > 0;
+  const textBody = hasEntries
+    ? payload.entries
+        .map((entry) => {
+          const personLabel = buildEntryLabel(entry);
+          const planLabel = formatPlanName(entry);
+          const endDateLabel =
+            formatDateForEmail(entry.subscriptionEndDate) || "unknown date";
+          return `- ${personLabel} (${entry.email}) – ${planLabel} ends on ${endDateLabel}`;
+        })
+        .join("\n")
+    : `There are no subscriptions scheduled to expire in ${payload.monthLabel}.`;
+
+  const htmlEntries = hasEntries
+    ? `<table style="width:100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th style="text-align:left; padding:8px; border-bottom: 2px solid #0f172a;">Subscriber</th>
+              <th style="text-align:left; padding:8px; border-bottom: 2px solid #0f172a;">Plan</th>
+              <th style="text-align:left; padding:8px; border-bottom: 2px solid #0f172a;">Expiry date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${payload.entries
+              .map((entry) => {
+                const personLabel = buildEntryLabel(entry);
+                const planLabel = formatPlanName(entry);
+                const endDateLabel =
+                  formatDateForEmail(entry.subscriptionEndDate) || "Unknown";
+                return `<tr>
+                  <td style="padding:8px; border-bottom: 1px solid #e2e8f0;">${personLabel}<br/><small>${entry.email}</small></td>
+                  <td style="padding:8px; border-bottom: 1px solid #e2e8f0;">${planLabel}</td>
+                  <td style="padding:8px; border-bottom: 1px solid #e2e8f0;">${endDateLabel}</td>
+                </tr>`;
+              })
+              .join("")}
+          </tbody>
+        </table>`
+    : `<p style="margin:0;">There are no subscriptions scheduled to expire in ${payload.monthLabel}.</p>`;
+
+  const htmlBody = `
+    <div style="font-family:'Segoe UI', Arial, sans-serif; background:#f8fafc; padding:32px 16px;">
+      <div style="max-width:720px; margin:0 auto; background:#fff; border-radius:14px; overflow:hidden; box-shadow:0 10px 35px rgba(15,23,42,0.12);">
+        <div style="background:linear-gradient(135deg, #001e3c, #0f172a); color:#fff; padding:28px;">
+          <h1 style="margin:0; font-size:24px;">Subscriptions expiring in ${payload.monthLabel}</h1>
+          <p style="margin:8px 0 0; font-size:16px;">Here’s the list of subscriptions that are set to end during ${payload.monthLabel}.</p>
+        </div>
+        <div style="padding:28px; color:#0f172a; font-size:15px; line-height:1.6;">
+          ${htmlEntries}
+          <p style="margin:24px 0 0;">If you need any help managing renewals, reply to this email or log in to the admin console.</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  try {
+    await sendEmail({
+      to: payload.to,
+      from: sender,
+      subject,
+      text: `Subscriptions expiring in ${payload.monthLabel}\n\n${textBody}`,
+      html: htmlBody,
+    });
+  } catch (error) {
+    console.error("Failed to send monthly subscription expiry summary", error);
+  }
+};
