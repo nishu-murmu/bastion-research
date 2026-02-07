@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import crypto from "crypto";
 import mailchimp from "@mailchimp/mailchimp_marketing";
 import {
   fetchMailchimpNewsletters,
@@ -80,28 +81,66 @@ export async function getMailchimpNewsletter(req: Request, res: Response) {
 
 export async function subscribeToNewsLetter(req: Request, res: Response) {
   try {
-    const { email, latitude, longitude, timestamp } = req.body;
+    const { email, latitude, longitude, timestamp, tags } = req.body;
 
     // Basic validation
     if (!email || !email.includes("@")) {
       return res.status(400).json({ message: "Valid email required" });
     }
 
-    const response = await mailchimp.lists.addListMember(
-      process.env.MAILCHIMP_AUDIENCE_ID!,
-      {
-        email_address: email,
-        status: "subscribed",
-        location: {
-          latitude,
-          longitude,
+    const normalizedTags = Array.isArray(tags)
+      ? tags.map((t: any) => String(t).trim()).filter(Boolean)
+      : typeof tags === "string" && tags.trim()
+        ? [tags.trim()]
+        : [];
+
+    const audienceId = process.env.MAILCHIMP_AUDIENCE_ID!;
+    const subscriberHash = crypto
+      .createHash("md5")
+      .update(String(email).toLowerCase())
+      .digest("hex");
+
+    const applyTags = async () => {
+      if (!normalizedTags.length) return;
+      await mailchimp.lists.updateListMemberTags(audienceId, subscriberHash, {
+        tags: normalizedTags.map((name) => ({ name, status: "active" })),
+      });
+    };
+
+    try {
+      await mailchimp.lists.addListMember(
+        audienceId,
+        {
+          email_address: email,
+          status: "subscribed",
+          location: {
+            latitude,
+            longitude,
+          },
+          timestamp_signup: timestamp,
         },
-        timestamp_signup: timestamp,
-      },
-      {
-        skipMergeValidation: true,
+        {
+          skipMergeValidation: true,
+        }
+      );
+    } catch (error: any) {
+      const status = error?.response?.status;
+      const detail = error?.response?.data?.detail || "";
+      const alreadySubscribed =
+        status === 400 &&
+        typeof detail === "string" &&
+        detail.toLowerCase().includes("already a list member");
+      if (!alreadySubscribed) {
+        throw error;
       }
-    );
+    }
+
+    try {
+      await applyTags();
+    } catch (e) {
+      console.error("Mailchimp tag update error:", e);
+    }
+
     res.json({ message: "Success! Already subscribed or now added." });
   } catch (error: any) {
     console.error("Mailchimp error:", error);
