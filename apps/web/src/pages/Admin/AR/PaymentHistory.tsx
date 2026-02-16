@@ -208,6 +208,8 @@ const PaymentHistory = () => {
             pagination={true}
             paginationPageSize={10}
             paginationPageSizeSelector={[10, 25, 50, 100]}
+            enableCellTextSelection={true}
+            ensureDomOrder={true}
           />
         </div>
       </div>
