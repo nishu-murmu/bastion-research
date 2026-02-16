@@ -44,10 +44,10 @@ const fmtDiscount = (t: string, n: number) =>
   t === "percentage"
     ? `${Number(n).toFixed(2)}%`
     : new Intl.NumberFormat("en-IN", {
-        style: "currency",
-        currency: "INR",
-        maximumFractionDigits: 2,
-      }).format(Number(n));
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 2,
+    }).format(Number(n));
 
 const CouponsManagement = () => {
   const [rows, setRows] = useState<RowCoupon[]>([]);
@@ -410,6 +410,8 @@ const CouponsManagement = () => {
             paginationPageSize={20}
             paginationPageSizeSelector={[10, 20, 50, 100]}
             suppressCellFocus={true}
+            enableCellTextSelection={true}
+            ensureDomOrder={true}
           />
         </div>
       </div>

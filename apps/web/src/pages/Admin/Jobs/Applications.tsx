@@ -194,8 +194,8 @@ const Applications = () => {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Applications</h1>
         <div className="flex items-center gap-2">
           <Button
@@ -210,102 +210,37 @@ const Applications = () => {
           </Button>
         </div>
       </div>
-      {/* <div className="bg-white p-4 rounded shadow mb-4 flex items-end gap-2">
-        <div className="flex gap-2 items-end flex-wrap">
-          <div>
-            <label className="block text-sm mb-1">Job ID</label>
-            <Input
-              value={form.job_id}
-              onChange={(e) => setForm({ ...form, job_id: e.target.value })}
-              placeholder="e.g. 1"
-            />
-          </div>
-          <div>
-            <label className="block text-sm mb-1">Applicant Name</label>
-            <Input
-              value={form.applicant_name}
-              onChange={(e) =>
-                setForm({ ...form, applicant_name: e.target.value })
+
+      <div className="bg-white rounded-lg shadow-sm border">
+        <div className="rounded-md border bg-white ag-theme-alpine" style={{ height: 600, width: "100%" }}>
+          <AgGridReact
+            ref={gridRef as any}
+            theme="legacy"
+            rowData={rowData}
+            columnDefs={columnDefs}
+            defaultColDef={{ sortable: true, filter: true, resizable: true }}
+            singleClickEdit={true}
+            onCellValueChanged={(e) => {
+              if (e.colDef.field === "comments") {
+                const row: any = e.data;
+                const newVal = (e.newValue ?? "").toString();
+                if (newVal !== (e.oldValue ?? "")) {
+                  updateMutation.mutate({
+                    id: row.application_id,
+                    body: { comments: newVal },
+                  });
+                }
               }
-              placeholder="John Doe"
-            />
-          </div>
-          <div>
-            <label className="block text-sm mb-1">Email</label>
-            <Input
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="john@example.com"
-            />
-          </div>
-          <div>
-            <label className="block text-sm mb-1">Phone</label>
-            <Input
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              placeholder="9999999999"
-            />
-          </div>
-          <div className="min-w-[280px]">
-            <label className="block text-sm mb-1">Cover Letter</label>
-            <Input
-              value={form.cover_letter}
-              onChange={(e) =>
-                setForm({ ...form, cover_letter: e.target.value })
-              }
-              placeholder="Optional"
-            />
-          </div>
-          <div className="min-w-[240px]">
-            <label className="block text-sm mb-1">Comments</label>
-            <Input
-              value={form.comments}
-              onChange={(e) => setForm({ ...form, comments: e.target.value })}
-              placeholder="Internal note"
-            />
-          </div>
-          <div>
-            <label className="block text-sm mb-1">Status</label>
-            <Input
-              value={form.status}
-              onChange={(e) => setForm({ ...form, status: e.target.value })}
-              placeholder="Pending"
-            />
-          </div>
+            }}
+            pagination={true}
+            paginationPageSize={10}
+            paginationPageSizeSelector={[10, 25, 50, 100]}
+            context={{ openEdit, deleteApplication }}
+            enableCellTextSelection={true}
+            ensureDomOrder={true}
+            suppressRowClickSelection={true}
+          />
         </div>
-        <Button
-          className="ml-auto"
-          onClick={() => createMutation.mutate()}
-          disabled={createMutation.isPending}
-        >
-          <Plus className="mr-1" size={16} /> Add Application
-        </Button>
-      </div> */}
-      <div className="ag-theme-alpine" style={{ height: 400, width: "100%" }}>
-        <AgGridReact
-          ref={gridRef as any}
-          theme="legacy"
-          rowData={rowData}
-          columnDefs={columnDefs}
-          defaultColDef={{ sortable: true, filter: true, resizable: true }}
-          singleClickEdit={true}
-          onCellValueChanged={(e) => {
-            if (e.colDef.field === "comments") {
-              const row: any = e.data;
-              const newVal = (e.newValue ?? "").toString();
-              if (newVal !== (e.oldValue ?? "")) {
-                updateMutation.mutate({
-                  id: row.application_id,
-                  body: { comments: newVal },
-                });
-              }
-            }
-          }}
-          pagination={true}
-          paginationPageSize={10}
-          paginationPageSizeSelector={[10, 25, 50, 100]}
-          context={{ openEdit, deleteApplication }}
-        />
       </div>
       <EditRowModal
         open={editOpen}
