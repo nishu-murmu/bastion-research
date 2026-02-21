@@ -90,9 +90,12 @@ const SingleCareer = () => {
         resume: null,
         // agreeToTerms: false,
       });
-    } catch (err) {
-      // Optionally log error
-      toast.error("Failed to submit application. Please try again.");
+    } catch (err: any) {
+      console.error(err);
+      const errorMessage =
+        err.response?.data?.error ||
+        "Failed to submit application. Please try again.";
+      toast.error(errorMessage);
     }
   };
 
@@ -258,8 +261,8 @@ const SingleCareer = () => {
           {/* What We Offer */}
           {(Array.isArray(careerData.benefits) &&
             careerData.benefits.length > 0) ||
-          (Array.isArray(careerData.whatWeOffer) &&
-            careerData.whatWeOffer.length > 0) ? (
+            (Array.isArray(careerData.whatWeOffer) &&
+              careerData.whatWeOffer.length > 0) ? (
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 What We Offer
