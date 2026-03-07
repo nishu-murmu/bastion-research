@@ -9,6 +9,7 @@ const SingleCareer = () => {
   const [careerData, setCareerData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -63,11 +64,14 @@ const SingleCareer = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Removed agreeToTerms check and associated toast
+    if (isSubmitting) return;
+
     if (!formData.resume) {
       toast.error("Please upload your resume.");
       return;
     }
+
+    setIsSubmitting(true);
     try {
       const id = params.slug;
       const form = new FormData();
@@ -88,7 +92,6 @@ const SingleCareer = () => {
         phone: "",
         coverLetter: "",
         resume: null,
-        // agreeToTerms: false,
       });
     } catch (err: any) {
       console.error(err);
@@ -96,6 +99,8 @@ const SingleCareer = () => {
         err.response?.data?.error ||
         "Failed to submit application. Please try again.";
       toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -438,9 +443,11 @@ const SingleCareer = () => {
 
               <button
                 type="submit"
-                className="w-full bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 font-medium"
+                disabled={isSubmitting}
+                className={`w-full py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 font-medium text-white transition-colors duration-200
+                  ${isSubmitting ? "bg-red-400 cursor-not-allowed" : "bg-red-500 hover:bg-red-600"}`}
               >
-                Submit
+                {isSubmitting ? "Submitting..." : "Submit"}
               </button>
             </form>
           </div>

@@ -14,7 +14,7 @@ export const getApplications = async (req: Request, res: Response) => {
 
 export const createApplication = async (req: Request, res: Response) => {
   try {
-    const {
+    let {
       job_id,
       applicant_name,
       email,
@@ -23,6 +23,9 @@ export const createApplication = async (req: Request, res: Response) => {
       status = "Pending",
       comments,
     } = req.body ?? {};
+    
+    email = email?.trim();
+    phone = phone?.trim();
 
     // Get the uploaded file from multer
     const file = (req as any).file;
