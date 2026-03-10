@@ -22,7 +22,6 @@ import PlansGrid from "./PlansGrid";
 
 const Subscription = () => {
   const { user, refetchUser, isAuthenticated, isLoading } = useAuth();
-  console.log(user, "user");
   const {
     data: subscription,
     isLoading: isSubscriptionLoading,
@@ -175,7 +174,7 @@ const Subscription = () => {
       if (!verification.valid) {
         setKycError(
           verification.message ||
-            "We could not verify this PAN. Please double-check the details."
+          "We could not verify this PAN. Please double-check the details."
         );
         return;
       }
@@ -280,9 +279,9 @@ const Subscription = () => {
           discount_amount: selectedPlan.amount,
           metadata: opts?.panVerification
             ? {
-                panReference: opts?.panVerification?.referenceId || null,
-                panStatus: opts?.panVerification?.status || null,
-              }
+              panReference: opts?.panVerification?.referenceId || null,
+              panStatus: opts?.panVerification?.status || null,
+            }
             : undefined,
         })
       );

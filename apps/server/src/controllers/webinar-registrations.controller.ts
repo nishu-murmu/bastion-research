@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { supabase } from '../supabase'
 
-// Create a new webinar registration (public endpoint)
+// Create a new webinar registration (public endpoint), avoid duplicate per (email, webinar_slug)
 export const createWebinarRegistration = async (
   req: Request,
   res: Response
@@ -24,7 +24,31 @@ export const createWebinarRegistration = async (
         .status(400)
         .json({ error: 'name and email are required fields' })
     }
+    if (!webinar_slug) {
+      return res.status(400).json({ error: 'webinar_slug is required' })
+    }
 
+    // Check for duplicate registration by email and webinar_slug
+    const { data: existing, error: findError } = await supabase
+      .from('webinar_registrations')
+      .select('*')
+      .eq('email', email)
+      .eq('webinar_slug', webinar_slug)
+      .maybeSingle()
+
+    if (findError) {
+      return res.status(500).json({ error: findError.message })
+    }
+
+    if (existing) {
+      return res.status(409).json({
+        error:
+          'Duplicate registration: already registered for this webinar with this email.',
+        registration: existing,
+      })
+    }
+
+    // Insert if not duplicate
     const { data, error } = await supabase
       .from('webinar_registrations')
       .insert({
@@ -42,6 +66,17 @@ export const createWebinarRegistration = async (
       .single()
 
     if (error) {
+      // If the constraint was violated (shouldn't happen due to pre-check)
+      if (
+        error.code === '23505' &&
+        (error.message || '').toLowerCase().includes('unique') &&
+        (error.message || '').includes('unique_email_per_webinar')
+      ) {
+        return res.status(409).json({
+          error:
+            'Duplicate registration: already registered for this webinar with this email.',
+        })
+      }
       return res.status(500).json({ error: error.message })
     }
 
@@ -61,7 +96,6 @@ export const listWebinarRegistrations = async (
       .from('webinar_registrations')
       .select('*')
       .order('created_at', { ascending: false })
-    console.log(data, error, '============')
 
     if (error) {
       return res.status(500).json({ error: error.message })
@@ -72,5 +106,41 @@ export const listWebinarRegistrations = async (
     return res
       .status(500)
       .json({ error: e?.message || 'Failed to load registrations' })
+  }
+}
+
+// Delete a webinar registration (admin)
+export const deleteWebinarRegistration = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id } = req.params
+    if (!id) {
+      return res.status(400).json({ error: 'id is required' })
+    }
+
+    const { data, error } = await supabase
+      .from('webinar_registrations')
+      .delete()
+      .eq('id', id)
+      .select('*')
+      .maybeSingle()
+
+    if (error) {
+      return res.status(500).json({ error: error.message })
+    }
+
+    if (!data) {
+      return res.status(404).json({ error: 'Registration not found' })
+    }
+
+    return res
+      .status(200)
+      .json({ message: 'Registration deleted.', registration: data })
+  } catch (e: any) {
+    return res
+      .status(500)
+      .json({ error: e?.message || 'Failed to delete registration' })
   }
 }
