@@ -176,10 +176,6 @@ export const routes: RouteObject[] = [
       { path: AppRoutes.podcasts, element: <PublicPodcastsPage /> },
       { path: AppRoutes.newsletter, element: <NewsletterArchive /> },
       { path: AppRoutes.webinar, element: <Webinar /> },
-      {
-        path: AppRoutes.webinarRedFlagsLanding,
-        element: <PortfolioRedFlagsWebinar />,
-      },
       { path: AppRoutes.smartFrameworks, element: <SmartFrameworks /> },
       { path: AppRoutes.newsletterView, element: <NewsletterView /> },
       {
@@ -194,6 +190,10 @@ export const routes: RouteObject[] = [
   {
     path: AppRoutes.comingSoon,
     element: <ComingSoon />,
+  },
+  {
+    path: AppRoutes.webinarRedFlagsLanding,
+    element: <PortfolioRedFlagsWebinar />,
   },
   {
     path: AppRoutes.ipoLanding,

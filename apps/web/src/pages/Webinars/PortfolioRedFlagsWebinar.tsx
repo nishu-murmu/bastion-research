@@ -99,16 +99,23 @@ const PortfolioRedFlagsWebinar: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-white via-[#E6E6E6]/30 to-white">
       {/* Sticky Header CTA */}
       <div
-        className={`fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 transition-all duration-300 ${
-          isScrolled ? "translate-y-0 shadow-lg" : "-translate-y-full"
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 transition-all duration-300 ${isScrolled ? "translate-y-0 shadow-lg" : "-translate-y-full"
+          }`}
       >
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <img src={LOGO_URL} alt="Bastion Research" className="h-8" />
             <Badge className="bg-[#C00000] text-white">LIVE WEBINAR</Badge>
             <span className="text-sm font-medium text-[#1C2852]">
-              5th March • 3 PM IST
+              {new Date().toLocaleString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+                timeZone: "Asia/Kolkata",
+              })} IST
             </span>
           </div>
           <Button
