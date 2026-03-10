@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { getWebinarRegistrations } from "@/api/webinar-registrations-api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { deleteWebinarRegistration, getWebinarRegistrations } from "@/api/webinar-registrations-api";
 import {
   Table,
   TableBody,
@@ -10,8 +10,11 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users } from "lucide-react";
+import { Calendar, Trash2, Users } from "lucide-react";
 import { queryKeys } from "@/api/queryKeys";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { confirmDelete } from "@/utils/confirm";
 
 type WebinarRegistration = {
   id: string | number;
@@ -27,10 +30,30 @@ type WebinarRegistration = {
 };
 
 const WebinarRegistrationsPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const { data, isLoading, error } = useQuery<WebinarRegistration[]>({
     queryKey: [queryKeys.webinar_registrations],
     queryFn: () => getWebinarRegistrations(),
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string | number) => deleteWebinarRegistration(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [queryKeys.webinar_registrations],
+      });
+      toast.success("Registration deleted successfully");
+    },
+    onError: () => {
+      toast.error("Failed to delete registration");
+    },
+  });
+  const handleDelete = async (item: WebinarRegistration) => {
+    const label = item.email || item.name || `#${item.id}`;
+    const ok = await confirmDelete(label);
+    if (!ok) return;
+    deleteMutation.mutate(item.id);
+  };
 
   const items = data || [];
 
@@ -71,6 +94,7 @@ const WebinarRegistrationsPage: React.FC = () => {
                   <TableHead>Source</TableHead>
                   <TableHead>UTM</TableHead>
                   <TableHead>Registered At</TableHead>
+                  <TableHead className="w-[120px] text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -105,6 +129,18 @@ const WebinarRegistrationsPage: React.FC = () => {
                       ) : (
                         "-"
                       )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        title="Delete"
+                        className="hover:bg-red-600 hover:text-white"
+                        onClick={() => handleDelete(item)}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
