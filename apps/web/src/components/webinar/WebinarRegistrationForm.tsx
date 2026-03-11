@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Config } from "@/utils/config";
 
 interface WebinarRegistrationFormProps {
   webinarSlug: string;
@@ -22,18 +23,11 @@ export function WebinarRegistrationForm({
   });
   const [submitting, setSubmitting] = useState(false);
 
-  // Mailchimp subscribe helper via backend API
   const subscribeToMailchimp = async (email: string) => {
-    const baseTags = ["webinar-registration"];
-    const slugTag =
-      webinarSlug && webinarSlug.trim()
-        ? [`webinar-${webinarSlug.trim()}`]
-        : [];
-
     try {
       await mailchimpNewsletterApi.subscribe({
         email,
-        tags: [...baseTags, ...slugTag],
+        tags: [Config.mailchimp_tags.portfolio_red_flags_landing],
       });
     } catch (error) {
       // Mailchimp failures should not block webinar registration
