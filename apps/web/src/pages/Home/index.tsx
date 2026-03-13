@@ -2,7 +2,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import BackgroundShapes from "../../components/generic/framer-motion.tsx";
 import SignUpForm from "../Register/SignupForm.tsx";
-// import ComingSoon from "@/components/ComingSoon.tsx";
 
 const NAVY = "#1C2852";
 const MAROON = "#C00000";
@@ -11,11 +10,79 @@ const tabs = [
   { key: "qualified", label: "Fund Manager / Family Office" },
   { key: "diy", label: "DIY Individual Investor" },
   { key: "non_diy", label: "Effortless Investor" },
-  //  { key: "ipo", label: "IPO Investor" },
 ] as const;
 
-
 type TabKey = (typeof tabs)[number]["key"];
+
+// ===== Countdown Component =====
+function useCountdown(targetDate: Date) {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const tick = () => setNow(new Date());
+    // Always use a 1s interval for highest accuracy, even for distant dates
+    const interval = 1000;
+    const id = setInterval(tick, interval);
+    return () => clearInterval(id);
+    // eslint-disable-next-line
+  }, [targetDate]);
+
+  const diff = targetDate.getTime() - now.getTime();
+  const negative = diff < 0;
+  const d = Math.max(0, Math.floor(diff / (24 * 60 * 60 * 1000)));
+  const h = Math.max(0, Math.floor((diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000)));
+  const m = Math.max(0, Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000)));
+  const s = Math.max(0, Math.floor((diff % (60 * 1000)) / 1000));
+
+  const oneDayLeft = diff <= 24 * 60 * 60 * 1000 && !negative;
+  return { days: d, hours: h, minutes: m, seconds: s, oneDayLeft, negative };
+}
+
+const LAUNCH_DATE = new Date("2026-03-20T00:00:00+05:30");
+
+function LaunchCountdown() {
+  const { days, hours, minutes, seconds, oneDayLeft, negative } = useCountdown(LAUNCH_DATE);
+
+  if (negative) {
+    return (
+      <motion.div
+        className="flex flex-col items-center gap-1 mb-3"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        style={{
+          color: MAROON,
+          fontSize: "1.06rem",
+          fontWeight: 500,
+          letterSpacing: 1,
+        }}
+      >
+        🎉 Now Launched!
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      className="flex flex-col md:flex-row md:items-end items-center justify-center gap-2 mb-3"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      style={{
+        color: MAROON,
+        fontWeight: 600,
+        letterSpacing: "0.5px",
+        fontSize: "1.12rem",
+      }}
+    >
+      <span className="text-[1rem] md:text-[1.08rem] flex-shrink-0">
+        🚀 Launching March 20, 2024
+      </span>
+      <span className="flex gap-2 items-center md:ml-3 mt-1 md:mt-0 text-base bg-[#fff8] backdrop-blur rounded-md px-2 py-1 font-mono border border-[#fff9] shadow-sm">
+        {days} days {hours} hours {minutes} minutes {seconds}s
+      </span>
+    </motion.div>
+  );
+}
+// ===== /Countdown Component =====
 
 export default function LandingPage() {
   const [active, setActive] = useState<TabKey>("qualified");
@@ -85,6 +152,9 @@ export default function LandingPage() {
       `width=${width},height=${height},top=${top},left=${left},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
     );
   }
+
+  // For blur management
+  const { negative } = useCountdown(LAUNCH_DATE);
 
   return (
     <>
@@ -195,7 +265,12 @@ export default function LandingPage() {
                   </div>
 
                   {/* Content area */}
-                  <div className="flex-1 p-5 md:p-8 overflow-hidden">
+                  <div className="flex-1 p-5 md:p-8 overflow-hidden flex flex-col">
+                    {/* --- Insert Countdown notice for "Effortless Investor" tab --- */}
+                    {active === "non_diy" && (
+                      <LaunchCountdown />
+                    )}
+
                     <AnimatePresence mode="wait">
                       {active === "qualified" && (
                         <motion.div
@@ -267,7 +342,7 @@ export default function LandingPage() {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -8 }}
                           transition={{ duration: 0.25 }}
-                          className="h-full flex flex-col md:flex-row gap-6 blur-sm"
+                          className={`h-full flex flex-col md:flex-row gap-6${negative ? "" : " blur-sm"}`}
                         >
                           <Panel
                             title="Product Suitability"
@@ -383,47 +458,47 @@ export default function LandingPage() {
 
 
                   {active === "non_diy" && (
-                    <div className="blur-sm pointer-events-none">
-                    <motion.div
-                      className="p-5 text-center border-t flex justify-center gap-4 flex-wrap"
-                      style={{ borderColor: "rgba(28,40,82,0.12)" }}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      <motion.button
-                        className="px-5 py-2.5 rounded-xl font-medium shadow-sm border"
-                        style={{
-                          background: `linear-gradient(135deg, ${MAROON}, ${MAROON}dd)`,
-                          color: "white",
-                          borderColor: MAROON,
-                        }}
-                        whileHover={{
-                          scale: 1.05,
-                          boxShadow: "0 10px 25px rgba(192,0,0,0.3)",
-                        }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => openPopup("/coming-soon")}
+                    <div className={`${negative ? "" : "blur-sm pointer-events-none"}`}>
+                      <motion.div
+                        className="p-5 text-center border-t flex justify-center gap-4 flex-wrap"
+                        style={{ borderColor: "rgba(28,40,82,0.12)" }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 }}
                       >
-                        View Product Page
-                      </motion.button>
-                      <motion.button
-                        className="px-5 py-2.5 rounded-xl font-medium shadow-sm border"
-                        style={{
-                          background: `linear-gradient(135deg, ${MAROON}, ${MAROON}dd)`,
-                          color: "white",
-                          borderColor: MAROON,
-                        }}
-                        whileHover={{
-                          scale: 1.05,
-                          boxShadow: "0 10px 25px rgba(192,0,0,0.3)",
-                        }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => openPopup("/coming-soon")}
-                      >
-                        Subscribe Portfolio
-                      </motion.button>
-                    </motion.div>
+                        <motion.button
+                          className="px-5 py-2.5 rounded-xl font-medium shadow-sm border"
+                          style={{
+                            background: `linear-gradient(135deg, ${MAROON}, ${MAROON}dd)`,
+                            color: "white",
+                            borderColor: MAROON,
+                          }}
+                          whileHover={{
+                            scale: 1.05,
+                            boxShadow: "0 10px 25px rgba(192,0,0,0.3)",
+                          }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => openPopup("/coming-soon")}
+                        >
+                          View Product Page
+                        </motion.button>
+                        <motion.button
+                          className="px-5 py-2.5 rounded-xl font-medium shadow-sm border"
+                          style={{
+                            background: `linear-gradient(135deg, ${MAROON}, ${MAROON}dd)`,
+                            color: "white",
+                            borderColor: MAROON,
+                          }}
+                          whileHover={{
+                            scale: 1.05,
+                            boxShadow: "0 10px 25px rgba(192,0,0,0.3)",
+                          }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => openPopup("/coming-soon")}
+                        >
+                          Subscribe Portfolio
+                        </motion.button>
+                      </motion.div>
                     </div>
                   )}
                 </div>
