@@ -75,6 +75,7 @@ export const AppRoutes = {
   ipoLanding: "/ipo-landing",
   instaLanding: "/insta",
   instaLanding2: "/newsletter",
+  redFlagDecision: "/red-flag-decision",
 } as const;
 
 export const AuthRoutes = [
