@@ -151,6 +151,9 @@ const InstaLandingPage = lazy(
 const InstaLandingPage2 = lazy(
   () => import("../pages/SocialMediaLandingPage/InstaLandingPage2")
 );
+const RedFlagDecision = lazy(
+  () => import("../pages/SocialMediaLandingPage/RedFlagDicision")
+);
 const IpoUserDashboardPage = lazy(
   () => import("../pages/IpoUserDashboardPage/components/IpoUserDashboard")
 );
@@ -206,6 +209,10 @@ export const routes: RouteObject[] = [
   {
     path: AppRoutes.instaLanding2,
     element: <InstaLandingPage2 />,
+  },
+  {
+    path: AppRoutes.redFlagDecision,
+    element: <RedFlagDecision />,
   },
   {
     element: <AdminLayout />,
