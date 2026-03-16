@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -351,7 +351,19 @@ function ToggleButton({ label, active, activeStyle, t, onClick }: ToggleButtonPr
 export default function RedFlagChecklist() {
   const [theme, setTheme] = useState<Theme>("dark");
   const [flags, setFlags] = useState<Record<number, FlagStatus>>({});
+  const [submitted, setSubmitted] = useState(false);
   const [filter, setFilter] = useState<FilterType>("all");
+  const [showFloating, setShowFloating] = useState(false);
+  const scoreBarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // Show floating if user has scrolled down at least 400px
+      setShowFloating(window.scrollY > 400);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const t: Tokens = theme === "dark" ? darkTokens : lightTokens;
 
@@ -362,6 +374,7 @@ export default function RedFlagChecklist() {
   const isFlagged = (id: number) => flags[id] === "flagged";
   const flagged = Object.values(flags).filter((v) => v === "flagged").length;
   const answered = Object.keys(flags).length;
+  const allAnswered = answered === 10;
 
   const evaluateCombos = () => {
     const triggered = { critical: [] as string[], high: [] as string[] };
@@ -382,7 +395,7 @@ export default function RedFlagChecklist() {
   const progressColor = flagged === 0 ? t.blueBright : hasCritical ? t.red : t.gold;
 
   const verdictInlineText =
-    answered === 0 ? "Not started" :
+    !submitted ? "Awaiting Submission" :
       hasCritical ? "☠ Critical Combo Active" :
         hasHigh ? "✗ High Risk Combo Active" :
           flagged > 0 ? "⚠ Flags Raised — No Combo Yet" :
@@ -395,7 +408,7 @@ export default function RedFlagChecklist() {
           t.greenBright;
 
   const verdictSubText =
-    answered === 0 ? "Mark flags below to begin" :
+    !submitted ? "Mark flags below to begin" :
       hasCritical ? `${triggered.critical.length} critical combination(s) triggered` :
         hasHigh ? `${triggered.high.length} high-risk combination(s) triggered` :
           flagged > 0 ? `${flagged} flag(s) raised — review remaining items` :
@@ -408,40 +421,40 @@ export default function RedFlagChecklist() {
           flagged > 0 ? "caution" : "safe";
 
   const bannerMain =
-    bannerVariant === "default" ? "Awaiting Input" :
+    !submitted ? "Awaiting Submission" :
       bannerVariant === "danger" ? "☠ DO NOT INVEST — EXIT NOW" :
         bannerVariant === "high" ? "✗ HIGH RISK — AVOID" :
           bannerVariant === "caution" ? "⚠ PROCEED WITH CAUTION" :
             "✓ PASSES FORENSIC CHECK";
 
   const bannerDetail =
-    bannerVariant === "default" ? "Mark each flag above as CLEAR or FLAGGED to receive your verdict. The verdict is driven entirely by meaningful flag combinations — not a raw count." :
+    !submitted ? "Mark each flag above as CLEAR or FLAGGED and click SUBMIT to receive your verdict. The verdict is driven entirely by meaningful flag combinations — not a raw count." :
       bannerVariant === "danger" ? "One or more Critical combinations are active. These patterns indicate a high probability of capital destruction, accounting fraud, or governance collapse. No valuation is cheap enough to justify this." :
         bannerVariant === "high" ? "One or more High Risk combinations are active. Serious structural problems are present. Unless you have a well-researched, time-bound turnaround thesis with specific numeric evidence — do not commit capital." :
           bannerVariant === "caution" ? "Flags have been raised but no dangerous combination has triggered yet. Complete the remaining flags — a combination may still emerge. Investigate each flagged item in depth before investing." :
             "No red flags detected and no toxic combinations are active. This stock passes the forensic quality screen. You may proceed to valuation analysis.";
 
   const bannerBorderTop =
-    bannerVariant === "default" ? `1px solid ${t.border}` :
+    !submitted ? `1px solid ${t.border}` :
       bannerVariant === "safe" ? `3px solid ${t.greenBright}` :
         bannerVariant === "caution" ? `3px solid ${t.gold}` :
           bannerVariant === "high" ? `3px solid ${t.red}` :
             `4px solid ${t.red}`;
 
   const bannerBg =
-    bannerVariant === "default" ? t.surface2 :
+    !submitted ? t.surface2 :
       bannerVariant === "safe" ? t.greenMuted :
         bannerVariant === "caution" ? t.goldMuted :
           t.redMuted;
 
   const bannerBorderColor =
-    bannerVariant === "default" ? t.border :
+    !submitted ? t.border :
       bannerVariant === "safe" ? t.greenBorder :
         bannerVariant === "caution" ? t.goldBorder :
           t.redBorder;
 
   const bannerTitleColor =
-    bannerVariant === "default" ? t.textDim :
+    !submitted ? t.textDim :
       bannerVariant === "safe" ? t.greenBright :
         bannerVariant === "caution" ? t.gold :
           t.red;
@@ -456,7 +469,7 @@ export default function RedFlagChecklist() {
     return true;
   });
 
-  const resetAll = () => { setFlags({}); setFilter("all"); };
+  const resetAll = () => { setFlags({}); setFilter("all"); setSubmitted(false); };
 
   return (
     <>
@@ -465,6 +478,11 @@ export default function RedFlagChecklist() {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
         .combo-blink { animation: blink 1.8s infinite; }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @media (max-width: 580px) {
           .flag-card-grid { grid-template-columns: 1fr !important; }
           .toggle-group { flex-direction: row !important; }
@@ -506,7 +524,7 @@ export default function RedFlagChecklist() {
           </header>
 
           {/* Score Bar */}
-          <div className="score-bar" style={{ background: t.surface, border: `1px solid ${t.border}`, borderTop: `3px solid ${t.blue}`, borderRadius: 12, padding: "22px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, marginBottom: 40, flexWrap: "wrap", transition: "background 0.3s, border-color 0.3s" }}>
+          <div ref={scoreBarRef} className="score-bar" style={{ background: t.surface, border: `1px solid ${t.border}`, borderTop: `3px solid ${t.blue}`, borderRadius: 12, padding: "22px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, marginBottom: 40, flexWrap: "wrap", transition: "background 0.3s, border-color 0.3s" }}>
             <div>
               <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: t.textDim, textTransform: "uppercase", marginBottom: 4 }}>Flags Triggered</div>
               <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 48, lineHeight: 1, color: scoreColor, transition: "color 0.4s" }}>{flagged} / 10</div>
@@ -515,15 +533,39 @@ export default function RedFlagChecklist() {
               </div>
             </div>
             <div className="verdict-box" style={{ flex: 1, textAlign: "right" }}>
-              <div style={{ fontSize: 16, fontWeight: 600, color: verdictInlineColor, transition: "color 0.3s" }}>{verdictInlineText}</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: submitted ? verdictInlineColor : t.textMuted, transition: "color 0.3s" }}>{verdictInlineText}</div>
               <div style={{ fontSize: 12, color: t.textMuted, marginTop: 5, fontFamily: "'DM Mono', monospace", letterSpacing: "0.05em" }}>{verdictSubText}</div>
             </div>
-            <button
-              onClick={resetAll}
-              onMouseEnter={(e) => { (e.currentTarget).style.borderColor = t.blueBright; (e.currentTarget).style.color = t.text; }}
-              onMouseLeave={(e) => { (e.currentTarget).style.borderColor = t.border; (e.currentTarget).style.color = t.textDim; }}
-              style={{ background: "transparent", border: `1px solid ${t.border}`, color: t.textDim, fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", padding: "9px 18px", borderRadius: 6, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}
-            >↺ Reset</button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <button
+                onClick={() => setSubmitted(true)}
+                disabled={!allAnswered || submitted}
+                style={{
+                  background: allAnswered && !submitted ? t.blue : "transparent",
+                  border: `1px solid ${allAnswered && !submitted ? t.blueBright : t.border}`,
+                  color: allAnswered && !submitted ? "#fff" : t.textMuted,
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 10,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  padding: "9px 18px",
+                  borderRadius: 6,
+                  cursor: allAnswered && !submitted ? "pointer" : "not-allowed",
+                  transition: "all 0.2s",
+                  whiteSpace: "nowrap",
+                  opacity: allAnswered && !submitted ? 1 : 0.4,
+                  boxShadow: allAnswered && !submitted ? `0 2px 10px ${t.blueBright}44` : "none"
+                }}
+              >
+                Submit Data
+              </button>
+              <button
+                onClick={resetAll}
+                onMouseEnter={(e) => { (e.currentTarget).style.borderColor = t.blueBright; (e.currentTarget).style.color = t.text; }}
+                onMouseLeave={(e) => { (e.currentTarget).style.borderColor = t.border; (e.currentTarget).style.color = t.textDim; }}
+                style={{ background: "transparent", border: `1px solid ${t.border}`, color: t.textDim, fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", padding: "9px 18px", borderRadius: 6, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}
+              >↺ Reset</button>
+            </div>
           </div>
 
           {/* Segments */}
@@ -562,62 +604,54 @@ export default function RedFlagChecklist() {
             </div>
           ))}
 
-          {/* Divider */}
-          <div style={{ height: 1, background: `linear-gradient(90deg, transparent, ${t.border}, transparent)`, margin: "44px 0" }} />
+          {/* Divider removed as well as Toxic Combinations */}
 
-          {/* Combos Section */}
-          <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderTop: `3px solid ${t.red}`, borderRadius: 12, padding: 28, transition: "background 0.3s, border-color 0.3s" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-              <div style={{ fontSize: 22 }}>☠️</div>
-              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: "0.05em", color: t.red }}>20 Toxic Combinations</div>
+          {/* Floating Submit Button */}
+          {showFloating && !submitted && (
+            <div
+              className="animate-fadeIn"
+              style={{ position: "fixed", bottom: 30, right: 30, zIndex: 1000 }}
+            >
+              <button
+                onClick={() => setSubmitted(true)}
+                disabled={!allAnswered}
+                style={{
+                  background: allAnswered ? t.blue : t.surface3,
+                  border: `1px solid ${allAnswered ? t.blueBright : t.border}`,
+                  color: allAnswered ? "#fff" : t.textMuted,
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  padding: "16px 32px",
+                  borderRadius: 99,
+                  cursor: allAnswered ? "pointer" : "not-allowed",
+                  boxShadow: allAnswered ? `0 12px 40px ${t.blueBright}55` : "none",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                  opacity: allAnswered ? 1 : 0.8,
+                }}
+                onMouseEnter={(e) => {
+                  if (allAnswered) {
+                    e.currentTarget.style.transform = "translateY(-4px) scale(1.02)";
+                    e.currentTarget.style.boxShadow = `0 16px 48px ${t.blueBright}77`;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (allAnswered) {
+                    e.currentTarget.style.transform = "translateY(0) scale(1)";
+                    e.currentTarget.style.boxShadow = `0 12px 40px ${t.blueBright}55`;
+                  }
+                }}
+              >
+                <span>{allAnswered ? "Submit Forensic Data" : `${answered}/10 Reviewed`}</span>
+                {allAnswered && <span style={{ fontSize: 16 }}>➔</span>}
+              </button>
             </div>
-            <div style={{ fontSize: 12, color: t.textDim, marginBottom: 22, lineHeight: 1.6, maxWidth: 620 }}>
-              Auto-highlights when relevant flags are marked above. Your verdict is driven <strong>only</strong> by these meaningful patterns — never by a raw count of flags.
-            </div>
-
-            {/* Legend */}
-            <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 20 }}>
-              {[{ color: t.red, label: "Critical — Do Not Invest / Exit Now" }, { color: t.gold, label: "High Risk — Avoid (unless strong turnaround case)" }].map(({ color, label }) => (
-                <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.1em", color: t.textDim, textTransform: "uppercase" }}>
-                  <div style={{ width: 10, height: 10, borderRadius: 2, flexShrink: 0, background: color }} />
-                  {label}
-                </div>
-              ))}
-            </div>
-
-            {/* Filter Tabs */}
-            <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-              {([{ key: "all", label: "All 20" }, { key: "critical", label: "Critical Only" }, { key: "high", label: "High Risk Only" }, { key: "triggered", label: "Triggered ✗" }] as { key: FilterType; label: string }[]).map(({ key, label }) => (
-                <button key={key} onClick={() => setFilter(key)} style={{ padding: "6px 14px", borderRadius: 6, border: `1px solid ${filter === key ? t.blueBright : t.border}`, background: filter === key ? t.blueMuted : "transparent", fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: filter === key ? t.blueBright : t.textDim, cursor: "pointer", transition: "all 0.2s" }}>{label}</button>
-              ))}
-            </div>
-
-            {/* Combo Grid */}
-            <div style={{ display: "grid", gap: 10 }}>
-              {visibleCombos.map((combo) => {
-                const active = isComboTriggered(combo);
-                const isCrit = combo.tier === "critical";
-                return (
-                  <div key={combo.id} style={{ background: active ? (isCrit ? t.redMuted : t.goldMuted) : t.surface2, border: `1px solid ${active ? (isCrit ? t.redBorder : t.goldBorder) : t.borderSoft}`, borderRadius: 8, padding: "14px 18px", display: "grid", gridTemplateColumns: "32px 1fr", gap: 14, alignItems: "flex-start", transition: "border-color 0.3s, background 0.3s", position: "relative", overflow: "hidden" }}>
-                    <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: active ? (isCrit ? t.red : t.gold) : (isCrit ? "rgba(192,0,0,0.3)" : "rgba(196,182,150,0.3)"), transition: "background 0.3s" }} />
-                    <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 24, color: active ? (isCrit ? t.red : t.gold) : t.textMuted, lineHeight: 1, transition: "color 0.3s" }}>{combo.id}</div>
-                    <div>
-                      <span style={{ display: "inline-block", fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", padding: "2px 7px", borderRadius: 3, marginBottom: 5, background: isCrit ? t.redMuted : t.goldMuted, color: isCrit ? t.redBright : t.gold, border: `1px solid ${isCrit ? t.redBorder : t.goldBorder}` }}>{isCrit ? "Critical" : "High Risk"}</span>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: t.text, marginBottom: 4 }}>{combo.name}</div>
-                      <div style={{ fontSize: 11.5, color: t.textDim, lineHeight: 1.55 }}>{combo.desc}</div>
-                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: t.textMuted, marginTop: 6, letterSpacing: "0.05em" }}>{combo.flagsLabel}</div>
-                      {combo.turnaround && (
-                        <div style={{ fontSize: 11, color: t.gold, background: t.goldMuted, border: `1px solid ${t.goldBorder}`, borderLeft: `3px solid ${t.gold}`, borderRadius: 4, padding: "6px 10px", marginTop: 9, lineHeight: 1.55 }}>{combo.turnaround}</div>
-                      )}
-                      {active && (
-                        <div className="combo-blink" style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 600, color: isCrit ? t.redBright : t.gold }}>{combo.alert}</div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          )}
 
           {/* Verdict Banner */}
           <div style={{ marginTop: 32, borderRadius: 12, padding: "30px 36px", textAlign: "center", transition: "all 0.45s", background: bannerBg, border: `1px solid ${bannerBorderColor}`, borderTop: bannerBorderTop }}>
