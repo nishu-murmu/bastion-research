@@ -1,5 +1,37 @@
 import { Request, Response } from 'express'
 import { supabase } from '../supabase'
+import { sendAiSensyCampaign } from '../services/aisensy.service'
+
+function buildAiSensyTemplateParams(context: {
+  name: string
+  email: string
+  phone?: string
+  webinar_slug?: string
+}) {
+  const spec = (process.env.AISENSY_TEMPLATE_PARAMS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  if (!spec.length) return undefined
+
+  const valueForKey = (key: string) => {
+    switch (key) {
+      case 'name':
+        return context.name
+      case 'email':
+        return context.email
+      case 'phone':
+        return context.phone || ''
+      case 'webinar_slug':
+        return context.webinar_slug || ''
+      default:
+        return ''
+    }
+  }
+
+  return spec.map(valueForKey)
+}
 
 // Create a new webinar registration (public endpoint), avoid duplicate per (email, webinar_slug)
 export const createWebinarRegistration = async (
@@ -26,6 +58,17 @@ export const createWebinarRegistration = async (
     }
     if (!webinar_slug) {
       return res.status(400).json({ error: 'webinar_slug is required' })
+    }
+
+    const isPortfolioRedFlags =
+      (source ?? '') === 'portfolio-red-flags-landing' ||
+      String(webinar_slug || '').startsWith('portfolio-red-flags')
+
+    if (isPortfolioRedFlags && !String(phone || '').trim()) {
+      return res.status(400).json({
+        error:
+          'phone is required to send WhatsApp updates for this webinar registration',
+      })
     }
 
     // Check for duplicate registration by email and webinar_slug
@@ -78,6 +121,27 @@ export const createWebinarRegistration = async (
         })
       }
       return res.status(500).json({ error: error.message })
+    }
+
+    // Trigger WhatsApp notification via AiSensy (best-effort; never blocks registration)
+    if (isPortfolioRedFlags && phone) {
+      void sendAiSensyCampaign({
+        destination: String(phone),
+        userName: String(name),
+        source: source ?? 'portfolio-red-flags-landing',
+        templateParams: buildAiSensyTemplateParams({
+          name: String(name),
+          email: String(email),
+          phone: String(phone),
+          webinar_slug: webinar_slug ? String(webinar_slug) : undefined,
+        }),
+        attributes: {
+          ...(email ? { email: String(email) } : {}),
+          ...(webinar_slug ? { webinar_slug: String(webinar_slug) } : {}),
+        },
+      }).catch((e: any) => {
+        console.error('AiSensy campaign send failed:', e?.message || e)
+      })
     }
 
     return res.status(201).json(data)

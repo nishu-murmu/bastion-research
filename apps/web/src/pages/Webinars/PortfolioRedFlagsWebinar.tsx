@@ -475,6 +475,7 @@ const PortfolioRedFlagsWebinar: React.FC = () => {
             </div>
             <WebinarRegistrationForm
               webinarSlug={WEBINAR_SLUG}
+              requirePhone
               onSuccess={() => setShowForm(false)}
             />
           </div>

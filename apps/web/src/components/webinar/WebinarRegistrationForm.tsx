@@ -10,11 +10,13 @@ import { Config } from "@/utils/config";
 interface WebinarRegistrationFormProps {
   webinarSlug: string;
   onSuccess?: () => void;
+  requirePhone?: boolean;
 }
 
 export function WebinarRegistrationForm({
   webinarSlug,
   onSuccess,
+  requirePhone = false,
 }: WebinarRegistrationFormProps) {
   const [form, setForm] = useState({
     name: "",
@@ -45,6 +47,11 @@ export function WebinarRegistrationForm({
 
     if (!form.name.trim() || !form.email.trim()) {
       toast.error("Please enter your name and email.");
+      return;
+    }
+
+    if (requirePhone && !form.phone.trim()) {
+      toast.error("Please enter your phone number.");
       return;
     }
 
@@ -120,7 +127,7 @@ export function WebinarRegistrationForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="phone">Phone (optional)</Label>
+        <Label htmlFor="phone">{`Phone${requirePhone ? "" : " (optional)"}`}</Label>
         <Input
           id="phone"
           name="phone"
@@ -129,6 +136,7 @@ export function WebinarRegistrationForm({
           onChange={handleChange}
           placeholder="+91 98765 43210"
           disabled={submitting}
+          required={requirePhone}
         />
       </div>
 
