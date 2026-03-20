@@ -462,9 +462,7 @@ export default function LandingPage() {
                               {
                                 text: "Portfolio choices:",
                                 sublist: [
-                                  "Adaptive Quality (Techno-Funda)",
-                                  "Triple Edge (Quant-based)",
-                                  "ETF Optimiser (Smart ETF investing)",
+                                  "Asymetric Growth"
                                 ],
                               },
                             ]}
