@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { redFlagApi, type RedFlagCompanyStats } from "@/api/red-flag-api";
+import { redFlagApi } from "@/api/red-flag-api";
 import { uploadFile } from "@/api/files-api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,8 +14,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { RefreshCw, Plus } from "lucide-react";
+import { RefreshCw, Plus, Trash2 } from "lucide-react";
 import { RED_FLAG_QUESTIONS, type RedFlagQuestionKey } from "@/config/redFlagQuestions";
+// Remove unused ConfirmationModal and modal-store imports, matching WebinarManagement.tsx approach
 
 const getQuestionLabel = (key: string) =>
   (RED_FLAG_QUESTIONS as Partial<Record<RedFlagQuestionKey, { name: string }>>)[
@@ -29,6 +30,12 @@ const RedFlagAnalytics: React.FC = () => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<{
+    open: boolean;
+    id: string | null;
+    name: string | null;
+  }>({ open: false, id: null, name: null });
 
   const load = async () => {
     setLoading(true);
@@ -84,6 +91,29 @@ const RedFlagAnalytics: React.FC = () => {
     }
   };
 
+  const handleConfirmDelete = (id: string, name: string) => {
+    setConfirmState({ open: true, id, name });
+  };
+
+  const handleDelete = async () => {
+    if (!confirmState.id || !confirmState.name) return;
+    setDeletingId(confirmState.id);
+    try {
+      await redFlagApi.admin.deleteCompany(confirmState.id);
+      toast.success("Company deleted");
+      await load();
+    } catch (e: any) {
+      toast.error(e?.response?.data?.error || "Failed to delete company");
+    } finally {
+      setDeletingId(null);
+      setConfirmState({ open: false, id: null, name: null });
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmState({ open: false, id: null, name: null });
+  };
+
   const rows = useMemo(() => {
     return [...stats].sort((a, b) =>
       a.company.name.localeCompare(b.company.name)
@@ -92,6 +122,37 @@ const RedFlagAnalytics: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Confirmation Modal, matching WebinarManagement style */}
+      {confirmState.open && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
+            <h3 className="text-lg font-semibold mb-2">
+              Delete {confirmState.name}?
+            </h3>
+            <p className="mb-6 text-gray-700">
+              Are you sure you want to delete the company "{confirmState.name}"? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="ghost"
+                onClick={handleCancelDelete}
+                disabled={deletingId === confirmState.id}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={deletingId === confirmState.id}
+                className="hover:bg-red-600 hover:text-white"
+              >
+                {deletingId === confirmState.id ? "Deleting..." : "Delete"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Red Flag Analytics</h1>
@@ -177,12 +238,13 @@ const RedFlagAnalytics: React.FC = () => {
                 <TableHead>Company</TableHead>
                 <TableHead>Flagged Questions</TableHead>
                 <TableHead className="text-right">Users Frequency</TableHead>
+                <TableHead className="text-center" style={{ width: 80 }}>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-muted-foreground">
+                  <TableCell colSpan={4} className="text-muted-foreground">
                     {loading ? "Loading..." : "No companies found"}
                   </TableCell>
                 </TableRow>
@@ -218,6 +280,18 @@ const RedFlagAnalytics: React.FC = () => {
                       )}
                     </TableCell>
                     <TableCell className="text-right">{r.usersFrequency}</TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        disabled={deletingId === r.company.id || loading}
+                        onClick={() => handleConfirmDelete(r.company.id, r.company.name)}
+                        aria-label="Delete company"
+                        className=""
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -230,4 +304,3 @@ const RedFlagAnalytics: React.FC = () => {
 };
 
 export default RedFlagAnalytics;
-

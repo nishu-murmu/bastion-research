@@ -14,185 +14,6 @@ const tabs = [
 
 type TabKey = (typeof tabs)[number]["key"];
 
-// ===== Countdown Component (revamped with animations & true center) =====
-
-function usePrevious<T>(value: T): T | undefined {
-  const ref = useRef<T>();
-  useEffect(() => { ref.current = value }, [value]);
-  return ref.current;
-}
-
-function useCountdown(targetDate: Date) {
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const tick = () => setNow(new Date());
-    const interval = 1000;
-    const id = setInterval(tick, interval);
-    return () => clearInterval(id);
-  }, [targetDate]);
-
-  const diff = targetDate.getTime() - now.getTime();
-  const negative = diff < 0;
-  const d = Math.max(0, Math.floor(diff / (24 * 60 * 60 * 1000)));
-  const h = Math.max(0, Math.floor((diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000)));
-  const m = Math.max(0, Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000)));
-  const s = Math.max(0, Math.floor((diff % (60 * 1000)) / 1000));
-  const oneDayLeft = diff <= 24 * 60 * 60 * 1000 && !negative;
-  return { days: d, hours: h, minutes: m, seconds: s, oneDayLeft, negative };
-}
-
-// Single animated timer digit (with nice vertical swipe for each change)
-function AnimatedTimerDigit({ value }: { value: number | string }) {
-  // Convert to string, pad with zero to always 2 chars (should work for all values except days, which can be >99)
-  const strValue = typeof value === "number"
-    ? value.toString().padStart(2, "0")
-    : value;
-
-  // Key each digit so that both digits animate independently
-  return (
-    <span className="inline-flex">
-      {strValue.split("").map((digit, i) => (
-        <motion.span
-          key={digit + "-" + i}
-          className="min-w-[1ch] block"
-          initial={{ y: -24, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 24, opacity: 0 }}
-          transition={{
-            type: "spring",
-            stiffness: 300,
-            damping: 16,
-          }}
-          style={{
-            display: "inline-block"
-          }}
-        >
-          {digit}
-        </motion.span>
-      ))}
-    </span>
-  );
-}
-
-// Animated timer block
-function CountdownAnimatedBlock({
-  value,
-  prevValue,
-  label,
-}: {
-  value: number;
-  prevValue?: number;
-  label: string;
-}) {
-  // If days go triple digit, 3 digits will animate, else always 2
-  const displayValue = value.toString().padStart(2, "0");
-
-  return (
-    <div className="flex flex-col items-center px-2 md:px-3">
-      <AnimatePresence initial={false} mode="popLayout">
-        <motion.div
-          key={value}
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 20, opacity: 0 }}
-          transition={{
-            duration: 0.35,
-            type: "spring",
-            stiffness: 260,
-            damping: 20,
-          }}
-          className="text-2xl md:text-3xl font-mono font-bold text-[#881a1a] bg-gradient-to-br from-[#fff6] to-[#eadc] px-3 py-1.5 rounded-lg shadow-lg border border-[#fff8]"
-          style={{
-            letterSpacing: 1.5,
-            minWidth: label === "days" ? "2.8ch" : "2ch",
-            userSelect: "none",
-          }}
-        >
-          {displayValue}
-        </motion.div>
-      </AnimatePresence>
-      <span className="block text-xs md:text-sm mt-1 font-medium uppercase text-[#911b1b] tracking-wider opacity-80">
-        {label}
-      </span>
-    </div>
-  );
-}
-
-const LAUNCH_DATE = new Date("2026-03-20T00:00:00+05:30");
-
-function LaunchCountdown() {
-  const { days, hours, minutes, seconds, negative } = useCountdown(LAUNCH_DATE);
-
-  // Store previous values for animation direction (optional enhancement)
-  const prev = {
-    days: usePrevious(days),
-    hours: usePrevious(hours),
-    minutes: usePrevious(minutes),
-    seconds: usePrevious(seconds),
-  };
-
-  if (negative) {
-    return (
-      <motion.div
-        className="flex flex-col items-center justify-center h-full"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        style={{
-          color: MAROON,
-          fontSize: "1.2rem",
-          fontWeight: 600,
-          letterSpacing: 1,
-        }}
-      >
-        🎉 Now Launched!
-      </motion.div>
-    );
-  }
-
-  // Center the timer feature both vertically and horizontally within the parent container!
-  return (
-    <div
-      className="flex flex-col items-center justify-center w-full h-full py-6 z-10"
-      style={{
-        minHeight: "220px", // ensures some space for timer block
-      }}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.33, type: "spring", damping: 26 }}
-      >
-        <div className="mb-4 text-center">
-          <span
-            className="text-base md:text-lg font-medium"
-            style={{
-              color: MAROON,
-              letterSpacing: 1,
-              fontWeight: 600,
-            }}
-          >
-            🚀 <span className="opacity-90">Launching March 20, 2024</span>
-          </span>
-        </div>
-        <div
-          className="flex flex-row justify-center items-end gap-2 md:gap-4 px-2 py-2 bg-[#fff8] rounded-lg shadow-md border border-[#fff7] backdrop-blur-md"
-        >
-          <CountdownAnimatedBlock value={days} prevValue={prev.days} label="days" />
-          <motion.span className="text-lg md:text-2xl text-[#910] font-mono font-bold px-0.5 select-none">:</motion.span>
-          <CountdownAnimatedBlock value={hours} prevValue={prev.hours} label="hours" />
-          <motion.span className="text-lg md:text-2xl text-[#910] font-mono font-bold px-0.5 select-none">:</motion.span>
-          <CountdownAnimatedBlock value={minutes} prevValue={prev.minutes} label="mins" />
-          <motion.span className="text-lg md:text-2xl text-[#910] font-mono font-bold px-0.5 select-none">:</motion.span>
-          <CountdownAnimatedBlock value={seconds} prevValue={prev.seconds} label="secs" />
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-// ===== /Countdown Component (revamped) =====
-
 export default function LandingPage() {
   const [active, setActive] = useState<TabKey>("qualified");
   const [progress, setProgress] = useState(0);
@@ -242,22 +63,6 @@ export default function LandingPage() {
       window.open(PDF_URL, "_blank");
     }
   };
-
-  // Function to open popup browser
-  const openPopup = (url: string) => {
-    const width = 800;
-    const height = 500;
-    const left = 20;
-    const top = 10;
-    window.open(
-      url,
-      "PopupWindow",
-      `width=${width},height=${height},top=${top},left=${left},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
-    );
-  };
-
-  // For blur management
-  const { negative } = useCountdown(LAUNCH_DATE);
 
   return (
     <>
@@ -369,11 +174,6 @@ export default function LandingPage() {
 
                   {/* Content area */}
                   <div className="flex-1 p-5 md:p-8 overflow-hidden flex flex-col justify-center relative">
-                    {/* --- Centered Countdown for "Effortless Investor" tab --- */}
-                    {active === "non_diy" && (
-                      <LaunchCountdown />
-                    )}
-
                     <AnimatePresence mode="wait">
                       {active === "qualified" && (
                         <motion.div
@@ -445,7 +245,7 @@ export default function LandingPage() {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -8 }}
                           transition={{ duration: 0.25 }}
-                          className={`h-full flex flex-col md:flex-row gap-6${negative ? "" : " blur-sm"}`}
+                          className={`h-full flex flex-col md:flex-row gap-6`}
                         >
                           <Panel
                             title="Product Suitability"
@@ -559,7 +359,7 @@ export default function LandingPage() {
 
 
                   {active === "non_diy" && (
-                    <div className={`${negative ? "" : "blur-sm pointer-events-none"}`}>
+                    <div>
                       <motion.div
                         className="p-5 text-center border-t flex justify-center gap-4 flex-wrap"
                         style={{ borderColor: "rgba(28,40,82,0.12)" }}

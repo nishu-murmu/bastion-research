@@ -158,12 +158,15 @@ export const endpoints = {
       `/api/recommendations/company/analytics/${symbol}?id=${userId}`,
   },
   redFlags: {
-    companies: "/api/red-flags/companies",
-    submissions: "/api/red-flags/submissions",
-    companyStats: (companyId: string) => `/api/red-flags/companies/${companyId}/stats`,
+    companies: '/api/red-flags/companies',
+    submissions: '/api/red-flags/submissions',
+    companyStats: (companyId: string) =>
+      `/api/red-flags/companies/${companyId}/stats`,
     admin: {
-      companies: "/api/admin/red-flags/companies",
-      stats: "/api/admin/red-flags/stats",
+      companies: '/api/admin/red-flags/companies',
+      stats: '/api/admin/red-flags/stats',
+      // New endpoint for deleting red-flag companies
+      deleteCompany: (id: string) => `/api/admin/red-flags/companies/${id}`,
     },
   },
 } as const

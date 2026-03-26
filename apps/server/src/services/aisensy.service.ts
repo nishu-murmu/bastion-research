@@ -1,6 +1,5 @@
 import axios from 'axios'
-
-const AISENSY_ENDPOINT = 'https://backend.aisensy.com/campaign/t1/api/v2'
+import { config } from '../utils/config'
 
 export type AiSensyCampaignPayload = {
   destination: string
@@ -35,7 +34,7 @@ export async function sendAiSensyCampaign(payload: AiSensyCampaignPayload) {
   }
 
   const { data } = await axios.post(
-    AISENSY_ENDPOINT,
+    config.aisensy_endpoint,
     {
       apiKey,
       campaignName,
@@ -56,4 +55,3 @@ export async function sendAiSensyCampaign(payload: AiSensyCampaignPayload) {
 
   return { sent: true, skipped: false, data }
 }
-

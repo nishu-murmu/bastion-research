@@ -47,5 +47,11 @@ export const redFlagApi = {
       )
       return res.data
     },
+    deleteCompany: async (id: string) => {
+      const res = await axiosInstance.delete<{ message: string }>(
+        endpoints.redFlags.admin.deleteCompany(id)
+      )
+      return res.data
+    },
   },
 }

@@ -46,6 +46,32 @@ export const listRedFlagCompanies = async (req: Request, res: Response) => {
   }
 }
 
+export const deleteRedFlagCompany = async (req: Request, res: Response) => {
+  try {
+    const companyId = req.params.id
+    if (!companyId) {
+      return res.status(400).json({ error: 'Company ID is required' })
+    }
+
+    // Optionally: You could check if the company exists here
+
+    const { error } = await supabase
+      .from(COMPANIES_TABLE)
+      .delete()
+      .eq('id', companyId)
+
+    if (error) {
+      console.error('Database error:', error)
+      return res.status(500).json({ error: error.message })
+    }
+
+    return res.status(204).send() // No Content
+  } catch (error: any) {
+    console.error('Error deleting red-flag company:', error)
+    return res.status(500).json({ error: 'Internal server error' })
+  }
+}
+
 export const createRedFlagCompany = async (req: Request, res: Response) => {
   try {
     const name = normalizeCompanyName(req.body?.name)
