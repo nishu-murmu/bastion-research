@@ -2,7 +2,8 @@ import { redFlagApi } from "@/api/red-flag-api";
 import { toast } from "sonner";
 import {
   RED_FLAG_QUESTION_KEY_BY_ID,
-  RED_FLAG_QUESTIONS_COUNT
+  RED_FLAG_QUESTIONS_COUNT,
+  type RedFlagQuestionKey,
 } from "@/config/redFlagQuestions";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
@@ -89,12 +90,7 @@ export default function RedFlagChecklist() {
       resetAll();
     } catch (e: any) {
       console.error("Failed to submit red-flag decision", e);
-      const status = e?.response?.status;
-      if (status === 401) {
-        toast.error("Sign in to submit your checklist. Submissions are saved per account.");
-      } else {
-        toast.error(e?.response?.data?.error || "Could not save submission. Try again.");
-      }
+      toast.error(e?.response?.data?.error || "Could not save submission. Try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -382,8 +378,8 @@ export default function RedFlagChecklist() {
                         <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: t.gold, background: t.goldMuted, border: `1px solid ${t.goldBorder}`, borderRadius: 4, padding: "4px 9px", marginTop: 9, display: "inline-block", letterSpacing: "0.04em" }}>{flag.check}</div>
                       </div>
                       <div className="toggle-group" style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
-                        <ToggleButton label="✗ FLAG" active={isFl} activeStyle={{ background: t.red, borderColor: t.red, color: "#fff", fontWeight: 600, boxShadow: "0 2px 12px rgba(192,0,0,0.4)" }} t={t} onClick={() => setFlag(fid, "flagged")} />
                         <ToggleButton label="✓ CLEAR" active={isCl} activeStyle={{ background: t.green, borderColor: t.greenBright, color: "#fff", fontWeight: 600, boxShadow: "0 2px 12px rgba(26,158,120,0.35)" }} t={t} onClick={() => setFlag(fid, "clear")} />
+                        <ToggleButton label="✗ FLAG" active={isFl} activeStyle={{ background: t.red, borderColor: t.red, color: "#fff", fontWeight: 600, boxShadow: "0 2px 12px rgba(192,0,0,0.4)" }} t={t} onClick={() => setFlag(fid, "flagged")} />
                       </div>
                     </div>
                   );

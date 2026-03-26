@@ -1,8 +1,6 @@
 import { Request, Response } from 'express'
 import { supabase } from '../supabase'
 
-type AuthedRequest = Request & { user?: { id: string; role?: string } }
-
 const COMPANIES_TABLE = 'red_flag_companies'
 /** Supabase table name (typo preserved to match existing DB). */
 const SUBMISSIONS_TABLE = 'red_flag_submissions'
@@ -10,13 +8,70 @@ const SUBMISSIONS_TABLE = 'red_flag_submissions'
 const normalizeCompanyName = (name: unknown) =>
   typeof name === 'string' ? name.trim().replace(/\s+/g, ' ') : ''
 
-const normalizeFlaggedKeys = (value: unknown) => {
+const normalizeFlaggedKeys = (value: unknown): string[] => {
   if (!Array.isArray(value)) return []
-  return value
-    .filter((k): k is string => typeof k === 'string')
-    .map((k) => k.trim())
-    .filter(Boolean)
-    .slice(0, 200)
+
+  const normalized: string[] = []
+
+  for (const entry of value) {
+    if (typeof entry !== 'string') continue
+    const key = entry.trim()
+    if (!key) continue
+    normalized.push(key)
+    if (normalized.length >= 200) break
+  }
+
+  return normalized
+}
+
+const buildFlaggedKeysFrequencyMap = (
+  keys: string[]
+): Record<string, number> => {
+  const frequencyMap: Record<string, number> = {}
+  for (const key of keys) {
+    frequencyMap[key] = (frequencyMap[key] ?? 0) + 1
+  }
+  return frequencyMap
+}
+
+const extractFlaggedKeysFrequencyMap = (
+  value: unknown
+): Record<string, number> => {
+  // Accepts object in { key: number, ... } form; or fallback to old array style.
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const result: Record<string, number> = {}
+    for (const [rawKey, rawValue] of Object.entries(value)) {
+      const key = rawKey.trim()
+      if (!key) continue
+      if (typeof rawValue !== 'number' || !Number.isFinite(rawValue)) continue
+      const count = Math.floor(rawValue)
+      if (count <= 0) continue
+      result[key] = count
+    }
+    return result
+  }
+
+  // Backward compatibility: old array-based storage (flat array or array of objects)
+  if (Array.isArray(value)) {
+    const fallbackMap: Record<string, number> = {}
+    for (const item of value) {
+      if (typeof item === 'string') {
+        const key = item.trim()
+        if (!key) continue
+        fallbackMap[key] = (fallbackMap[key] ?? 0) + 1
+      } else if (item && typeof item === 'object') {
+        const key =
+          typeof (item as { key?: unknown }).key === 'string'
+            ? (item as { key: string }).key.trim()
+            : ''
+        if (!key) continue
+        fallbackMap[key] = (fallbackMap[key] ?? 0) + 1
+      }
+    }
+    return fallbackMap
+  }
+
+  return {}
 }
 
 const normalizeLogoUrl = (value: unknown) => {
@@ -52,8 +107,6 @@ export const deleteRedFlagCompany = async (req: Request, res: Response) => {
     if (!companyId) {
       return res.status(400).json({ error: 'Company ID is required' })
     }
-
-    // Optionally: You could check if the company exists here
 
     const { error } = await supabase
       .from(COMPANIES_TABLE)
@@ -101,16 +154,13 @@ export const createRedFlagCompany = async (req: Request, res: Response) => {
   }
 }
 
-export const submitRedFlagDecision = async (
-  req: AuthedRequest,
-  res: Response
-) => {
+/**
+ * The payload for red-flag submissions is now stored per submission (per request).
+ * Each submission builds its key frequency from that one payload only.
+ * Multiple submissions for the same company_id will result in an array of submissions.
+ */
+export const submitRedFlagDecision = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.id
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authorized' })
-    }
-
     const companyId =
       typeof req.body?.companyId === 'string' ? req.body.companyId : ''
     if (!companyId) {
@@ -118,18 +168,19 @@ export const submitRedFlagDecision = async (
     }
 
     const flaggedKeys = normalizeFlaggedKeys(req.body?.flaggedKeys)
+    const flaggedKeysFrequency = buildFlaggedKeysFrequencyMap(flaggedKeys)
 
     const payload = {
       company_id: companyId,
-      user_id: userId,
-      flagged_keys: flaggedKeys,
+      flagged_keys: flaggedKeysFrequency,
       updated_at: new Date().toISOString(),
     }
 
+    // Insert a new submission every time. Don't upsert; multiple users/attempts should yield multiple rows.
     const { data, error } = await supabase
       .from(SUBMISSIONS_TABLE)
-      .upsert([payload], { onConflict: 'company_id,user_id' })
-      .select('id,company_id,user_id,flagged_keys,created_at,updated_at')
+      .insert([payload])
+      .select('id,company_id,flagged_keys,created_at,updated_at')
       .single()
 
     if (error) {
@@ -145,23 +196,21 @@ export const submitRedFlagDecision = async (
 }
 
 const computeStats = (
-  submissions: Array<{ user_id: string; flagged_keys: string[] | null }>
+  submissions: Array<{
+    flagged_keys: unknown
+  }>
 ) => {
-  const userIds = new Set<string>()
   const flaggedCounts = new Map<string, number>()
 
   for (const s of submissions) {
-    if (s.user_id) userIds.add(s.user_id)
-    const keys = Array.isArray(s.flagged_keys) ? s.flagged_keys : []
-    for (const k of keys) {
-      const key = typeof k === 'string' ? k.trim() : ''
-      if (!key) continue
-      flaggedCounts.set(key, (flaggedCounts.get(key) ?? 0) + 1)
+    const frequencyMap = extractFlaggedKeysFrequencyMap(s.flagged_keys)
+    for (const [key, count] of Object.entries(frequencyMap)) {
+      flaggedCounts.set(key, (flaggedCounts.get(key) ?? 0) + count)
     }
   }
 
   return {
-    usersFrequency: userIds.size,
+    usersFrequency: submissions.length,
     flaggedQuestions: Array.from(flaggedCounts.entries())
       .map(([key, count]) => ({ key, count }))
       .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key)),
@@ -186,7 +235,7 @@ export const getRedFlagCompanyStats = async (req: Request, res: Response) => {
         .single(),
       supabase
         .from(SUBMISSIONS_TABLE)
-        .select('user_id,flagged_keys')
+        .select('flagged_keys')
         .eq('company_id', companyId),
     ])
 
@@ -203,7 +252,9 @@ export const getRedFlagCompanyStats = async (req: Request, res: Response) => {
     }
 
     const stats = computeStats(
-      (submissions ?? []) as Array<{ user_id: string; flagged_keys: string[] }>
+      (submissions ?? []) as Array<{
+        flagged_keys: unknown
+      }>
     )
 
     return res.status(200).json({
@@ -229,9 +280,7 @@ export const getAllRedFlagCompanyStats = async (
         .from(COMPANIES_TABLE)
         .select('id,name,logo_url,created_at')
         .order('name', { ascending: true }),
-      supabase
-        .from(SUBMISSIONS_TABLE)
-        .select('company_id,user_id,flagged_keys'),
+      supabase.from(SUBMISSIONS_TABLE).select('company_id,flagged_keys'),
     ])
 
     if (companiesError) {
@@ -245,17 +294,17 @@ export const getAllRedFlagCompanyStats = async (
 
     const byCompany = new Map<
       string,
-      Array<{ user_id: string; flagged_keys: string[] | null }>
+      Array<{
+        flagged_keys: unknown
+      }>
     >()
     for (const s of (submissions ?? []) as Array<{
       company_id: string
-      user_id: string
-      flagged_keys: string[] | null
+      flagged_keys: unknown
     }>) {
       if (!s.company_id) continue
       if (!byCompany.has(s.company_id)) byCompany.set(s.company_id, [])
       byCompany.get(s.company_id)!.push({
-        user_id: s.user_id,
         flagged_keys: s.flagged_keys,
       })
     }
