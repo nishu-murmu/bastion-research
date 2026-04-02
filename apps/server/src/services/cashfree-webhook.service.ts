@@ -95,11 +95,6 @@ export const handlePaymentSuccess = async (payload: any) => {
         : config.roles.core_subscriber,
   }
 
-  const updateUserPromise = supabase
-    .from('users')
-    .update(updateUserPayload)
-    .eq('id', customer_details?.customer_id)
-
   const transactionId = taggedTransactionId || crypto.randomUUID()
   const normalizedCouponCode =
     typeof tagCouponCode === 'string' && tagCouponCode.trim()
@@ -121,14 +116,46 @@ export const handlePaymentSuccess = async (payload: any) => {
 
   const { data: existingPayment } = await supabase
     .from('payment_history')
-    .select('transaction_id')
+    .select('transaction_id, user_id')
     .eq('transaction_id', transactionId)
     .maybeSingle()
+
+  const resolveUserId = async (): Promise<string | null> => {
+    const candidateCustomerId = customer_details?.customer_id
+    if (typeof candidateCustomerId === 'string' && candidateCustomerId.trim()) {
+      const { data: byId } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', candidateCustomerId)
+        .maybeSingle()
+      if (byId?.id) return byId.id as string
+    }
+
+    const customerEmail = customer_details?.customer_email
+    if (typeof customerEmail === 'string' && customerEmail.trim()) {
+      const { data: byEmail } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', customerEmail.trim())
+        .maybeSingle()
+      if (byEmail?.id) return byEmail.id as string
+    }
+
+    if (typeof (existingPayment as any)?.user_id === 'string') {
+      return (existingPayment as any).user_id
+    }
+
+    return null
+  }
+
+  const resolvedUserId = await resolveUserId()
+  const updateUserPromise = resolvedUserId
+    ? supabase.from('users').update(updateUserPayload).eq('id', resolvedUserId)
+    : Promise.resolve({} as any)
 
   const paymentUpdateBase: any = {
     transaction_status: payment?.payment_status,
     plan_id: currentPlan?.plan_id,
-    user_id: customer_details?.customer_id,
     payer_email: customer_details?.customer_email,
     created_at: payment?.payment_time,
     discounted_amount:
@@ -138,8 +165,23 @@ export const handlePaymentSuccess = async (payload: any) => {
     coupon_code: normalizedCouponCode,
     coupon_applied: await resolveCouponId(),
   }
+  if (resolvedUserId) {
+    paymentUpdateBase.user_id = resolvedUserId
+  }
 
   const persistPaymentHistory = async () => {
+    if (!existingPayment && !resolvedUserId) {
+      console.warn(
+        'Skipping payment_history insert because no matching user was found for webhook payment',
+        {
+          transactionId,
+          customerId: customer_details?.customer_id,
+          customerEmail: customer_details?.customer_email,
+        }
+      )
+      return
+    }
+
     const op = existingPayment
       ? supabase
           .from('payment_history')
@@ -157,9 +199,11 @@ export const handlePaymentSuccess = async (payload: any) => {
       const fallbackBase: any = {
         transaction_status: payment?.payment_status,
         plan_id: currentPlan?.plan_id,
-        user_id: customer_details?.customer_id,
         payer_email: customer_details?.customer_email,
         created_at: payment?.payment_time,
+      }
+      if (resolvedUserId) {
+        fallbackBase.user_id = resolvedUserId
       }
       if (existingPayment) {
         await supabase
