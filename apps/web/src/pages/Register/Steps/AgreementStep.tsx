@@ -16,7 +16,6 @@ const AgreementStep: React.FC<AgreementStepProps> = ({
   onNext,
   formData,
 }) => {
-  console.log({formData})
   const [error, setError] = useState<string | null>(null);
   const [pdfUrlWithAddress, setPdfUrlWithAddress] = useState("");
   const [isEsignSubmitting, setIsEsignSubmitting] = useState(false);
