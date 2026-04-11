@@ -16,6 +16,7 @@ import { queryKeys } from "@/api/queryKeys";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { confirmDelete } from "@/utils/confirm";
+import { formatDate } from "@/lib/utils";
 
 type WebinarRegistration = {
   id: string | number;
@@ -168,7 +169,8 @@ const WebinarRegistrationsPage: React.FC = () => {
                       {item.created_at ? (
                         <div className="flex items-center text-sm text-gray-600">
                           <Calendar className="h-4 w-4 mr-1" />
-                          {new Date(item.created_at).toLocaleString()}
+                          {/* {new Date(item.created_at).toLocaleString()} */}
+                          {formatDate(item.created_at)}
                         </div>
                       ) : (
                         "-"

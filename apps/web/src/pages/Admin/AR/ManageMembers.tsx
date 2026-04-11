@@ -16,6 +16,7 @@ import axiosInstance from "@/api/axios";
 import ViewMemberModal from "@/components/core/common/Modals/ViewMemberModal";
 import { differenceInDays } from "date-fns";
 import { confirm } from "@/utils/confirm";
+import { formatDate } from "@/lib/utils";
 
 interface MemberData {
   id: string;
@@ -356,7 +357,8 @@ const MemberManagementDashboard = () => {
       field: "created_at",
       valueFormatter: (params) => {
         if (!params.value) return "";
-        return new Date(params.value).toLocaleDateString();
+        return formatDate(params.value)
+        // return new Date(params.value).toLocaleDateString();
       },
       minWidth: 120,
     },

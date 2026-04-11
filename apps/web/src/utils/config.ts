@@ -30,7 +30,9 @@ export const Config = {
     research_ally_subscriber: 'research_ally_subscriber',
   },
   mailchimp_tags: {
-    portfolio_red_flags_landing: 'Risk_webinar',
+    portfolio_red_flags_landing: `Risk_webinar_${new Date().getFullYear()}_${(new Date().getMonth() + 1)
+      .toString()
+      .padStart(2, '0')}_${new Date().getDate().toString().padStart(2, '0')}`,
     webinar_registration: 'webinar-registration',
   },
 }

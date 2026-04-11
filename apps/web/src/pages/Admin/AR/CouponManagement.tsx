@@ -11,6 +11,7 @@ import {
 } from "@/api/coupons-api";
 import { confirm, confirmDelete } from "@/utils/confirm";
 import Modal from "@/components/core/Modal";
+import { formatDate } from "@/lib/utils";
 
 type ApiCoupon = {
   coupon_id: number;
@@ -203,7 +204,12 @@ const CouponsManagement = () => {
     if (!p.value) return <span>Unlimited</span>;
     const expired = isExpired(p.value);
     return (
-      <span className={expired ? "text-red-600" : ""}>{fmtDate(p.value)}</span>
+      <span className={expired ? "text-red-600" : ""}>{formatDate(p.value)}</span>
+    );
+  };
+  const StateDateRenderer = (p: any) => {
+    return (
+      <span >{formatDate(p.value)}</span>
     );
   };
   const ActionsRenderer = (p: any) => (
@@ -236,7 +242,7 @@ const CouponsManagement = () => {
     },
     { headerName: "Code", field: "code", cellRenderer: CodeRenderer },
     { headerName: "Discount", field: "discount" },
-    { headerName: "Start Date", field: "startDate" },
+    { headerName: "Start Date", field: "startDate", cellRenderer: StateDateRenderer },
     {
       headerName: "Expire Date",
       field: "expireDate",

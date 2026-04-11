@@ -6,6 +6,7 @@ import type { ColDef } from "ag-grid-community";
 import { useState } from "react";
 import EditRowModal from "@/components/core/common/Modals/EditRowModal";
 import ExpandableCell from "@/components/admin/ExpandableCell";
+import { formatDate } from "@/lib/utils";
 
 type Lead = {
   lead_id: number;
@@ -87,7 +88,7 @@ const LeadsPage = () => {
       field: "created_at",
       minWidth: 140,
       valueFormatter: (p) =>
-        p.value ? new Date(p.value).toLocaleString() : "",
+        p.value ? formatDate(p.value) : "",
     },
   ];
 
