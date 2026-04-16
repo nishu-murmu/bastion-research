@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { confirmDelete } from "@/utils/confirm";
 import { formatDate } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
+import { UTMSourcesManager } from "./UtmTable";
 
 function formatIntegrationDate(s?: string | null) {
   const t = s?.trim();
@@ -245,6 +246,10 @@ const WebinarRegistrationsPage: React.FC = () => {
         </CardContent>
       </Card>
 
+      <div className="my-6">
+        <UTMSourcesManager />
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Portfolio Red Flags Webinar</CardTitle>
@@ -255,6 +260,7 @@ const WebinarRegistrationsPage: React.FC = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
             </div>
           ) : error ? (
+         
             <div className="text-center text-red-600 py-8">
               Failed to load registrations.
             </div>
