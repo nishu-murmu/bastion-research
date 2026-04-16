@@ -89,7 +89,7 @@ const useConstants = () => {
     },
     {
       key: "effortless_investor",
-      name: "Effortless Investor",
+      name: "Subscribe to Smallcase",
       icon: TrendingUp,
       path: AppRoutes.effortlessInvestor,
     },

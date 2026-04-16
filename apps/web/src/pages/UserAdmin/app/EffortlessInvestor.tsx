@@ -18,7 +18,7 @@ import {
 
 const EffortlessInvestor: React.FC = () => {
   const [copied, setCopied] = useState(false);
-  const code = "PREMIUM50";
+  const code = "CORECOMMUNITY";
   const { BrandColors } = useConstants();
 
   const copyCode = () => {
