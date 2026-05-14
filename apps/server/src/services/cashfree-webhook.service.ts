@@ -2,6 +2,7 @@ import crypto from 'crypto'
 import { supabase } from '../supabase'
 import { config } from '../utils/config'
 import { clearOnboardingDropOffForUser } from '../automations/onboardingDropOff.scheduler'
+import { sendWelcomeEmailForUser } from './emailNotification.service'
 
 export const verifyWebhookSignature = (
   signature: string | undefined,
@@ -116,9 +117,11 @@ export const handlePaymentSuccess = async (payload: any) => {
 
   const { data: existingPayment } = await supabase
     .from('payment_history')
-    .select('transaction_id, user_id')
+    .select('transaction_id, user_id, transaction_status')
     .eq('transaction_id', transactionId)
     .maybeSingle()
+  const wasAlreadySuccessful =
+    (existingPayment as any)?.transaction_status === 'SUCCESS'
 
   const resolveUserId = async (): Promise<string | null> => {
     const candidateCustomerId = customer_details?.customer_id
@@ -223,6 +226,9 @@ export const handlePaymentSuccess = async (payload: any) => {
   }
 
   await Promise.all([updateUserPromise, persistPaymentHistory()])
+  if (resolvedUserId && !wasAlreadySuccessful) {
+    void sendWelcomeEmailForUser(resolvedUserId, currentPlan?.plan_name)
+  }
   clearOnboardingDropOffForUser(customer_details?.customer_id)
 }
 

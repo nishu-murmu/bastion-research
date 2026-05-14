@@ -5,7 +5,10 @@ import { config } from "../utils/config";
 import { supabase } from "../supabase";
 import crypto from "crypto";
 import sendEmail, { getResolvedSmtpFromAddress } from "../utils/email";
-import { sendWelcomeEmail } from "../services/emailNotification.service";
+import {
+  sendWelcomeEmail,
+  sendWelcomeEmailForUser,
+} from "../services/emailNotification.service";
 import { validateEmailOtp } from "./otp.controller";
 import { incrementCouponUsage } from "./coupon.controller";
 import {
@@ -433,12 +436,14 @@ export const onboardUser = async (req: Request, res: Response) => {
     if (typeof planNameValue === "string") {
       welcomePlanName = planNameValue;
     }
-    void sendWelcomeEmail({
-      to: normalizedEmail,
-      firstName,
-      username,
-      planName: welcomePlanName,
-    });
+    if (status === "free") {
+      void sendWelcomeEmail({
+        to: normalizedEmail,
+        firstName,
+        username,
+        planName: welcomePlanName,
+      });
+    }
 
     // Issue a session cookie so subsequent steps are authenticated
     try {
@@ -694,6 +699,8 @@ export const zeroAmountAccountCreation = async (
         console.error("Failed to increment coupon usage:", e);
         // Do not fail the request if coupon increment fails
       }
+
+      void sendWelcomeEmailForUser(user_id);
 
       return res.status(200).json({ user: data });
     } catch (e: any) {

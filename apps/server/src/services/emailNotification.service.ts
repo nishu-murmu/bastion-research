@@ -3,6 +3,7 @@ import sendEmail, {
   getResolvedSmtpFromAddress,
 } from "../utils/email";
 import { config } from "../utils/config";
+import { supabase } from "../supabase";
 
 const formatDateForEmail = (value?: string | null) => {
   if (!value) return null;
@@ -82,6 +83,45 @@ export const sendWelcomeEmail = async (
   } catch (error) {
     console.error("Failed to send welcome email", error);
   }
+};
+
+export const sendWelcomeEmailForUser = async (
+  userId: string,
+  fallbackPlanName?: string | null
+): Promise<void> => {
+  const { data: user, error } = await supabase
+    .from("users")
+    .select(
+      `
+        email,
+        username,
+        first_name,
+        membership_plans (
+          plan_name
+        )
+      `
+    )
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error || !user?.email) {
+    console.error("Failed to load user for welcome email", error);
+    return;
+  }
+
+  const membershipPlans = (user as any).membership_plans;
+  const planName =
+    fallbackPlanName ||
+    (Array.isArray(membershipPlans)
+      ? membershipPlans[0]?.plan_name
+      : membershipPlans?.plan_name);
+
+  await sendWelcomeEmail({
+    to: user.email,
+    firstName: (user as any).first_name,
+    username: (user as any).username,
+    planName: typeof planName === "string" ? planName : undefined,
+  });
 };
 
 export const sendSubscriptionExpiryReminderEmail = async (
