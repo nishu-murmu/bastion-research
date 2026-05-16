@@ -10,7 +10,7 @@ import { useLoader } from "@/hooks/use-loader";
 import { useSubscription } from "@/hooks/use-subscription";
 import AgreementStep from "@/pages/Register/Steps/AgreementStep";
 import PaymentStep from "@/pages/Register/Steps/PaymentStep";
-import { PAN_REGEX } from "@/utils";
+import { PAN_REGEX, getFeatureKey } from "@/utils";
 import { Config } from "@/utils/config";
 import { load } from "@cashfreepayments/cashfree-js";
 import { Sparkles } from "lucide-react";
@@ -33,7 +33,6 @@ const Subscription = () => {
   };
   const loader = useLoader();
   const navigate = useNavigate();
-
   // Redirect if not authenticated
   useEffect(() => {
     if (!isAuthenticated && !isLoading) {
@@ -69,8 +68,9 @@ const Subscription = () => {
     agreementSignedAt: undefined,
   });
 
+  
   const currentPlanCode =
-    subscription?.currentPlan || user?.membership_plans?.plan_code || null;
+  subscription?.subscription?.plan_code || "freemium"
   useEffect(() => {
     const loadPlans = async () => {
       setIsPlansLoading(true);
@@ -137,14 +137,18 @@ const Subscription = () => {
 
   const availablePlans = useMemo(() => {
     if (!plans.length) return [];
-    if (!hasSignedAgreement) return plans;
-
     return plans.filter((plan) => {
       const planCode = (plan.plan_code || "").toLowerCase();
       const isFree = String(plan.amount) === "0" || planCode === "freemium";
-      return !isFree;
+      if (isFree) return false;
+      const featureKey = getFeatureKey(plan);
+      if (featureKey === "core" && currentPlanCode === "core_annual") {
+        return false;
+      }
+      
+      return true;
     });
-  }, [plans, hasSignedAgreement]);
+  }, [plans, hasSignedAgreement, currentPlanCode, user]);
 
   const startUpgradeFlow = (plan: Plan) => {
     setPendingPlan(plan);
