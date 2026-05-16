@@ -131,7 +131,8 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
 
     setIsLoading(true);
     try {
-      const editorContent = editorStore.editor.getHTML();
+      let editorContent = editorStore.editor.getHTML();
+      editorContent = editorContent.replaceAll(/<img[^>]*src="attachment:[^"]*"[^>]*\/?>/gi, "");
       let dataToSave: any = { ...formData };
 
       // For scratch pad, map to correct database fields
@@ -389,19 +390,19 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
               placeholder="Enter featured image URL"
             />
             <label className="cursor-pointer">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={uploading.featured_image}
-              asChild
-            >
-              <span>
-                <Upload className="h-4 w-4 mr-1" />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={uploading.featured_image}
+                asChild
+              >
+                <span>
+                  <Upload className="h-4 w-4 mr-1" />
                   {uploading.featured_image ? "Uploading..." : "Upload"}
-              </span>
-            </Button>
-            <input
+                </span>
+              </Button>
+              <input
                 type="file"
                 accept="image/*"
                 className="hidden"
@@ -510,6 +511,7 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
             onClick={() => {
               let editorContent = editorStore.editor.getHTML();
               editorContent = editorContent.replace(/<p[^>]*><\/p>/g, "<br>");
+              editorContent = editorContent.replaceAll(/<img[^>]*src="attachment:[^"]*"[^>]*\/?>/gi, "");
               setFormData((prev) => ({
                 ...prev,
                 html_content: editorContent,
