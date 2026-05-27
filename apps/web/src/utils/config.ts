@@ -58,5 +58,11 @@ export const Config = {
       `Risk_webinar_${formatMailchimpTagDate(dateYmd)}`,
     webinar_registration: 'webinar-registration',
   },
+  campaignNames: {
+    subscription_one_week_before: "Bastion CORE Renewal Reminder #1",
+    subscription_expiry_day: "Bastion CORE Renewal Reminder #2",
+    subscription_one_week_after: "Bastion CORE Renewal Reminder #3",
+    subscription_fifteen_days_after: "Bastion CORE Renewal Reminder #4",
+  },
   aisensy_source: "new-landing-page form"
 }

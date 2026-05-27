@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
+import { useSubscriptionWhatsappReminder } from "@/hooks/use-subscription-whatsapp-reminder";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -37,6 +38,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(data?.user ?? null);
     setIsLoading(sessionLoading);
   }, [data, sessionLoading]);
+
+  useSubscriptionWhatsappReminder(data?.user ?? null);
 
   const refetchUser = async () => {
     await refetch();

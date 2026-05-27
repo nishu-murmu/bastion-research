@@ -68,6 +68,9 @@ export const endpoints = {
     panStatus: (referenceId: string | number) =>
       `/api/cashfree/verification/pan/${referenceId}`,
   },
+  subscriptionWhatsapp: {
+    reminder: '/api/subscription/whatsapp-reminder',
+  },
   files: {
     upload: '/api/files/upload',
   },
