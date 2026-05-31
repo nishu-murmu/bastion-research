@@ -34,6 +34,14 @@ interface SubscriptionReminderPayload {
   subscriptionEndDate?: string | null;
 }
 
+interface SubscriptionRenewalReminderPayload extends SubscriptionReminderPayload {
+  reminderType:
+    | "one_week_before"
+    | "expiry_day"
+    | "one_week_after"
+    | "fifteen_days_after";
+}
+
 const buildUsernameLine = (username?: string) =>
   username ? `Username: ${username}\n` : "";
 
@@ -167,6 +175,90 @@ export const sendSubscriptionExpiryReminderEmail = async (
     await sendEmail(emailOptions);
   } catch (error) {
     console.error("Failed to send subscription expiry reminder", error);
+  }
+};
+
+const renewalReminderCopyByType: Record<
+  SubscriptionRenewalReminderPayload["reminderType"],
+  { subject: string; heading: string; intro: string; cta: string }
+> = {
+  one_week_before: {
+    subject: "Your Bastion Research membership expires in 7 days",
+    heading: "Membership expiring soon",
+    intro:
+      "Your membership is due to expire in 7 days. Renew now to keep your access uninterrupted.",
+    cta: "Renew your membership before the expiry date.",
+  },
+  expiry_day: {
+    subject: "Your Bastion Research membership expires today",
+    heading: "Membership expires today",
+    intro:
+      "Your membership expires today. Renew now to continue using your Bastion Research access.",
+    cta: "Renew your membership today to avoid interruption.",
+  },
+  one_week_after: {
+    subject: "Your Bastion Research membership expired 7 days ago",
+    heading: "Membership expired 7 days ago",
+    intro:
+      "Your membership expired 7 days ago. Renew now to restore your access.",
+    cta: "Renew your membership to regain access.",
+  },
+  fifteen_days_after: {
+    subject: "Your Bastion Research membership expired 15 days ago",
+    heading: "Membership expired 15 days ago",
+    intro:
+      "Your membership expired 15 days ago. Renew now if you want to continue with Bastion Research.",
+    cta: "Renew your membership to continue.",
+  },
+};
+
+export const sendSubscriptionRenewalReminderEmail = async (
+  payload: SubscriptionRenewalReminderPayload
+): Promise<void> => {
+  const sender = getSenderEmail();
+  if (!sender) {
+    console.warn(
+      "SMTP sender is not configured; skipping subscription renewal reminder email."
+    );
+    return;
+  }
+
+  const copy = renewalReminderCopyByType[payload.reminderType];
+  const friendlyName = payload.firstName?.trim() || "there";
+  const planLabel = payload.planName?.trim() || "your Bastion Research membership";
+  const endDateLabel =
+    formatDateForEmail(payload.subscriptionEndDate) || "your expiry date";
+  const appUrl = getAppUrl();
+
+  const emailOptions: EmailOptions = {
+    to: payload.to,
+    from: sender,
+    subject: copy.subject,
+    text: `Hi ${friendlyName},\n\n${copy.intro}\n\nPlan: ${planLabel}\nExpiry date: ${endDateLabel}\n\nVisit ${appUrl} to renew or manage your membership.\n\nIf you already renewed, you can safely ignore this message.\n\nBest regards,\nBastion Research Team`,
+    html: `
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; padding: 32px 16px;">
+        <div style="max-width: 640px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.15);">
+          <div style="background: linear-gradient(135deg, #00213e, #0f172a); color: #fff; padding: 26px;">
+            <h1 style="margin: 0; font-size: 24px;">${copy.heading}</h1>
+            <p style="margin: 12px 0 0; font-size: 16px;">${planLabel} expiry date: ${endDateLabel}</p>
+          </div>
+          <div style="padding: 26px; color: #0f172a; font-size: 15px; line-height: 1.7;">
+            <p>Hi ${friendlyName},</p>
+            <p>${copy.intro}</p>
+            <p><strong>${copy.cta}</strong></p>
+            <p>Visit <a href="${appUrl}" style="color: #1d4ed8;">${appUrl}</a> to renew or manage your membership.</p>
+            <p>If you already renewed, you can safely ignore this message.</p>
+            <p style="margin: 24px 0 0;">Warm regards,<br/>The Bastion Research Team</p>
+          </div>
+        </div>
+      </div>
+    `,
+  };
+
+  try {
+    await sendEmail(emailOptions);
+  } catch (error) {
+    console.error("Failed to send subscription renewal reminder", error);
   }
 };
 
