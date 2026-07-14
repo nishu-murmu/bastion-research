@@ -1,4 +1,4 @@
-import { AnimatePresence, motion, AnimatePresenceProps } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import BackgroundShapes from "../../components/generic/framer-motion.tsx";
 import SignUpForm from "../Register/SignupForm.tsx";
