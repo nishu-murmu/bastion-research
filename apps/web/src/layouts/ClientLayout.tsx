@@ -1,6 +1,8 @@
 import BackToTop from "@/components/generic/backToTop";
 import Footer from "@/components/generic/Footer";
 import Header from "@/components/generic/Header";
+import WebinarImagePopup from "@/components/webinar/WebinarImagePopup";
+// import WebinarPopup from "@/components/webinar/WebinarPopup";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppRoutes, AuthRoutes } from "@/routes/app-routes";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
@@ -23,6 +25,8 @@ const ClientLayout = () => {
       <main className="flex-grow main pt-[80px] md:pt-[88px]">
         <Outlet />
         <BackToTop />
+        <WebinarImagePopup />
+        {/* <WebinarPopup /> */}
       </main>
       <Footer />
     </div>
