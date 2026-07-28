@@ -121,6 +121,21 @@ export const handlePaymentSuccess = async (payload: any) => {
     .select('transaction_id, user_id, transaction_status')
     .eq('transaction_id', transactionId)
     .maybeSingle()
+  const isTrackedPayment = Boolean(taggedTransactionId || existingPayment)
+
+  if (!isTrackedPayment) {
+    console.warn(
+      'Skipping untracked Cashfree payment success webhook because it does not map to an app-created transaction',
+      {
+        orderId: payment?.order_id,
+        cfPaymentId: payment?.cf_payment_id,
+        customerId: customer_details?.customer_id,
+        customerEmail: customer_details?.customer_email,
+      }
+    )
+    return
+  }
+
   const wasAlreadySuccessful =
     (existingPayment as any)?.transaction_status === 'SUCCESS'
 
