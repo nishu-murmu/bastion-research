@@ -28,6 +28,7 @@ import redFlagsRoutes from './routes/red-flags.routes'
 import staffRoutes from './routes/staff.routes'
 import qnaRoutes from './routes/qna.routes'
 import subscriptionWhatsappRoutes from './routes/subscription-whatsapp.routes'
+import publicRoutes from './routes/public.routes'
 
 dotenv.config()
 
@@ -160,6 +161,7 @@ app.use('/api', redFlagsRoutes)
 app.use('/api', staffRoutes)
 app.use('/api', qnaRoutes)
 app.use('/api', subscriptionWhatsappRoutes)
+app.use('/api/public/v1', publicRoutes)
 
 app.set('trust proxy', 1) // if you use secure cookies or rely on req.protocol
 
