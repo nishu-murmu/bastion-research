@@ -25,7 +25,7 @@ const ClientLayout = () => {
       <main className="flex-grow main pt-[80px] md:pt-[88px]">
         <Outlet />
         <BackToTop />
-        <WebinarImagePopup />
+        {/* <WebinarImagePopup /> */}
         {/* <WebinarPopup /> */}
       </main>
       <Footer />
