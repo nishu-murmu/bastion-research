@@ -16,6 +16,15 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import useSheetStocks from "@/hooks/use-sheets-stocks";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/use-subscription";
+
+const tiers: Record<string, string[]> = {
+  freemium: ["freemium"],
+  core: ["freemium", "core"],
+  core_annual: ["freemium", "core", "core_annual"],
+  research_hub: ["freemium", "core", "core_annual", "research_hub"],
+};
 
 function formatDate(value?: string | null) {
   return formatAdminDate(value);
@@ -37,17 +46,18 @@ function StatusBadge({ status }: { status: QnaQuestion["status"] }) {
 }
 
 function AskQuestionModal({
+  accessibleStocks,
   onClose,
   onSubmit,
   isSubmitting,
 }: {
+  accessibleStocks: any[];
   onClose: () => void;
   onSubmit: (payload: { question: string; category?: string }) => void;
   isSubmitting: boolean;
 }) {
   const [text, setText] = useState("");
   const [category, setCategory] = useState("");
-  const { stocks } = useSheetStocks();
 
   return (
     <div
@@ -76,17 +86,27 @@ function AskQuestionModal({
         <div className="mb-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="w-full rounded-lg border border-gray-200 p-2 text-left text-sm">
-                {category || "Select company"}
+              <button className="w-full rounded-lg border border-gray-200 p-2 text-left text-sm font-normal focus:outline-none focus:ring-2 focus:ring-red-100 flex items-center justify-between">
+                <span>{category || "Select company"}</span>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-full">
-              {stocks?.map((stock: any) => {
+            <DropdownMenuContent
+              align="start"
+              className="w-[--radix-dropdown-menu-trigger-width] max-h-60 overflow-y-auto text-left"
+            >
+              <DropdownMenuItem
+                onClick={() => setCategory("General")}
+                className="cursor-pointer justify-start text-left text-sm font-medium text-red-600 border-b border-gray-100 mb-1"
+              >
+                General
+              </DropdownMenuItem>
+              {accessibleStocks?.map((stock: any) => {
                 const name = stock?.name || stock?.company || stock?.symbol;
                 return (
                   <DropdownMenuItem
                     key={name}
                     onClick={() => setCategory(name)}
+                    className="cursor-pointer justify-start text-left text-sm"
                   >
                     {name}
                   </DropdownMenuItem>
@@ -126,11 +146,44 @@ export default function QnaSection() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { data: subscription } = useSubscription();
+  const { stocks } = useSheetStocks();
+
+  const userPlanCode =
+    subscription?.currentPlan || user?.membership_plans?.plan_code || "freemium";
+  const currentTier = tiers[userPlanCode] ?? tiers["freemium"];
+
+  const accessibleStocks = useMemo(() => {
+    return (stocks || []).filter((stock: any) => {
+      const tags = stock?.tags ? stock.tags : "freemium";
+      return Array.isArray(currentTier) && currentTier.includes(tags);
+    });
+  }, [stocks, currentTier]);
+
+  const accessibleCompanyNames = useMemo(() => {
+    const names = new Set<string>();
+    accessibleStocks.forEach((stk: any) => {
+      const name = stk?.name || stk?.company || stk?.symbol;
+      if (name) names.add(name);
+    });
+    return names;
+  }, [accessibleStocks]);
 
   const { data = [], isLoading } = useQuery({
     queryKey: [queryKeys.qna, "user"],
     queryFn: () => getQnaQuestions(),
   });
+
+  const accessibleData = useMemo(() => {
+    if (userPlanCode === "research_hub" || subscription?.is_premium) {
+      return data;
+    }
+    return data.filter((q) => {
+      if (!q.category || q.category === "General") return true;
+      return accessibleCompanyNames.has(q.category);
+    });
+  }, [data, accessibleCompanyNames, userPlanCode, subscription?.is_premium]);
 
   const submitMutation = useMutation({
     mutationFn: submitQnaQuestion,
@@ -147,7 +200,7 @@ export default function QnaSection() {
   // Add category to the client-side filter
   const filtered = useMemo(() => {
     const lower = search.trim().toLowerCase();
-    return data.filter((q) => {
+    return accessibleData.filter((q) => {
       const matchesSearch = [q.question, q.answer, q.author]
         .join(" ")
         .toLowerCase()
@@ -155,11 +208,23 @@ export default function QnaSection() {
       const matchesCategory = !selectedCategory || q.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [data, search, selectedCategory]);
+  }, [accessibleData, search, selectedCategory]);
 
-  const categories = Array.from(new Set(data.map((q) => q.category).filter(Boolean)));
+  const categories = useMemo(() => {
+    const answeredQuestions = accessibleData.filter(
+      (q) => q.status === "answered" && Boolean(q.category)
+    );
+    const catSet = new Set(answeredQuestions.map((q) => q.category as string));
+    const list = Array.from(catSet);
+    list.sort((a, b) => {
+      if (a === "General") return -1;
+      if (b === "General") return 1;
+      return a.localeCompare(b);
+    });
+    return list;
+  }, [accessibleData]);
 
-  const answeredCount = data.filter((q) => q.status === "answered").length;
+  const answeredCount = accessibleData.filter((q) => q.status === "answered").length;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 py-6">
@@ -170,7 +235,7 @@ export default function QnaSection() {
             <h1 className="text-3xl font-bold tracking-tight">QnA</h1>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            {data.length} questions · {answeredCount} answered
+            {accessibleData.length} questions · {answeredCount} answered
           </p>
         </div>
         <Button onClick={() => setShowModal(true)}>
@@ -255,6 +320,14 @@ export default function QnaSection() {
                           {q.question}
                         </p>
                         <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                          {q.category && (
+                            <>
+                              <Badge variant="secondary" className="text-[11px] font-normal">
+                                {q.category}
+                              </Badge>
+                              <span>•</span>
+                            </>
+                          )}
                           <span>{q.author}</span>
                           <span>•</span>
                           <span>{formatDate(q.created_at)}</span>
@@ -286,6 +359,7 @@ export default function QnaSection() {
 
       {showModal && (
         <AskQuestionModal
+          accessibleStocks={accessibleStocks}
           onClose={() => setShowModal(false)}
           onSubmit={(payload) => submitMutation.mutate(payload)}
           isSubmitting={submitMutation.isPending}

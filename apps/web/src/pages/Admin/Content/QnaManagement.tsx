@@ -214,6 +214,14 @@ export default function QnaManagement() {
                       {q.question}
                     </p>
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      {q.category && (
+                        <>
+                          <Badge variant="outline" className="text-[11px] font-normal">
+                            {q.category}
+                          </Badge>
+                          <span>•</span>
+                        </>
+                      )}
                       <span>{q.author}</span>
                       <span>•</span>
                       <span>{formatDate(q.created_at)}</span>

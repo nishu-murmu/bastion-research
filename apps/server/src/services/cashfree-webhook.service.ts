@@ -37,11 +37,12 @@ export const verifyWebhookSignature = (
 }
 
 export const handlePaymentSuccess = async (payload: any) => {
-  const { payment, customer_details } = payload?.data || {}
-  const tagPlanId = payment?.order_tags?.plan_id
-  const tagPlanCode = payment?.order_tags?.plan_code
-  const tagCouponCode = payment?.order_tags?.coupon_code
-  const taggedTransactionId = payment?.order_tags?.transaction_id as
+  const { order, payment, customer_details } = payload?.data || {}
+  const orderTags = order?.order_tags || payment?.order_tags || {}
+  const tagPlanId = orderTags.plan_id
+  const tagPlanCode = orderTags.plan_code
+  const tagCouponCode = orderTags.coupon_code
+  const taggedTransactionId = orderTags.transaction_id as
     | string
     | undefined
   let currentPlan: any = null
@@ -61,6 +62,23 @@ export const handlePaymentSuccess = async (payload: any) => {
       )
       .limit(1)
     currentPlan = data?.[0] || null
+  }
+  if (!currentPlan && taggedTransactionId) {
+    const { data: historyRow } = await supabase
+      .from('payment_history')
+      .select('plan_id')
+      .eq('transaction_id', taggedTransactionId)
+      .maybeSingle()
+    if (historyRow?.plan_id) {
+      const { data: planData } = await supabase
+        .from('membership_plans')
+        .select(
+          'plan_id, plan_name, price_amount, currency, duration_months, plan_code, tier'
+        )
+        .eq('plan_id', historyRow.plan_id)
+        .maybeSingle()
+      currentPlan = planData || null
+    }
   }
   if (!currentPlan) {
     const { data: plans } = await supabase
@@ -264,18 +282,42 @@ export const handlePaymentSuccess = async (payload: any) => {
   clearOnboardingDropOffForUser(customer_details?.customer_id)
 }
 
+const isUserActiveOrFree = async (userIdOrEmail?: string | null): Promise<boolean> => {
+  if (!userIdOrEmail) return false
+  const { data: user } = await supabase
+    .from('users')
+    .select('status')
+    .or(`id.eq.${userIdOrEmail},email.eq.${userIdOrEmail}`)
+    .maybeSingle()
+  return user?.status === 'active' || user?.status === 'free'
+}
+
 export const handlePaymentUserDropped = async (payload: any) => {
   const { customer_details } = payload?.data || {}
-  await supabase
-    .from('users')
-    .update({ status: 'payment_pending' })
-    .eq('id', customer_details?.customer_id)
+  const targetId = customer_details?.customer_id || customer_details?.customer_email
+  if (targetId && (await isUserActiveOrFree(targetId))) {
+    console.log(`[webhook] Skipping payment_pending update for active user: ${targetId}`)
+    return
+  }
+  if (customer_details?.customer_id) {
+    await supabase
+      .from('users')
+      .update({ status: 'payment_pending' })
+      .eq('id', customer_details.customer_id)
+  }
 }
 
 export const handlePaymentFailed = async (payload: any) => {
   const { customer_details } = payload?.data || {}
-  await supabase
-    .from('users')
-    .update({ status: 'payment_pending' })
-    .eq('id', customer_details?.customer_id)
+  const targetId = customer_details?.customer_id || customer_details?.customer_email
+  if (targetId && (await isUserActiveOrFree(targetId))) {
+    console.log(`[webhook] Skipping payment_pending update for active user: ${targetId}`)
+    return
+  }
+  if (customer_details?.customer_id) {
+    await supabase
+      .from('users')
+      .update({ status: 'payment_pending' })
+      .eq('id', customer_details.customer_id)
+  }
 }

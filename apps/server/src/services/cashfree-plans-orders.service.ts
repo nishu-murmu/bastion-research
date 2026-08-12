@@ -4,6 +4,7 @@ import { pgCreateOrder } from "./cashfree-pg.service";
 import { getFrontendBaseUrl } from "./cashfree-config";
 import { incrementCouponUsage } from "../controllers/coupon.controller";
 import { syncOnboardedUserToMailchimp } from "./mailchimpAudience.service";
+import { config } from "../utils/config";
 export type PublicPlan = {
   code: string;
   name: string;
@@ -116,6 +117,13 @@ export const createOrderForPlanService = async (params: {
       endDateStr = end.toISOString().split("T")[0];
     }
 
+    const assignedRole =
+      planRow.plan_code === "research_hub"
+        ? config.roles.research_ally_subscriber
+        : planRow.plan_code === "freemium"
+        ? "user"
+        : config.roles.core_subscriber;
+
     // For free tier, mark the user as active on this plan in users table
     await supabase
       .from("users")
@@ -124,6 +132,7 @@ export const createOrderForPlanService = async (params: {
         plan_id: planRow.plan_id,
         subscription_start_date: startDateStr,
         subscription_end_date: endDateStr,
+        role: assignedRole,
       })
       .eq("id", params.customer_id);
     void syncOnboardedUserToMailchimp({

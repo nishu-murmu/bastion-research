@@ -197,7 +197,27 @@ export const getOrder = async (req: Request, res: Response) => {
   try {
     const { orderId } = req.params
     const response = await pgFetchOrder(orderId)
-    return res.status(200).json(response?.data || response)
+    const orderData = response?.data || response
+
+    if (orderData?.order_status === 'PAID') {
+      try {
+        await handlePaymentSuccess({
+          data: {
+            order: orderData,
+            payment: {
+              payment_status: 'SUCCESS',
+              payment_amount: orderData?.order_amount,
+              payment_time: orderData?.created_at,
+            },
+            customer_details: orderData?.customer_details,
+          },
+        })
+      } catch (reconError) {
+        console.error('Active order reconciliation failed:', reconError)
+      }
+    }
+
+    return res.status(200).json(orderData)
   } catch (error: any) {
     const status = error?.response?.status || 500
     const payload = error?.response?.data || {
