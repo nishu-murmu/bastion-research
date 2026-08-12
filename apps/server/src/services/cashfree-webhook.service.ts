@@ -37,11 +37,12 @@ export const verifyWebhookSignature = (
 }
 
 export const handlePaymentSuccess = async (payload: any) => {
-  const { payment, customer_details } = payload?.data || {}
-  const tagPlanId = payment?.order_tags?.plan_id
-  const tagPlanCode = payment?.order_tags?.plan_code
-  const tagCouponCode = payment?.order_tags?.coupon_code
-  const taggedTransactionId = payment?.order_tags?.transaction_id as
+  const { order, payment, customer_details } = payload?.data || {}
+  const orderTags = order?.order_tags || payment?.order_tags || {}
+  const tagPlanId = orderTags.plan_id
+  const tagPlanCode = orderTags.plan_code
+  const tagCouponCode = orderTags.coupon_code
+  const taggedTransactionId = orderTags.transaction_id as
     | string
     | undefined
   let currentPlan: any = null
