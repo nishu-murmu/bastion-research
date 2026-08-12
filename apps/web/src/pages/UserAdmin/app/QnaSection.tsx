@@ -94,6 +94,12 @@ function AskQuestionModal({
               align="start"
               className="w-[--radix-dropdown-menu-trigger-width] max-h-60 overflow-y-auto text-left"
             >
+              <DropdownMenuItem
+                onClick={() => setCategory("General")}
+                className="cursor-pointer justify-start text-left text-sm font-medium text-red-600 border-b border-gray-100 mb-1"
+              >
+                General
+              </DropdownMenuItem>
               {accessibleStocks?.map((stock: any) => {
                 const name = stock?.name || stock?.company || stock?.symbol;
                 return (
@@ -174,7 +180,7 @@ export default function QnaSection() {
       return data;
     }
     return data.filter((q) => {
-      if (!q.category) return true;
+      if (!q.category || q.category === "General") return true;
       return accessibleCompanyNames.has(q.category);
     });
   }, [data, accessibleCompanyNames, userPlanCode, subscription?.is_premium]);
@@ -208,9 +214,14 @@ export default function QnaSection() {
     const answeredQuestions = accessibleData.filter(
       (q) => q.status === "answered" && Boolean(q.category)
     );
-    return Array.from(
-      new Set(answeredQuestions.map((q) => q.category as string))
-    );
+    const catSet = new Set(answeredQuestions.map((q) => q.category as string));
+    const list = Array.from(catSet);
+    list.sort((a, b) => {
+      if (a === "General") return -1;
+      if (b === "General") return 1;
+      return a.localeCompare(b);
+    });
+    return list;
   }, [accessibleData]);
 
   const answeredCount = accessibleData.filter((q) => q.status === "answered").length;
@@ -309,6 +320,14 @@ export default function QnaSection() {
                           {q.question}
                         </p>
                         <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                          {q.category && (
+                            <>
+                              <Badge variant="secondary" className="text-[11px] font-normal">
+                                {q.category}
+                              </Badge>
+                              <span>•</span>
+                            </>
+                          )}
                           <span>{q.author}</span>
                           <span>•</span>
                           <span>{formatDate(q.created_at)}</span>
