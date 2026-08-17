@@ -2,40 +2,32 @@ import { useState } from "react";
 import { ChevronDown, ChevronRight, ArrowUp, User } from "lucide-react";
 import MonthEndingTitle from "../../components/MonthEndingTitle";
 
-function getFinancialYearMonths() {
+function getLast12Months() {
   const today = new Date();
-  const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth(); // 0–11
-
-  const fyStartYear = currentMonth >= 3 ? currentYear : currentYear - 1;
-
-  const months = [
-    { name: "Apr", index: 3 },
-    { name: "May", index: 4 },
-    { name: "Jun", index: 5 },
-    { name: "Jul", index: 6 },
-    { name: "Aug", index: 7 },
-    { name: "Sep", index: 8 },
-    { name: "Oct", index: 9 },
-    { name: "Nov", index: 10 },
-    { name: "Dec", index: 11 },
-    { name: "Jan", index: 0 },
-    { name: "Feb", index: 1 },
-    { name: "Mar", index: 2 },
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
   ];
-
   const result = [];
 
-  months.forEach((m) => {
-    const year = m.index >= 3 ? fyStartYear : fyStartYear + 1;
-    const monthDate = new Date(year, m.index, 1);
-
-    if (monthDate <= today) {
-      result.push({
-        month: `${m.name}'${String(year).slice(-2)}`,
-      });
-    }
-  });
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    const mName = monthNames[d.getMonth()];
+    const yearShort = String(d.getFullYear()).slice(-2);
+    result.push({
+      month: `${mName}'${yearShort}`,
+    });
+  }
 
   return result.map((item, index) => ({
     num: index + 1,
@@ -70,7 +62,7 @@ export default function Complaince() {
   }
 
 
-  const rows = getFinancialYearMonths();
+  const rows = getLast12Months();
 
   const [expandedSections, setExpandedSections] = useState({
     complaints: false,
@@ -779,16 +771,16 @@ export default function Complaince() {
                       {row.month}
                     </td>
                     <td className="border border-gray-300 px-4 py-3 text-center">
-                      NA
+                      0
                     </td>
                     <td className="border border-gray-300 px-4 py-3 text-center">
-                      NA
+                      0
                     </td>
                     <td className="border border-gray-300 px-4 py-3 text-center">
-                      NA
+                      0
                     </td>
                     <td className="border border-gray-300 px-4 py-3 text-center">
-                      NA
+                      0
                     </td>
                   </tr>
                 ))}
@@ -802,16 +794,16 @@ export default function Complaince() {
                     Grand Total
                   </td>
                   <td className="border border-gray-300 px-4 py-3 text-center">
-                    NA
+                    0
                   </td>
                   <td className="border border-gray-300 px-4 py-3 text-center">
-                    NA
+                    0
                   </td>
                   <td className="border border-gray-300 px-4 py-3 text-center">
-                    NA
+                    0
                   </td>
                   <td className="border border-gray-300 px-4 py-3 text-center">
-                    NA
+                    0
                   </td>
                 </tr>
               </tbody>
