@@ -81,12 +81,12 @@ export const submitContact = async (req: Request, res: Response) => {
       console.error("Failed to store lead:", e);
     }
 
-    const toInbox = process.env.LEADS_EMAIL?.trim();
+    const toInbox = process.env.CONNECT_EMAIL?.trim() || process.env.LEADS_EMAIL?.trim();
     const fromAddress = getResolvedSmtpFromAddress();
     if (!toInbox || !fromAddress) {
       return res.status(500).json({
         message:
-          "Contact email routing is not configured (set LEADS_EMAIL and SMTP_USERNAME).",
+          "Contact email routing is not configured (set CONNECT_EMAIL or LEADS_EMAIL and SMTP_USERNAME).",
       });
     }
 
