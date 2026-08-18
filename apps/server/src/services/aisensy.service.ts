@@ -17,11 +17,17 @@ export type AiSensyCampaignPayload = {
 };
 
 function normalizeDestinationPhone(input: string) {
-  // AiSensy accepts numbers with or without country code. We just remove obvious formatting.
-  return (input || "")
+  // AiSensy accepts numbers with country code. We clean formatting and ensure country code.
+  let cleaned = (input || "")
     .trim()
     .replace(/\s+/g, "")
     .replace(/[-().]/g, "");
+
+  if (/^[6-9]\d{9}$/.test(cleaned)) {
+    cleaned = `91${cleaned}`;
+  }
+
+  return cleaned;
 }
 
 export async function sendAiSensyCampaign(payload: AiSensyCampaignPayload) {
