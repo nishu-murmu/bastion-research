@@ -105,29 +105,15 @@ export const sendReminderForUser = async (
     'User'
   let subscriptionEndDate = String(user?.subscription_end_date || '').trim()
 
-  if (process.env.NODE_ENV !== 'production') {
-    if (!phone) {
-      phone = '919327832747'
-    }
-    if (!subscriptionEndDate) {
-      subscriptionEndDate = new Date().toISOString().split('T')[0]
-    }
-  }
-
   if (!phone || !subscriptionEndDate) {
     throw new Error('User phone and subscription_end_date are required')
   }
 
   let targetPhone = phone
-  let targetEmail = user.email
-
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`[subscription-reminder-redirect] Dev mode: overriding real phone (${phone}) with '919327832747' and real email (${user.email || 'N/A'}) with 'mv9898733607@gmail.com'`)
-    targetPhone = '919327832747'
-    if (user.email) {
-      targetEmail = 'mv9898733607@gmail.com'
-    }
+  if (/^[6-9]\d{9}$/.test(targetPhone)) {
+    targetPhone = `91${targetPhone}`
   }
+  let targetEmail = user.email
 
   const reminderConfig = reminderConfigByType[reminderType]
   const templateParams = reminderConfig.paramCount > 0
