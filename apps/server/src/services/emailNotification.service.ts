@@ -214,13 +214,13 @@ const renewalReminderCopyByType: Record<
 
 export const sendSubscriptionRenewalReminderEmail = async (
   payload: SubscriptionRenewalReminderPayload
-): Promise<void> => {
+): Promise<boolean> => {
   const sender = getSenderEmail();
   if (!sender) {
     console.warn(
       "SMTP sender is not configured; skipping subscription renewal reminder email."
     );
-    return;
+    return false;
   }
 
   const copy = renewalReminderCopyByType[payload.reminderType];
@@ -257,8 +257,10 @@ export const sendSubscriptionRenewalReminderEmail = async (
 
   try {
     await sendEmail(emailOptions);
+    return true;
   } catch (error) {
     console.error("Failed to send subscription renewal reminder", error);
+    return false;
   }
 };
 

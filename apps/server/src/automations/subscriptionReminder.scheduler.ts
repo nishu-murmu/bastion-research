@@ -10,7 +10,7 @@ import {
 } from '../controllers/subscription-whatsapp.controller'
 import { syncExpiredPremiumUserToMailchimp } from '../services/mailchimpAudience.service'
 
-const ONE_DAY_MS = 24 * 60 * 60 * 1000
+const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000
 const MONTHLY_SUMMARY_RECIPIENT =
   process.env.MONTHLY_SUBSCRIPTION_EXPIRY_REPORT_EMAIL ||
   'subscription@bastionresearch.in'
@@ -80,7 +80,7 @@ export const runSubscriptionExpiryReminder = async () => {
           // Check if log already exists for this cycle to prevent duplicates
           const { data: existingLog, error: logError } = await supabase
             .from('subscription_reminder_logs')
-            .select('id')
+            .select('id, whatsapp_sent, email_sent')
             .eq('user_id', user.id)
             .eq('reminder_type', reminderType)
             .eq('subscription_end_date', targetDateStr)
@@ -90,12 +90,20 @@ export const runSubscriptionExpiryReminder = async () => {
             console.error(`[subscription-reminder] Failed to check logs for user ${user.id}:`, logError)
           }
 
-          if (existingLog) {
-            console.log(`[subscription-reminder] Skipping user ${user.id} - reminder (${reminderType}) already sent for expiry ${targetDateStr}`)
+          const whatsappAlreadySent = !!existingLog?.whatsapp_sent
+          const emailAlreadySent = !!existingLog?.email_sent
+
+          // Skip only if BOTH WhatsApp and Email were sent successfully
+          if (existingLog && whatsappAlreadySent && emailAlreadySent) {
+            console.log(`[subscription-reminder] Skipping user ${user.id} - reminder (${reminderType}) already sent via WhatsApp and Email for expiry ${targetDateStr}`)
             continue
           }
 
-          await sendReminderForUser(user as any, reminderType, config.campaignName)
+          await sendReminderForUser(user as any, reminderType, config.campaignName, {
+            skipWhatsapp: whatsappAlreadySent,
+            skipEmail: emailAlreadySent,
+            existingLogId: existingLog?.id,
+          })
           console.log(`[subscription-reminder] Sent reminder (${reminderType}) to user: ${user.id}`)
           // Wait 2 seconds between emails to prevent rate limiting (e.g. Mailtrap limits)
           await new Promise((resolve) => setTimeout(resolve, 2000))
@@ -282,7 +290,7 @@ export const runExpiredPremiumMailchimpSync = async (
 }
 
 let scheduled = false
-let lastRunDay: string | null = null
+let lastRunTimestamp = 0
 
 export const startSubscriptionExpiryReminderJob = () => {
   const enableScheduler =
@@ -294,11 +302,14 @@ export const startSubscriptionExpiryReminderJob = () => {
 
   const execute = async () => {
     const now = new Date()
-    const today = now.toISOString().split('T')[0]
-    if (lastRunDay === today) {
+    const currentTs = now.getTime()
+
+    // Prevent executing more frequently than every 12 hours
+    if (currentTs - lastRunTimestamp < TWELVE_HOURS_MS - 60_000) {
       return
     }
-    lastRunDay = today
+    lastRunTimestamp = currentTs
+
     await runExpiredPremiumMailchimpSync(now)
     await runSubscriptionExpiryReminder()
     await runDropOffSummary(now)
@@ -315,5 +326,5 @@ export const startSubscriptionExpiryReminderJob = () => {
     execute().catch((error) => {
       console.error('Subscription reminder scheduler error', error)
     })
-  }, ONE_DAY_MS)
+  }, TWELVE_HOURS_MS)
 }

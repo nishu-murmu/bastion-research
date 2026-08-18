@@ -14,10 +14,10 @@ export type SubscriptionReminderType =
 
 export const reminderConfigByType: Record<
   SubscriptionReminderType,
-  { 
-    reminderLabel: string; 
-    campaignName: string; 
-    dayDiff: number; 
+  {
+    reminderLabel: string;
+    campaignName: string;
+    dayDiff: number;
     paramCount: number;
     media?: { url: string; filename: string };
   }
@@ -53,10 +53,10 @@ export const reminderConfigByType: Record<
     campaignName: 'Bastion CORE Renewal Reminder #4',
     dayDiff: -15,
     paramCount: 0,
-    media: process.env.AISENSY_REMINDER_4_MEDIA_URL ? {
-      url: process.env.AISENSY_REMINDER_4_MEDIA_URL,
+    media: {
+      url: process.env.AISENSY_REMINDER_4_MEDIA_URL || 'https://d3jt6ku4g6z5l8.cloudfront.net/IMAGE/6353da2e153a147b991dd812/4958901_highanglekidcheatingschooltestmin.jpg',
       filename: 'Bastion-Logo.png'
-    } : undefined
+    }
   },
 }
 
@@ -91,7 +91,12 @@ const isSubscriptionReminderType = (
 export const sendReminderForUser = async (
   user: ReminderUserRow,
   reminderType: SubscriptionReminderType,
-  campaignName: string
+  campaignName: string,
+  options?: {
+    skipWhatsapp?: boolean
+    skipEmail?: boolean
+    existingLogId?: string
+  }
 ) => {
   let phone = String(user?.phone || '').trim()
   const name =
@@ -100,85 +105,96 @@ export const sendReminderForUser = async (
     'User'
   let subscriptionEndDate = String(user?.subscription_end_date || '').trim()
 
-  if (process.env.NODE_ENV !== 'production') {
-    if (!phone) {
-      phone = '9327832747'
-    }
-    if (!subscriptionEndDate) {
-      subscriptionEndDate = new Date().toISOString().split('T')[0]
-    }
-  }
-
   if (!phone || !subscriptionEndDate) {
     throw new Error('User phone and subscription_end_date are required')
   }
 
   let targetPhone = phone
-  let targetEmail = user.email
-
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`[subscription-reminder-redirect] Dev mode: overriding real phone (${phone}) with '9327832747' and real email (${user.email || 'N/A'}) with 'mv9898733607@gmail.com'`)
-    targetPhone = '9327832747'
-    if (user.email) {
-      targetEmail = 'mv9898733607@gmail.com'
-    }
+  if (/^[6-9]\d{9}$/.test(targetPhone)) {
+    targetPhone = `91${targetPhone}`
   }
+  let targetEmail = user.email
 
   const reminderConfig = reminderConfigByType[reminderType]
   const templateParams = reminderConfig.paramCount > 0
     ? [name, subscriptionEndDate, reminderConfig.reminderLabel]
     : []
 
-  const whatsappResult = await sendAiSensyCampaign({
-    destination: targetPhone,
-    userName: name,
-    campaignName: campaignName,
-    source: 'subscription-expiry-reminder',
-    templateParams,
-    tags: ['subscription-expiry-reminder', reminderType],
-    media: reminderConfig.media,
-    attributes: {
-      user_id: String(user.id),
-      email: String(user.email || ''),
-      reminder_type: reminderType,
-      subscription_end_date: subscriptionEndDate,
-    },
-  })
+  let whatsappResult: any = { sent: true, skipped: true, reason: 'already_sent' }
+  if (!options?.skipWhatsapp) {
+    whatsappResult = await sendAiSensyCampaign({
+      destination: targetPhone,
+      userName: name,
+      campaignName: campaignName,
+      source: 'subscription-expiry-reminder',
+      templateParams,
+      tags: ['subscription-expiry-reminder', reminderType],
+      media: reminderConfig.media,
+      attributes: {
+        user_id: String(user.id),
+        email: String(user.email || ''),
+        reminder_type: reminderType,
+        subscription_end_date: subscriptionEndDate,
+      },
+    })
+  }
 
-  let emailSent = false
-  if (targetEmail) {
-    await sendSubscriptionRenewalReminderEmail({
+  let emailSent = options?.skipEmail ?? false
+  if (!options?.skipEmail && targetEmail) {
+    emailSent = await sendSubscriptionRenewalReminderEmail({
       to: targetEmail,
       firstName: user.first_name || undefined,
       planName: user.membership_plans?.plan_name || undefined,
       subscriptionEndDate,
       reminderType,
     })
-    emailSent = true
   }
 
-  // Save log entry to Supabase
+  // Save or update log entry in Supabase
   try {
-    const { error } = await supabase
-      .from('subscription_reminder_logs')
-      .insert({
-        user_id: user.id,
-        email: user.email || null,
-        phone: phone || null,
-        reminder_type: reminderType,
-        campaign_name: campaignName,
-        subscription_end_date: subscriptionEndDate,
-        whatsapp_sent: !!whatsappResult?.sent,
-        email_sent: emailSent,
-        whatsapp_result: whatsappResult || null,
-        email_result: emailSent ? { sent: true } : null,
-      })
+    const isWhatsappSent = options?.skipWhatsapp ? true : !!whatsappResult?.sent
 
-    if (error) {
-      console.error(`[subscription-reminder] Failed to write to subscription_reminder_logs for user: ${user.id}:`, error)
+    if (options?.existingLogId) {
+      const updatePayload: any = {}
+      if (!options.skipWhatsapp) {
+        updatePayload.whatsapp_sent = isWhatsappSent
+        updatePayload.whatsapp_result = whatsappResult || null
+      }
+      if (!options.skipEmail) {
+        updatePayload.email_sent = emailSent
+        updatePayload.email_result = emailSent ? { sent: true } : { sent: false }
+      }
+
+      const { error } = await supabase
+        .from('subscription_reminder_logs')
+        .update(updatePayload)
+        .eq('id', options.existingLogId)
+
+      if (error) {
+        console.error(`[subscription-reminder] Failed to update subscription_reminder_logs for log: ${options.existingLogId}:`, error)
+      }
+    } else {
+      const { error } = await supabase
+        .from('subscription_reminder_logs')
+        .insert({
+          user_id: user.id,
+          email: user.email || null,
+          phone: phone || null,
+          reminder_type: reminderType,
+          campaign_name: campaignName,
+          subscription_end_date: subscriptionEndDate,
+          whatsapp_sent: isWhatsappSent,
+          email_sent: emailSent,
+          whatsapp_result: whatsappResult || null,
+          email_result: emailSent ? { sent: true } : { sent: false },
+        })
+
+      if (error) {
+        console.error(`[subscription-reminder] Failed to write to subscription_reminder_logs for user: ${user.id}:`, error)
+      }
     }
   } catch (err: any) {
-    console.error(`[subscription-reminder] Error inserting into subscription_reminder_logs:`, err?.message || err)
+    console.error(`[subscription-reminder] Error inserting/updating subscription_reminder_logs:`, err?.message || err)
   }
 
   return { whatsapp: whatsappResult, emailSent }
@@ -251,3 +267,5 @@ export const sendSubscriptionWhatsappReminder = async (
       .json({ message: e?.message || 'Failed to send WhatsApp reminder' })
   }
 }
+
+
