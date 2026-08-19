@@ -67,6 +67,7 @@ export default function Complaince() {
   const [expandedSections, setExpandedSections] = useState({
     complaints: false,
     investor: false,
+    upiIntimation: false,
     grievances: false,
   });
 
@@ -565,6 +566,134 @@ export default function Complaince() {
                       trading, demat or bank accounts with the Research Analyst.
                     </li>
                   </ol>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* UPI - Intimation to Investors Section */}
+        <div className="mb-6">
+          <button
+            onClick={() => toggleSection("upiIntimation")}
+            className="flex sm:items-center items-start text-lg font-semibold text-gray-800 hover:text-red-600"
+          >
+            {expandedSections.upiIntimation ? (
+              <ChevronDown className="w-8 h-8 mr-2 sm:w-4 sm:h-4 flex-shrink-0" />
+            ) : (
+              <ChevronRight className="w-8 h-8 mr-2 sm:w-4 sm:h-4 flex-shrink-0" />
+            )}
+            UPI - Intimation to Investors
+          </button>
+
+          {expandedSections.upiIntimation && (
+            <div className="ml-6 mt-4 text-gray-700 leading-relaxed space-y-4">
+              <p className="font-semibold text-gray-800">Dear Investors,</p>
+              <p>
+                We would like to inform you that we have obtained a SEBI-validated UPI ID handle for secure payment collection, as mandated by SEBI.
+              </p>
+              <p>
+                For any UPI payment, you can make the payment on the following validated UPI ID:
+              </p>
+              <p className="font-semibold text-red-600 text-lg flex items-center">
+                <span className="mr-2">➡️</span> bastionresearchhouse.ra@valididfc
+              </p>
+
+              <div className="pt-2">
+                <h3 className="text-base font-bold text-gray-800 mb-1">
+                  1. Please Read the FAQs Below to Understand the Validated UPI Handle System
+                </h3>
+                <h4 className="text-base font-semibold text-gray-800 mb-3">
+                  Frequently Asked Questions (FAQs)
+                </h4>
+
+                <div className="space-y-4">
+                  <div>
+                    <p className="font-semibold text-gray-800">
+                      Q. Is it compulsory for the investors to use the new handle only?
+                    </p>
+                    <p className="mt-1">
+                      Ans. The investors can choose their preferred mode of payment, such as UPI, IMPS, NEFT, RTGS, or Cheques. If an investor opts to use UPI for the payment to registered intermediaries, then they have to do so only using the new UPI IDs allotted to registered intermediaries.
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-gray-800">
+                      Q. What should I check while making payment using the new UPI IDs/ QR Code?
+                    </p>
+                    <p className="mt-1 mb-2">
+                      Ans. Investors need to keep following things into consideration:
+                    </p>
+                    <ol className="list-decimal ml-6 space-y-1">
+                      <li>
+                        The UPI ID should properly show the name of the intermediary, followed by the short abbreviation of their category for example “brk” for Brokers, “mf” for Mutual Funds to the left of the “@” character.
+                      </li>
+                      <li>
+                        On the right side of the “@”, the new and exclusive handle “@valid” should be present, followed by the bank name.
+                      </li>
+                      <li>
+                        On the confirmation screen, the app should show a white thumbs-up icon inside a green triangle.
+                      </li>
+                      <li>
+                        The QR code generated using the utility will have a white thumbs-up icon inside a green triangle. It will also display the UPI ID just below the QR code.
+                      </li>
+                    </ol>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-gray-800">
+                      Q. Do investors also need to obtain new UPI handles to transact in the securities market?
+                    </p>
+                    <p className="mt-1">
+                      Ans. No, the new UPI IDs are only for intermediaries to obtain and investors can continue to use their existing UPI IDs
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-gray-800">
+                      Q. Whom to approach if my transaction/ payment fails with the new UPI ID?
+                    </p>
+                    <p className="mt-1">
+                      Ans. The secure validated UPI ID of intermediaries will use the same banking channel as the earlier generic UPI handles. In case of any technical difficulty, investors are requested to approach their respective bank.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <h3 className="text-base font-bold text-gray-800 mb-2">
+                  2. Verify Our UPI ID Using SEBI’s Online Verification Tool
+                </h3>
+                <p className="mb-2">
+                  For complete transparency, investors may verify whether the UPI ID shared by us is official and SEBI-validated by visiting the link below:
+                </p>
+                <div className="mb-3">
+                  <span className="mr-2">➡️</span>
+                  <span className="font-semibold text-gray-800 mr-1">SEBI UPI Handle Verification Facility</span>
+                  <a
+                    href="https://siportal.sebi.gov.in/intermediary/sebi-check"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-red-600 hover:underline break-all"
+                  >
+                    https://siportal.sebi.gov.in/intermediary/sebi-check
+                  </a>
+                </div>
+                <p className="mb-1">
+                  Using this facility, you can confirm:
+                </p>
+                <ul className="list-disc ml-6 space-y-1">
+                  <li>Whether our UPI ID is SEBI-registered</li>
+                  <li>Whether it is officially validated</li>
+                  <li>The intermediary name and category</li>
+                </ul>
+
+                <div className="mt-6 pt-2 flex flex-col items-start sm:items-start">
+                  <img
+                    src="/media/upi-qr-code.jpeg"
+                    alt="SEBI Validated UPI QR Code"
+                    className="w-64 max-w-full rounded-md shadow-sm border border-gray-200"
+                  />
                 </div>
               </div>
             </div>
