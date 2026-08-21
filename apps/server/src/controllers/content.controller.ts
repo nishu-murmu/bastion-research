@@ -299,7 +299,10 @@ export async function createNewsletter(req: Request, res: Response) {
         headline_image_url: headline_image_url ?? null,
 
         author: author ?? null,
-        published_date: req.body.published_date ?? null,
+        published_date:
+          req.body.published_date && typeof req.body.published_date === "string" && req.body.published_date.trim() !== ""
+            ? req.body.published_date
+            : null,
       })
       .select("*")
       .single();
@@ -338,7 +341,11 @@ export async function updateNewsletter(req: Request, res: Response) {
     if (headline_image_url !== undefined)
       updateData.headline_image_url = headline_image_url;
     if (author !== undefined) updateData.author = author;
-    if (published_date !== undefined) updateData.published_date = published_date;
+    if (published_date !== undefined)
+      updateData.published_date =
+        published_date && typeof published_date === "string" && published_date.trim() !== ""
+          ? published_date
+          : null;
     if (hidden !== undefined) updateData.hidden = !!hidden;
 
     const { data, error } = await supabase

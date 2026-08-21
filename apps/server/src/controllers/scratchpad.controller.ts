@@ -120,7 +120,10 @@ export const createScratchPadNewsletter = async (
           content,
           featured_image,
           author,
-          published_date,
+          published_date:
+            published_date && typeof published_date === "string" && published_date.trim() !== ""
+              ? published_date
+              : null,
           is_published: is_published || false,
           tags: tags || [],
         },
@@ -165,7 +168,10 @@ export const updateScratchPadNewsletter = async (
       updateData.featured_image = featured_image;
     if (author !== undefined) updateData.author = author;
     if (published_date !== undefined)
-      updateData.published_date = published_date;
+      updateData.published_date =
+        published_date && typeof published_date === "string" && published_date.trim() !== ""
+          ? published_date
+          : null;
     if (is_published !== undefined) updateData.is_published = is_published;
     if (tags !== undefined) updateData.tags = tags;
 

@@ -150,7 +150,11 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
         };
       } else {
         // For other types, use contents field
-        dataToSave = { ...formData, contents: editorContent };
+        dataToSave = {
+          ...formData,
+          contents: editorContent,
+          published_date: formData.published_date || null,
+        };
       }
 
       await onSave(dataToSave);
